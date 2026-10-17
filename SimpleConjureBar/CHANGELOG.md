@@ -14,6 +14,8 @@ Checked in game on WoW Forever 1.60.1.70450 (interface 16001).
   focus first. Macro names follow the client's language, cut to 16 characters.
 
 ### Changed
+- Report bug: the window now names where to send the report - the issues page of the GitHub
+  repository, with a form that has a place for it.
 - Macros tab: the Polymorph part is laid out like the other sections - its name as header, the
   raid marker, then "Create macro". "Show macro" moved to the bottom right corner and leaves the
   settings window open.

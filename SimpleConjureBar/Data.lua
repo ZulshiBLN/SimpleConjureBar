@@ -129,7 +129,7 @@ D.ANTS_STEPS  = { 0.04, 0.02, 0.01, 0.0075, 0.005 }
 
 -- Where bug reports go (shown in the report window). Empty = no link, the window asks the user
 -- to send the report to the addon author instead.
-D.BUG_REPORT_URL = ""
+D.BUG_REPORT_URL = "https://github.com/ZulshiBLN/SimpleConjureBar/issues"
 
 D.ADDON_ICON = "Interface\\Icons\\INV_Drink_06" -- same icon as in the AddOn list (TOC IconTexture)
 

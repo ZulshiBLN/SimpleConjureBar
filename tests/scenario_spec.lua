@@ -254,6 +254,18 @@ describe("the addon in a mocked client", function()
 
         r.desc:SetText("Bar vanished"); RUNSCRIPT(r.desc, "OnTextChanged", true)
         assert.is_truthy((r.report:GetText() or ""):find("Bar vanished", 1, true))
+
+        -- Where to send it: the repository's issues, shown and selectable
+        assert.is_truthy(ns.D.BUG_REPORT_URL:find("^https://github%.com/ZulshiBLN/SimpleConjureBar/issues"))
+        local shownUrl, step3
+        for _, c in ipairs(r.children) do
+            if c.kind == "EditBox" and c.text == ns.D.BUG_REPORT_URL then shownUrl = c end
+        end
+        for _, region in ipairs(r.regions) do
+            if region.text == ns.L.REPORT_STEP3 then step3 = region end
+        end
+        assert.is_truthy(shownUrl and shownUrl:IsShown(), "the URL box")
+        assert.is_truthy(step3, "the step telling where to paste it")
     end)
 
     it("raised no Lua error in any script, hook or timer along the way", function()

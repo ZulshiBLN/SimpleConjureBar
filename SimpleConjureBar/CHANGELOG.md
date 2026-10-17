@@ -1,5 +1,16 @@
 # Changelog
 
+From 1.37.1 on, this file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
+versions follow [Semantic Versioning](https://semver.org/). Earlier entries stay as written.
+
+## [1.37.1] - Unreleased
+
+Checked in game on WoW Forever 1.60.1.70450 (interface 16001).
+
+### Changed
+- README: two known limits are gone, both verified in game. Russian, Korean and Chinese texts
+  render on an English client, and Molten Armor's WoW Forever spell ID (429307) is correct.
+
 ## 1.37
 - New "Report bug" button (General tab, bottom left) and `/scb bug`: opens a window with an
   optional description field and a ready-made, pre-selected report (addon version, client,

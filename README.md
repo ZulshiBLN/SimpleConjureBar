@@ -98,10 +98,8 @@ every file far below Lua's limit of 200 local variables per chunk.
 
 MIT, see [LICENSE](LICENSE). Author: ZulshiBLN.
 
-## Known limits / to verify in game
+## Known limits
 
-- Molten Armor uses the WoW Forever spell ID 429307, which is not verified yet.
-- Korean and Chinese texts on Western clients depend on the fonts shipped with the client.
 - With several mana gems in the bags, a left click in combat may still show the shared cooldown
   message for the second gem line of the macro.
 - Armor and Intellect highlights and the Intellect count are frozen during combat (the client

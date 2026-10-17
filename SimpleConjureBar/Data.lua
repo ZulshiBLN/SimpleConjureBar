@@ -1,7 +1,7 @@
 -- SimpleConjureBar - static data
 -- Spell and item IDs, layout constants and default settings. Loaded before every other module.
 -- All IDs are the Classic Era IDs, which WoW Forever uses as well. Molten Armor (429307) is the
--- only WoW Forever specific ID and still has to be verified in game.
+-- only WoW Forever specific ID; verified in game on build 1.60.1.70450.
 
 local _, ns = ...
 
@@ -43,7 +43,7 @@ D.ARMOR_FAMILIES = {
     { 7301, 7300, 168 },          -- Frost Armor ranks 3-1
     { 10220, 10219, 7320, 7302 }, -- Ice Armor ranks 4-1
     { 22783, 22782, 6117 },       -- Mage Armor ranks 3-1
-    { 429307 },                   -- Molten Armor (WoW Forever ID, still to verify in game)
+    { 429307 },                   -- Molten Armor (WoW Forever ID)
 }
 D.ARMOR_SHORT_KEYS = { "ARMOR_SHORT_FROST", "ARMOR_SHORT_ICE" }
 -- One spell ID per family is enough for the buff check: the aura lookup uses the spell name,

@@ -1,0 +1,19 @@
+# Packager output
+.release/
+*.zip
+
+# Lua tooling
+luacov.*.out
+
+# Python (tests/run.py, until the busted port replaces it)
+__pycache__/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db

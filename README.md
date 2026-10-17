@@ -3,6 +3,19 @@
 A slim mage bar for **WoW Forever** (Classic content on the modern Retail client, Interface 16001).
 It bundles everything a mage conjures, buffs and travels with into one movable bar.
 
+## Installation
+
+**With WowUp** (2.24 or later, which knows WoW Forever): choose your WoW Forever installation,
+then *Get Addons* → *Install from URL* and enter
+`https://github.com/ZulshiBLN/SimpleConjureBar`. WowUp offers every later release as an update.
+
+**By hand:** download `SimpleConjureBar-<version>-forever.zip` from the
+[releases](https://github.com/ZulshiBLN/SimpleConjureBar/releases) and unpack it into
+`Interface\AddOns` of your WoW Forever installation, so that the folder
+`Interface\AddOns\SimpleConjureBar` holds `SimpleConjureBar.toc`.
+
+The addon loads for mages only.
+
 ## Buttons
 
 | Button | Left click | Right click | Middle click |

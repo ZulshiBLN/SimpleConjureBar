@@ -21,6 +21,8 @@ Checked in game on WoW Forever 1.60.1.70450 (interface 16001).
   settings window open.
 - README: two known limits are gone, both verified in game. Russian, Korean and Chinese texts
   render on an English client, and Molten Armor's WoW Forever spell ID (429307) is correct.
+- README: an installation section - with WowUp from the GitHub URL, or by hand from the
+  release zip.
 
 ### Fixed
 - Macros tab: "Show macro" opens the macro window on the character tab, where the SCB macros

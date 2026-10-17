@@ -178,13 +178,30 @@ describe("the Macros tab", function()
         assert.is_true(picked)
         assert.are.equal(wanted, SimpleConjureBarDB.macroStopcast)
 
-        -- Two "Create macro" buttons: Ice Block first, stopcasting second
+        -- Three "Create macro" buttons: Polymorph, Ice Block, stopcasting
         local buttons = find(SimpleConjureBarSettings, function(f) return f.text == ns.L.BTN_CREATE_MACRO end)
-        assert.are.equal(2, #buttons)
-        RUNSCRIPT(buttons[2], "OnClick", "LeftButton", false)
+        assert.are.equal(3, #buttons)
+        RUNSCRIPT(buttons[3], "OnClick", "LeftButton", false)
         assert.are.equal("SCB " .. ns.SpellName(wanted), MACROS[1].name)
-        RUNSCRIPT(buttons[1], "OnClick", "LeftButton", false)
+        RUNSCRIPT(buttons[2], "OnClick", "LeftButton", false)
         assert.are.equal("SCB " .. ns.SpellName(ns.D.SPELL_ICE_BLOCK), MACROS[2].name)
+        RUNSCRIPT(buttons[1], "OnClick", "LeftButton", false)
+        assert.are.equal("SCB Polymorph", MACROS[3].name)
+    end)
+
+    it("heads the Polymorph section with the spell's name, like the others", function()
+        local ns = login(nil)
+        ns.ToggleSettings()
+        local function label(id) return ns.LocalName(ns.SpellName(id), ns.D.SPELL_NAME_KEYS[id]) end
+        local texts = {}
+        local function collect(frame)
+            for _, r in ipairs(frame.regions) do if r.text then texts[r.text] = true end end
+            for _, c in ipairs(frame.children) do collect(c) end
+        end
+        collect(SimpleConjureBarSettings)
+        assert.is_true(texts[label(ns.D.SPELL_POLYMORPH)], "Polymorph header")
+        assert.is_true(texts[label(ns.D.SPELL_ICE_BLOCK)], "Ice Block header")
+        assert.is_nil(rawget(ns.locales.enUS, "BTN_POLY_MACRO"))
     end)
 end)
 

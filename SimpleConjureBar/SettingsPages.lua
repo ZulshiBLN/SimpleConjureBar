@@ -384,12 +384,15 @@ end
 -- Tab 5: Macros
 ---------------------------------------------------------------------------
 local macroPage = UI.NewPage("TAB_MACROS")
+
+-- A spell's name in the addon's language (ns.LocalName), as a function for ns.SetL
+local function SpellLabel(spellId)
+    return ns.LocalName(ns.SpellName(spellId), D.SPELL_NAME_KEYS[spellId])
+end
+
+-- Polymorph: the raid marker, then one button - laid out like the stopcasting section
+UI.AddHeader(function() return SpellLabel(D.SPELL_POLYMORPH) end, 6)
 do
-    local create = UI.AddButton(macroPage, "BTN_POLY_MACRO", function() ns.CreatePolymorphMacro() end)
-    create:SetPoint("TOPLEFT", INSET, Place(22, 6))
-
-    UI.AddNote("MACRO_HELP", 8, 3) -- three lines
-
     -- Raid marker used by the macro (applied when the macro is created or updated)
     local opts = {}
     for i = 1, 8 do
@@ -400,11 +403,9 @@ do
     end
     UI.AddDropdown("OPT_MARKER", opts, function() return db.macroMarker end,
         function(v) db.macroMarker = v end)
-end
-
--- A spell's name in the addon's language (ns.LocalName), as a function for ns.SetL
-local function SpellLabel(spellId)
-    return ns.LocalName(ns.SpellName(spellId), D.SPELL_NAME_KEYS[spellId])
+    local create = UI.AddButton(macroPage, "BTN_CREATE_MACRO", function() ns.CreatePolymorphMacro() end)
+    create:SetPoint("TOPLEFT", INSET, Place(22, 6))
+    UI.AddNote("MACRO_HELP", 8, 3) -- three lines
 end
 
 -- Ice Block: one button

@@ -10,13 +10,13 @@ local _, ns = ...
 local locales = {}
 
 locales.enUS = {
-    MACRO_STOPCAST_HEADER = "Stopcasting macros", BTN_CREATE_MACRO = "Create macro", OPT_STOPCAST_SPELL = "Spell", MACRO_ICEBLOCK_HELP = "First press: %s. A press during it ends it early.", MACRO_STOPCAST_HELP = "Stops your current cast and casts the chosen spell at once.\n%s aims at your focus first.", SPELL_FIRE_BLAST = "Fire Blast", SPELL_FROST_NOVA = "Frost Nova", SPELL_BLINK = "Blink", SPELL_COUNTERSPELL = "Counterspell", SPELL_ICE_BLOCK = "Ice Block",
+    MACRO_STOPCAST_HEADER = "Stopcasting macros", BTN_CREATE_MACRO = "Create macro", OPT_STOPCAST_SPELL = "Spell", MACRO_ICEBLOCK_HELP = "First press: %s. A press during it ends it early.", MACRO_STOPCAST_HELP = "Stops your current cast and casts the chosen spell at once.\n%s aims at your focus first.", SPELL_FIRE_BLAST = "Fire Blast", SPELL_FROST_NOVA = "Frost Nova", SPELL_BLINK = "Blink", SPELL_COUNTERSPELL = "Counterspell", SPELL_ICE_BLOCK = "Ice Block", SPELL_POLYMORPH = "Polymorph",
     BTN_REPORT_BUG = "Report bug", REPORT_TITLE = "Report a bug", REPORT_STEP1 = "1. What happened? (optional)", REPORT_STEP2 = "2. Copy the report with Ctrl+C (already selected)", REPORT_STEP3 = "3. Paste it as a new issue on GitHub:", REPORT_NO_URL = "3. Send the report to the addon author.", CLOSE = "Close", CMD_BUG = "Open the bug report window",
     BTN_SHOW_MACRO = "Show macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Raid marker",
     MACRO_HELP = "First click: your hostile target becomes the focus and gets the raid marker.\nFurther clicks: Polymorph on the focus.\nA dead focus is cleared automatically.",
     MARKER_1 = "Star", MARKER_2 = "Circle", MARKER_3 = "Diamond", MARKER_4 = "Triangle", MARKER_5 = "Moon", MARKER_6 = "Square", MARKER_7 = "Cross", MARKER_8 = "Skull",
-    BTN_POLY_MACRO = "Create Polymorph macro", MACRO_CREATED = "Macro \"%s\" created (character).", MACRO_UPDATED = "Macro \"%s\" updated.", MACRO_FULL = "No free character macro slot.",
+    MACRO_CREATED = "Macro \"%s\" created (character).", MACRO_UPDATED = "Macro \"%s\" updated.", MACRO_FULL = "No free character macro slot.",
     OPT_GOLD_RESERVE = "Gold reserve (never spend below, gold)", RESERVE_REACHED = "Auto-buy stopped at the gold reserve of %s.",
     BTN_INTELLECT = "Arcane Intellect",
     MENU_COMBAT = "The settings can't be opened in combat.",
@@ -93,13 +93,13 @@ locales.enUS = {
 }
 
 locales.deDE = {
-    MACRO_STOPCAST_HEADER = "Stopcasting-Makros", BTN_CREATE_MACRO = "Makro anlegen", OPT_STOPCAST_SPELL = "Zauber", MACRO_ICEBLOCK_HELP = "Erster Druck: %s. Ein Druck während der Wirkung beendet ihn vorzeitig.", MACRO_STOPCAST_HELP = "Bricht den laufenden Zauber ab und wirkt den gewählten sofort.\n%s zielt zuerst auf deinen Fokus.", SPELL_FIRE_BLAST = "Feuerschlag", SPELL_FROST_NOVA = "Frostnova", SPELL_BLINK = "Blinzeln", SPELL_COUNTERSPELL = "Gegenzauber", SPELL_ICE_BLOCK = "Eisblock",
+    MACRO_STOPCAST_HEADER = "Stopcasting-Makros", BTN_CREATE_MACRO = "Makro anlegen", OPT_STOPCAST_SPELL = "Zauber", MACRO_ICEBLOCK_HELP = "Erster Druck: %s. Ein Druck während der Wirkung beendet ihn vorzeitig.", MACRO_STOPCAST_HELP = "Bricht den laufenden Zauber ab und wirkt den gewählten sofort.\n%s zielt zuerst auf deinen Fokus.", SPELL_FIRE_BLAST = "Feuerschlag", SPELL_FROST_NOVA = "Frostnova", SPELL_BLINK = "Blinzeln", SPELL_COUNTERSPELL = "Gegenzauber", SPELL_ICE_BLOCK = "Eisblock", SPELL_POLYMORPH = "Verwandlung",
     BTN_REPORT_BUG = "Fehler melden", REPORT_TITLE = "Fehler melden", REPORT_STEP1 = "1. Was ist passiert? (optional)", REPORT_STEP2 = "2. Bericht mit Strg+C kopieren (bereits markiert)", REPORT_STEP3 = "3. Als neues Issue auf GitHub einfügen:", REPORT_NO_URL = "3. Bericht an den Autor des Addons schicken.", CLOSE = "Schließen", CMD_BUG = "Fenster für Fehlerberichte öffnen",
     BTN_SHOW_MACRO = "Makro anzeigen",
     TAB_MACROS = "Makros", OPT_MARKER = "Zielmarkierung",
     MACRO_HELP = "Erster Klick: Dein feindliches Ziel wird Fokus und erhält die Markierung.\nWeitere Klicks: Verwandlung auf den Fokus.\nEin toter Fokus wird automatisch gelöscht.",
     MARKER_1 = "Stern", MARKER_2 = "Kreis", MARKER_3 = "Diamant", MARKER_4 = "Dreieck", MARKER_5 = "Mond", MARKER_6 = "Quadrat", MARKER_7 = "Kreuz", MARKER_8 = "Totenschädel",
-    BTN_POLY_MACRO = "Verwandlungs-Makro anlegen", MACRO_CREATED = "Makro \"%s\" angelegt (Charakter).", MACRO_UPDATED = "Makro \"%s\" aktualisiert.", MACRO_FULL = "Kein freier Charakter-Makroplatz.",
+    MACRO_CREATED = "Makro \"%s\" angelegt (Charakter).", MACRO_UPDATED = "Makro \"%s\" aktualisiert.", MACRO_FULL = "Kein freier Charakter-Makroplatz.",
     OPT_GOLD_RESERVE = "Goldreserve (nie darunter ausgeben, Gold)", RESERVE_REACHED = "Autokauf an der Goldreserve von %s gestoppt.",
     BTN_INTELLECT = "Arkane Intelligenz",
     MENU_COMBAT = "Das Menü kann im Kampf nicht geöffnet werden.",
@@ -177,13 +177,13 @@ locales.deDE = {
 }
 
 locales.frFR = {
-    MACRO_STOPCAST_HEADER = "Macros d'annulation de sort", BTN_CREATE_MACRO = "Créer la macro", OPT_STOPCAST_SPELL = "Sort", MACRO_ICEBLOCK_HELP = "Premier appui : %s. Un appui pendant l'effet y met fin.", MACRO_STOPCAST_HELP = "Annule le sort en cours et lance aussitôt le sort choisi.\n%s cible d'abord votre focalisation.", SPELL_FIRE_BLAST = "Trait de feu", SPELL_FROST_NOVA = "Nova de givre", SPELL_BLINK = "Transfert", SPELL_COUNTERSPELL = "Contresort", SPELL_ICE_BLOCK = "Bloc de glace",
+    MACRO_STOPCAST_HEADER = "Macros d'annulation de sort", BTN_CREATE_MACRO = "Créer la macro", OPT_STOPCAST_SPELL = "Sort", MACRO_ICEBLOCK_HELP = "Premier appui : %s. Un appui pendant l'effet y met fin.", MACRO_STOPCAST_HELP = "Annule le sort en cours et lance aussitôt le sort choisi.\n%s cible d'abord votre focalisation.", SPELL_FIRE_BLAST = "Trait de feu", SPELL_FROST_NOVA = "Nova de givre", SPELL_BLINK = "Transfert", SPELL_COUNTERSPELL = "Contresort", SPELL_ICE_BLOCK = "Bloc de glace", SPELL_POLYMORPH = "Métamorphose",
     BTN_REPORT_BUG = "Signaler un bug", REPORT_TITLE = "Signaler un bug", REPORT_STEP1 = "1. Que s'est-il passé ? (facultatif)", REPORT_STEP2 = "2. Copiez le rapport avec Ctrl+C (déjà sélectionné)", REPORT_STEP3 = "3. Collez-le dans un nouveau ticket sur GitHub :", REPORT_NO_URL = "3. Envoyez le rapport à l'auteur de l'addon.", CLOSE = "Fermer", CMD_BUG = "Ouvrir la fenêtre de rapport de bug",
     BTN_SHOW_MACRO = "Afficher la macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Marqueur de cible",
     MACRO_HELP = "Premier clic : votre cible hostile devient le focus et reçoit le marqueur.\nClics suivants : Métamorphose sur le focus.\nUn focus mort est effacé automatiquement.",
     MARKER_1 = "Étoile", MARKER_2 = "Cercle", MARKER_3 = "Losange", MARKER_4 = "Triangle", MARKER_5 = "Lune", MARKER_6 = "Carré", MARKER_7 = "Croix", MARKER_8 = "Crâne",
-    BTN_POLY_MACRO = "Créer la macro Métamorphose", MACRO_CREATED = "Macro « %s » créée (personnage).", MACRO_UPDATED = "Macro « %s » mise à jour.", MACRO_FULL = "Aucun emplacement de macro de personnage libre.",
+    MACRO_CREATED = "Macro « %s » créée (personnage).", MACRO_UPDATED = "Macro « %s » mise à jour.", MACRO_FULL = "Aucun emplacement de macro de personnage libre.",
     OPT_GOLD_RESERVE = "Réserve d'or (ne jamais dépenser en dessous, or)", RESERVE_REACHED = "Achat automatique arrêté à la réserve d'or de %s.",
     BTN_INTELLECT = "Intelligence des arcanes",
     MENU_COMBAT = "Les options ne peuvent pas être ouvertes en combat.",
@@ -260,13 +260,13 @@ locales.frFR = {
 }
 
 locales.esES = {
-    MACRO_STOPCAST_HEADER = "Macros de cancelar lanzamiento", BTN_CREATE_MACRO = "Crear macro", OPT_STOPCAST_SPELL = "Hechizo", MACRO_ICEBLOCK_HELP = "Primera pulsación: %s. Una pulsación durante el efecto lo termina.", MACRO_STOPCAST_HELP = "Cancela el hechizo en curso y lanza al instante el elegido.\n%s apunta primero a tu foco.", SPELL_FIRE_BLAST = "Explosión de Fuego", SPELL_FROST_NOVA = "Nova de Escarcha", SPELL_BLINK = "Traslación", SPELL_COUNTERSPELL = "Contrahechizo", SPELL_ICE_BLOCK = "Bloqueo de hielo",
+    MACRO_STOPCAST_HEADER = "Macros de cancelar lanzamiento", BTN_CREATE_MACRO = "Crear macro", OPT_STOPCAST_SPELL = "Hechizo", MACRO_ICEBLOCK_HELP = "Primera pulsación: %s. Una pulsación durante el efecto lo termina.", MACRO_STOPCAST_HELP = "Cancela el hechizo en curso y lanza al instante el elegido.\n%s apunta primero a tu foco.", SPELL_FIRE_BLAST = "Explosión de Fuego", SPELL_FROST_NOVA = "Nova de Escarcha", SPELL_BLINK = "Traslación", SPELL_COUNTERSPELL = "Contrahechizo", SPELL_ICE_BLOCK = "Bloqueo de hielo", SPELL_POLYMORPH = "Polimorfia",
     BTN_REPORT_BUG = "Informar de error", REPORT_TITLE = "Informar de un error", REPORT_STEP1 = "1. ¿Qué ha pasado? (opcional)", REPORT_STEP2 = "2. Copia el informe con Ctrl+C (ya seleccionado)", REPORT_STEP3 = "3. Pégalo como nuevo issue en GitHub:", REPORT_NO_URL = "3. Envía el informe al autor del addon.", CLOSE = "Cerrar", CMD_BUG = "Abrir la ventana de informe de errores",
     BTN_SHOW_MACRO = "Mostrar macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Marcador de objetivo",
     MACRO_HELP = "Primer clic: tu objetivo hostil pasa a ser el foco y recibe el marcador.\nSiguientes clics: Polimorfia sobre el foco.\nUn foco muerto se borra automáticamente.",
     MARKER_1 = "Estrella", MARKER_2 = "Círculo", MARKER_3 = "Diamante", MARKER_4 = "Triángulo", MARKER_5 = "Luna", MARKER_6 = "Cuadrado", MARKER_7 = "Cruz", MARKER_8 = "Calavera",
-    BTN_POLY_MACRO = "Crear macro de Polimorfia", MACRO_CREATED = "Macro \"%s\" creada (personaje).", MACRO_UPDATED = "Macro \"%s\" actualizada.", MACRO_FULL = "No hay espacio libre para macros de personaje.",
+    MACRO_CREATED = "Macro \"%s\" creada (personaje).", MACRO_UPDATED = "Macro \"%s\" actualizada.", MACRO_FULL = "No hay espacio libre para macros de personaje.",
     OPT_GOLD_RESERVE = "Reserva de oro (no gastar por debajo, oro)", RESERVE_REACHED = "Compra automática detenida en la reserva de oro de %s.",
     BTN_INTELLECT = "Intelecto Arcano",
     MENU_COMBAT = "Las opciones no se pueden abrir en combate.",
@@ -348,13 +348,13 @@ locales.esMX = setmetatable({
 }, { __index = locales.esES })
 
 locales.itIT = {
-    MACRO_STOPCAST_HEADER = "Macro di interruzione lancio", BTN_CREATE_MACRO = "Crea macro", OPT_STOPCAST_SPELL = "Incantesimo", MACRO_ICEBLOCK_HELP = "Prima pressione: %s. Una pressione durante l'effetto lo termina.", MACRO_STOPCAST_HELP = "Interrompe l'incantesimo in corso e lancia subito quello scelto.\n%s mira prima al tuo focus.", SPELL_FIRE_BLAST = "Detonazione di Fuoco", SPELL_FROST_NOVA = "Esplosione Gelida", SPELL_BLINK = "Traslazione", SPELL_COUNTERSPELL = "Controincantesimo", SPELL_ICE_BLOCK = "Blocco di Ghiaccio",
+    MACRO_STOPCAST_HEADER = "Macro di interruzione lancio", BTN_CREATE_MACRO = "Crea macro", OPT_STOPCAST_SPELL = "Incantesimo", MACRO_ICEBLOCK_HELP = "Prima pressione: %s. Una pressione durante l'effetto lo termina.", MACRO_STOPCAST_HELP = "Interrompe l'incantesimo in corso e lancia subito quello scelto.\n%s mira prima al tuo focus.", SPELL_FIRE_BLAST = "Detonazione di Fuoco", SPELL_FROST_NOVA = "Esplosione Gelida", SPELL_BLINK = "Traslazione", SPELL_COUNTERSPELL = "Controincantesimo", SPELL_ICE_BLOCK = "Blocco di Ghiaccio", SPELL_POLYMORPH = "Metamorfosi",
     BTN_REPORT_BUG = "Segnala bug", REPORT_TITLE = "Segnala un bug", REPORT_STEP1 = "1. Cosa è successo? (facoltativo)", REPORT_STEP2 = "2. Copia il rapporto con Ctrl+C (già selezionato)", REPORT_STEP3 = "3. Incollalo come nuova issue su GitHub:", REPORT_NO_URL = "3. Invia il rapporto all'autore dell'addon.", CLOSE = "Chiudi", CMD_BUG = "Apri la finestra di segnalazione bug",
     BTN_SHOW_MACRO = "Mostra macro",
     TAB_MACROS = "Macro", OPT_MARKER = "Segnalino bersaglio",
     MACRO_HELP = "Primo clic: il bersaglio ostile diventa il focus e riceve il segnalino.\nClic successivi: Metamorfosi sul focus.\nUn focus morto viene rimosso automaticamente.",
     MARKER_1 = "Stella", MARKER_2 = "Cerchio", MARKER_3 = "Rombo", MARKER_4 = "Triangolo", MARKER_5 = "Luna", MARKER_6 = "Quadrato", MARKER_7 = "Croce", MARKER_8 = "Teschio",
-    BTN_POLY_MACRO = "Crea macro Metamorfosi", MACRO_CREATED = "Macro \"%s\" creata (personaggio).", MACRO_UPDATED = "Macro \"%s\" aggiornata.", MACRO_FULL = "Nessuno slot libero per macro del personaggio.",
+    MACRO_CREATED = "Macro \"%s\" creata (personaggio).", MACRO_UPDATED = "Macro \"%s\" aggiornata.", MACRO_FULL = "Nessuno slot libero per macro del personaggio.",
     OPT_GOLD_RESERVE = "Riserva d'oro (non spendere sotto, oro)", RESERVE_REACHED = "Acquisto automatico interrotto alla riserva d'oro di %s.",
     BTN_INTELLECT = "Intelletto Arcano",
     MENU_COMBAT = "Le opzioni non possono essere aperte in combattimento.",
@@ -431,13 +431,13 @@ locales.itIT = {
 }
 
 locales.ptBR = {
-    MACRO_STOPCAST_HEADER = "Macros de interromper conjuração", BTN_CREATE_MACRO = "Criar macro", OPT_STOPCAST_SPELL = "Feitiço", MACRO_ICEBLOCK_HELP = "Primeiro toque: %s. Um toque durante o efeito o encerra.", MACRO_STOPCAST_HELP = "Interrompe a conjuração atual e lança o feitiço escolhido na hora.\n%s mira primeiro no seu foco.", SPELL_FIRE_BLAST = "Impacto de Fogo", SPELL_FROST_NOVA = "Nova Congelante", SPELL_BLINK = "Lampejo", SPELL_COUNTERSPELL = "Contrafeitiço", SPELL_ICE_BLOCK = "Bloco de Gelo",
+    MACRO_STOPCAST_HEADER = "Macros de interromper conjuração", BTN_CREATE_MACRO = "Criar macro", OPT_STOPCAST_SPELL = "Feitiço", MACRO_ICEBLOCK_HELP = "Primeiro toque: %s. Um toque durante o efeito o encerra.", MACRO_STOPCAST_HELP = "Interrompe a conjuração atual e lança o feitiço escolhido na hora.\n%s mira primeiro no seu foco.", SPELL_FIRE_BLAST = "Impacto de Fogo", SPELL_FROST_NOVA = "Nova Congelante", SPELL_BLINK = "Lampejo", SPELL_COUNTERSPELL = "Contrafeitiço", SPELL_ICE_BLOCK = "Bloco de Gelo", SPELL_POLYMORPH = "Polimorfia",
     BTN_REPORT_BUG = "Relatar bug", REPORT_TITLE = "Relatar um bug", REPORT_STEP1 = "1. O que aconteceu? (opcional)", REPORT_STEP2 = "2. Copie o relatório com Ctrl+C (já selecionado)", REPORT_STEP3 = "3. Cole como nova issue no GitHub:", REPORT_NO_URL = "3. Envie o relatório ao autor do addon.", CLOSE = "Fechar", CMD_BUG = "Abrir a janela de relatório de bugs",
     BTN_SHOW_MACRO = "Mostrar macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Marcador de alvo",
     MACRO_HELP = "Primeiro clique: seu alvo hostil vira o foco e recebe o marcador.\nCliques seguintes: Metamorfose no foco.\nUm foco morto é limpo automaticamente.",
     MARKER_1 = "Estrela", MARKER_2 = "Círculo", MARKER_3 = "Diamante", MARKER_4 = "Triângulo", MARKER_5 = "Lua", MARKER_6 = "Quadrado", MARKER_7 = "X", MARKER_8 = "Caveira",
-    BTN_POLY_MACRO = "Criar macro de Metamorfose", MACRO_CREATED = "Macro \"%s\" criada (personagem).", MACRO_UPDATED = "Macro \"%s\" atualizada.", MACRO_FULL = "Nenhum espaço livre para macros do personagem.",
+    MACRO_CREATED = "Macro \"%s\" criada (personagem).", MACRO_UPDATED = "Macro \"%s\" atualizada.", MACRO_FULL = "Nenhum espaço livre para macros do personagem.",
     OPT_GOLD_RESERVE = "Reserva de ouro (nunca gastar abaixo, ouro)", RESERVE_REACHED = "Compra automática parada na reserva de ouro de %s.",
     BTN_INTELLECT = "Inteligência Arcana",
     MENU_COMBAT = "As opções não podem ser abertas em combate.",
@@ -514,13 +514,13 @@ locales.ptBR = {
 }
 
 locales.ruRU = {
-    MACRO_STOPCAST_HEADER = "Макросы прерывания", BTN_CREATE_MACRO = "Создать макрос", OPT_STOPCAST_SPELL = "Заклинание", MACRO_ICEBLOCK_HELP = "Первое нажатие: %s. Нажатие во время действия прерывает его.", MACRO_STOPCAST_HELP = "Прерывает текущее заклинание и сразу применяет выбранное.\n%s сначала нацеливается на фокус.", SPELL_FIRE_BLAST = "Огненный взрыв", SPELL_FROST_NOVA = "Кольцо льда", SPELL_BLINK = "Скачок", SPELL_COUNTERSPELL = "Антимагия", SPELL_ICE_BLOCK = "Ледяная глыба",
+    MACRO_STOPCAST_HEADER = "Макросы прерывания", BTN_CREATE_MACRO = "Создать макрос", OPT_STOPCAST_SPELL = "Заклинание", MACRO_ICEBLOCK_HELP = "Первое нажатие: %s. Нажатие во время действия прерывает его.", MACRO_STOPCAST_HELP = "Прерывает текущее заклинание и сразу применяет выбранное.\n%s сначала нацеливается на фокус.", SPELL_FIRE_BLAST = "Огненный взрыв", SPELL_FROST_NOVA = "Кольцо льда", SPELL_BLINK = "Скачок", SPELL_COUNTERSPELL = "Антимагия", SPELL_ICE_BLOCK = "Ледяная глыба", SPELL_POLYMORPH = "Превращение",
     BTN_REPORT_BUG = "Сообщить об ошибке", REPORT_TITLE = "Сообщить об ошибке", REPORT_STEP1 = "1. Что произошло? (необязательно)", REPORT_STEP2 = "2. Скопируйте отчёт с помощью Ctrl+C (уже выделен)", REPORT_STEP3 = "3. Вставьте его как новый issue на GitHub:", REPORT_NO_URL = "3. Отправьте отчёт автору аддона.", CLOSE = "Закрыть", CMD_BUG = "Открыть окно отчёта об ошибке",
     BTN_SHOW_MACRO = "Показать макрос",
     TAB_MACROS = "Макросы", OPT_MARKER = "Метка цели",
     MACRO_HELP = "Первый щелчок: враждебная цель становится фокусом и получает метку.\nСледующие щелчки: Превращение на фокус.\nМёртвый фокус сбрасывается автоматически.",
     MARKER_1 = "Звезда", MARKER_2 = "Круг", MARKER_3 = "Ромб", MARKER_4 = "Треугольник", MARKER_5 = "Полумесяц", MARKER_6 = "Квадрат", MARKER_7 = "Крест", MARKER_8 = "Череп",
-    BTN_POLY_MACRO = "Создать макрос Превращения", MACRO_CREATED = "Макрос «%s» создан (для персонажа).", MACRO_UPDATED = "Макрос «%s» обновлён.", MACRO_FULL = "Нет свободного места для макросов персонажа.",
+    MACRO_CREATED = "Макрос «%s» создан (для персонажа).", MACRO_UPDATED = "Макрос «%s» обновлён.", MACRO_FULL = "Нет свободного места для макросов персонажа.",
     OPT_GOLD_RESERVE = "Запас золота (не тратить ниже, золото)", RESERVE_REACHED = "Автопокупка остановлена на запасе золота %s.",
     BTN_INTELLECT = "Чародейский интеллект",
     MENU_COMBAT = "Настройки нельзя открыть в бою.",
@@ -599,13 +599,13 @@ locales.ruRU = {
 }
 
 locales.koKR = {
-    MACRO_STOPCAST_HEADER = "시전 중단 매크로", BTN_CREATE_MACRO = "매크로 생성", OPT_STOPCAST_SPELL = "주문", MACRO_ICEBLOCK_HELP = "첫 번째 누름: %s. 효과 중에 다시 누르면 해제됩니다.", MACRO_STOPCAST_HELP = "현재 시전을 중단하고 선택한 주문을 즉시 시전합니다.\n%s 주문은 주시 대상을 먼저 노립니다.", SPELL_FIRE_BLAST = "화염 작열", SPELL_FROST_NOVA = "얼음 회오리", SPELL_BLINK = "점멸", SPELL_COUNTERSPELL = "마법 차단", SPELL_ICE_BLOCK = "얼음 방패",
+    MACRO_STOPCAST_HEADER = "시전 중단 매크로", BTN_CREATE_MACRO = "매크로 생성", OPT_STOPCAST_SPELL = "주문", MACRO_ICEBLOCK_HELP = "첫 번째 누름: %s. 효과 중에 다시 누르면 해제됩니다.", MACRO_STOPCAST_HELP = "현재 시전을 중단하고 선택한 주문을 즉시 시전합니다.\n%s 주문은 주시 대상을 먼저 노립니다.", SPELL_FIRE_BLAST = "화염 작열", SPELL_FROST_NOVA = "얼음 회오리", SPELL_BLINK = "점멸", SPELL_COUNTERSPELL = "마법 차단", SPELL_ICE_BLOCK = "얼음 방패", SPELL_POLYMORPH = "변이",
     BTN_REPORT_BUG = "버그 신고", REPORT_TITLE = "버그 신고", REPORT_STEP1 = "1. 무슨 일이 있었나요? (선택)", REPORT_STEP2 = "2. Ctrl+C로 보고서를 복사하세요 (이미 선택됨)", REPORT_STEP3 = "3. GitHub에 새 이슈로 붙여넣으세요:", REPORT_NO_URL = "3. 보고서를 애드온 제작자에게 보내세요.", CLOSE = "닫기", CMD_BUG = "버그 신고 창 열기",
     BTN_SHOW_MACRO = "매크로 보기",
     TAB_MACROS = "매크로", OPT_MARKER = "대상 징표",
     MACRO_HELP = "첫 클릭: 적대적 대상을 주시 대상으로 지정하고 징표를 붙입니다.\n다음 클릭: 주시 대상에게 변이를 시전합니다.\n죽은 주시 대상은 자동으로 해제됩니다.",
     MARKER_1 = "별", MARKER_2 = "동그라미", MARKER_3 = "다이아몬드", MARKER_4 = "세모", MARKER_5 = "달", MARKER_6 = "네모", MARKER_7 = "가위표", MARKER_8 = "해골",
-    BTN_POLY_MACRO = "변이 매크로 만들기", MACRO_CREATED = "매크로 \"%s\" 생성됨 (캐릭터 전용).", MACRO_UPDATED = "매크로 \"%s\" 업데이트됨.", MACRO_FULL = "캐릭터 전용 매크로 슬롯이 없습니다.",
+    MACRO_CREATED = "매크로 \"%s\" 생성됨 (캐릭터 전용).", MACRO_UPDATED = "매크로 \"%s\" 업데이트됨.", MACRO_FULL = "캐릭터 전용 매크로 슬롯이 없습니다.",
     OPT_GOLD_RESERVE = "골드 보유량 (이하로 쓰지 않음, 골드)", RESERVE_REACHED = "골드 보유량 %s에서 자동 구매를 중지했습니다.",
     BTN_INTELLECT = "신비한 지능",
     MENU_COMBAT = "전투 중에는 설정을 열 수 없습니다.",
@@ -682,13 +682,13 @@ locales.koKR = {
 }
 
 locales.zhCN = {
-    MACRO_STOPCAST_HEADER = "停止施法宏", BTN_CREATE_MACRO = "创建宏", OPT_STOPCAST_SPELL = "法术", MACRO_ICEBLOCK_HELP = "第一次按下：%s。效果期间再按一次可提前取消。", MACRO_STOPCAST_HELP = "中断当前施法并立即施放所选法术。\n%s会优先以焦点为目标。", SPELL_FIRE_BLAST = "火焰冲击", SPELL_FROST_NOVA = "冰霜新星", SPELL_BLINK = "闪现术", SPELL_COUNTERSPELL = "法术反制", SPELL_ICE_BLOCK = "寒冰屏障",
+    MACRO_STOPCAST_HEADER = "停止施法宏", BTN_CREATE_MACRO = "创建宏", OPT_STOPCAST_SPELL = "法术", MACRO_ICEBLOCK_HELP = "第一次按下：%s。效果期间再按一次可提前取消。", MACRO_STOPCAST_HELP = "中断当前施法并立即施放所选法术。\n%s会优先以焦点为目标。", SPELL_FIRE_BLAST = "火焰冲击", SPELL_FROST_NOVA = "冰霜新星", SPELL_BLINK = "闪现术", SPELL_COUNTERSPELL = "法术反制", SPELL_ICE_BLOCK = "寒冰屏障", SPELL_POLYMORPH = "变形术",
     BTN_REPORT_BUG = "报告错误", REPORT_TITLE = "报告错误", REPORT_STEP1 = "1. 发生了什么？（可选）", REPORT_STEP2 = "2. 按 Ctrl+C 复制报告（已选中）", REPORT_STEP3 = "3. 在 GitHub 上粘贴为新的 issue：", REPORT_NO_URL = "3. 将报告发送给插件作者。", CLOSE = "关闭", CMD_BUG = "打开错误报告窗口",
     BTN_SHOW_MACRO = "显示宏",
     TAB_MACROS = "宏", OPT_MARKER = "目标标记",
     MACRO_HELP = "第一次点击：将敌对目标设为焦点并添加标记。\n之后点击：对焦点施放变形术。\n焦点死亡后会自动清除。",
     MARKER_1 = "星形", MARKER_2 = "圆形", MARKER_3 = "菱形", MARKER_4 = "三角", MARKER_5 = "月亮", MARKER_6 = "方块", MARKER_7 = "十字", MARKER_8 = "骷髅",
-    BTN_POLY_MACRO = "创建变形术宏", MACRO_CREATED = "宏“%s”已创建（角色专用宏）。", MACRO_UPDATED = "宏“%s”已更新。", MACRO_FULL = "没有空余的角色专用宏位置。",
+    MACRO_CREATED = "宏“%s”已创建（角色专用宏）。", MACRO_UPDATED = "宏“%s”已更新。", MACRO_FULL = "没有空余的角色专用宏位置。",
     OPT_GOLD_RESERVE = "金币保留（不低于此值，金）", RESERVE_REACHED = "自动购买已在金币保留 %s 处停止。",
     BTN_INTELLECT = "奥术智慧",
     MENU_COMBAT = "战斗中无法打开设置。",
@@ -765,13 +765,13 @@ locales.zhCN = {
 }
 
 locales.zhTW = {
-    MACRO_STOPCAST_HEADER = "停止施法巨集", BTN_CREATE_MACRO = "建立巨集", OPT_STOPCAST_SPELL = "法術", MACRO_ICEBLOCK_HELP = "第一次按下：%s。效果期間再按一次可提前取消。", MACRO_STOPCAST_HELP = "中斷目前施法並立即施放所選法術。\n%s會優先以專注目標為目標。", SPELL_FIRE_BLAST = "火焰衝擊", SPELL_FROST_NOVA = "冰霜新星", SPELL_BLINK = "閃現術", SPELL_COUNTERSPELL = "法術反制", SPELL_ICE_BLOCK = "寒冰屏障",
+    MACRO_STOPCAST_HEADER = "停止施法巨集", BTN_CREATE_MACRO = "建立巨集", OPT_STOPCAST_SPELL = "法術", MACRO_ICEBLOCK_HELP = "第一次按下：%s。效果期間再按一次可提前取消。", MACRO_STOPCAST_HELP = "中斷目前施法並立即施放所選法術。\n%s會優先以專注目標為目標。", SPELL_FIRE_BLAST = "火焰衝擊", SPELL_FROST_NOVA = "冰霜新星", SPELL_BLINK = "閃現術", SPELL_COUNTERSPELL = "法術反制", SPELL_ICE_BLOCK = "寒冰屏障", SPELL_POLYMORPH = "變形術",
     BTN_REPORT_BUG = "回報錯誤", REPORT_TITLE = "回報錯誤", REPORT_STEP1 = "1. 發生了什麼事？（選填）", REPORT_STEP2 = "2. 按 Ctrl+C 複製報告（已選取）", REPORT_STEP3 = "3. 在 GitHub 上貼成新的 issue：", REPORT_NO_URL = "3. 將報告寄給插件作者。", CLOSE = "關閉", CMD_BUG = "開啟錯誤回報視窗",
     BTN_SHOW_MACRO = "顯示巨集",
     TAB_MACROS = "巨集", OPT_MARKER = "目標標記",
     MACRO_HELP = "第一次點擊：將敵對目標設為專注目標並加上標記。\n之後點擊：對專注目標施放變形術。\n專注目標死亡後會自動清除。",
     MARKER_1 = "星星", MARKER_2 = "圓圈", MARKER_3 = "鑽石", MARKER_4 = "三角形", MARKER_5 = "月亮", MARKER_6 = "方塊", MARKER_7 = "十字", MARKER_8 = "骷髏",
-    BTN_POLY_MACRO = "建立變形術巨集", MACRO_CREATED = "巨集「%s」已建立（角色專用）。", MACRO_UPDATED = "巨集「%s」已更新。", MACRO_FULL = "沒有空餘的角色專用巨集欄位。",
+    MACRO_CREATED = "巨集「%s」已建立（角色專用）。", MACRO_UPDATED = "巨集「%s」已更新。", MACRO_FULL = "沒有空餘的角色專用巨集欄位。",
     OPT_GOLD_RESERVE = "金幣保留（不低於此值，金）", RESERVE_REACHED = "自動購買已在金幣保留 %s 處停止。",
     BTN_INTELLECT = "秘法智慧",
     MENU_COMBAT = "戰鬥中無法開啟設定。",

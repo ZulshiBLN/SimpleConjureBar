@@ -83,6 +83,7 @@ D.MANA_GEMS = {
 
 -- Macros tab. Ice Block is a Frost talent. The stopcasting spells are listed by the level
 -- they are learned at; the first is the default choice. IDs checked on Wowhead (Classic).
+D.SPELL_POLYMORPH    = 118 -- rank 1; the name is the same for every rank
 D.SPELL_ICE_BLOCK    = 11958
 D.SPELL_COUNTERSPELL = 2139 -- aims at the focus first in its macro
 D.STOPCAST_SPELLS    = { 2136, 122, 1953, D.SPELL_COUNTERSPELL } -- Fire Blast, Frost Nova, Blink
@@ -91,6 +92,7 @@ D.STOPCAST_SPELLS    = { 2136, 122, 1953, D.SPELL_COUNTERSPELL } -- Fire Blast, 
 D.SPELL_NAME_KEYS = {
     [2136] = "SPELL_FIRE_BLAST", [122] = "SPELL_FROST_NOVA", [1953] = "SPELL_BLINK",
     [D.SPELL_COUNTERSPELL] = "SPELL_COUNTERSPELL", [D.SPELL_ICE_BLOCK] = "SPELL_ICE_BLOCK",
+    [D.SPELL_POLYMORPH] = "SPELL_POLYMORPH",
 }
 
 D.ITEM_ARCANE_POWDER = 17020

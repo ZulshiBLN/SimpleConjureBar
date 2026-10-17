@@ -1,7 +1,9 @@
 -- SimpleConjureBar - macro helper
--- Creates the character macro "SCB Polymorph" (or updates it when it already exists).
---   First click without focus: the hostile, living target becomes the focus and gets the raid
---   marker chosen in the Macros tab (default: moon). Further clicks: Polymorph on the focus. A dead focus is cleared automatically.
+-- Creates the character macros of the Macros tab (or updates them when they exist):
+-- "SCB Polymorph", the Ice Block macro and the stopcasting macros.
+--   Polymorph, first click without focus: the hostile, living target becomes the focus and gets
+--   the raid marker chosen in the Macros tab (default: moon). Further clicks: Polymorph on the
+--   focus. A dead focus is cleared automatically.
 -- /tm is used for the marker: SetRaidTarget is protected and cannot be called from /run.
 
 local _, ns = ...
@@ -14,11 +16,10 @@ ns.OnDBReady(function(d) db = d end)
 
 local MACRO_NAME = "SCB Polymorph"
 local MACRO_ICON = "INV_MISC_QUESTIONMARK" -- #showtooltip shows the spell icon instead
-local SPELL_POLYMORPH = 118                -- rank 1; the name is the same for every rank
 
 local function MacroBody()
     -- The spell name must match the client language, so it comes from the client
-    local spell = ns.SpellName(SPELL_POLYMORPH) or "Polymorph"
+    local spell = ns.SpellName(D.SPELL_POLYMORPH) or "Polymorph"
     return table.concat({
         "#showtooltip " .. spell,
         "/clearfocus [@focus,dead]",

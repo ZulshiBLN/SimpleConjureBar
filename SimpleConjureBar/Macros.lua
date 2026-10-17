@@ -39,15 +39,17 @@ function ns.ShowMacroWindow()
         if load then load("Blizzard_MacroUI") end
         if MacroFrame then ShowUIPanel(MacroFrame) end
     end
-    -- Tab 2 = character macros (method names differ between client versions)
+    -- Tab 2 = character macros, where every SCB macro lives. The window switches to tab 1
+    -- when shown, so this comes after. ChangeTab takes the tab number; SelectTab takes the
+    -- tab button and errored on a number (Blizzard_MacroUI). Older clients: the tab button.
+    -- The settings window stays open (Michel's choice, 2026-10-18).
     if MacroFrame then
-        if MacroFrame.SelectTab then
-            pcall(MacroFrame.SelectTab, MacroFrame, 2)
+        if MacroFrame.ChangeTab then
+            MacroFrame:ChangeTab(2)
         elseif MacroFrameTab2 and MacroFrameTab2.Click then
             MacroFrameTab2:Click()
         end
     end
-    ns.CloseSettings() -- our window would cover the macro window
 end
 
 -- Creates the character macro `name`, or updates it when it exists.

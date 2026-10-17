@@ -387,9 +387,6 @@ local macroPage = UI.NewPage("TAB_MACROS")
 do
     local create = UI.AddButton(macroPage, "BTN_POLY_MACRO", function() ns.CreatePolymorphMacro() end)
     create:SetPoint("TOPLEFT", INSET, Place(22, 6))
-    local show = UI.AddButton(macroPage, "BTN_SHOW_MACRO", function() ns.ShowMacroWindow() end)
-    show:SetPoint("LEFT", create, "RIGHT", 8, 0)
-    UI.measures[#UI.measures + 1] = function() return create:GetWidth() + 8 + show:GetWidth() end
 
     UI.AddNote("MACRO_HELP", 8, 3) -- three lines
 
@@ -432,6 +429,14 @@ do
     local create = UI.AddButton(macroPage, "BTN_CREATE_MACRO", function() ns.CreateStopcastMacro() end)
     create:SetPoint("TOPLEFT", INSET, Place(22, 6))
     UI.AddNote(function() return L.MACRO_STOPCAST_HELP:format(SpellLabel(D.SPELL_COUNTERSPELL)) end, 8, 2)
+end
+
+-- "Show macro" in the bottom right corner, as "Reload UI" on the General tab
+do
+    local show = UI.AddButton(macroPage, "BTN_SHOW_MACRO", function() ns.ShowMacroWindow() end)
+    show:SetPoint("BOTTOMRIGHT", macroPage, "BOTTOMRIGHT", -INSET, INSET - 4)
+    -- Reserve the space, so the button never overlaps the last element
+    Place(22, 8)
 end
 
 UI.CreateTabs()

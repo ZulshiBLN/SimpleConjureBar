@@ -230,10 +230,15 @@ describe("the addon in a mocked client", function()
         ns.CreatePolymorphMacro()
         assert.is_truthy(MACROS[1].body:find("/tm %[@focus,harm,nodead%] 8"))
 
-        _G.ShowMacroFrame = function() _G.SHOWN_MACRO = true end
+        -- Blizzard's macro window switches to its first tab (general) when shown; the
+        -- addon must switch it to the second (character) afterwards, and stay open.
+        local tabs = {}
+        _G.MacroFrame = { ChangeTab = function(_, id) tabs[#tabs + 1] = id end }
+        _G.ShowMacroFrame = function() _G.SHOWN_MACRO = true; MacroFrame:ChangeTab(1) end
         SimpleConjureBarSettings:Show(); ns.ShowMacroWindow()
         assert.is_true(SHOWN_MACRO)
-        assert.is_false(SimpleConjureBarSettings:IsShown())
+        assert.are.same({ 1, 2 }, tabs)
+        assert.is_true(SimpleConjureBarSettings:IsShown())
     end)
 
     it("builds a bug report with this addon's errors and no personal data", function()

@@ -147,6 +147,47 @@ describe("the new macros", function()
     end)
 end)
 
+describe("the Macros tab", function()
+    -- Every frame under `frame` matching `test`, depth first.
+    local function find(frame, test, found)
+        found = found or {}
+        for _, child in ipairs(frame.children) do
+            if test(child) then found[#found + 1] = child end
+            find(child, test, found)
+        end
+        return found
+    end
+
+    it("creates the macro of the spell chosen in its dropdown", function()
+        local ns = login(nil)
+        _G.MACROS = {}
+        ns.ToggleSettings()
+        local wanted = ns.D.STOPCAST_SPELLS[3]
+
+        -- The dropdown offering the stopcasting spells: pick the third through its menu
+        local picked = false
+        for _, dd in ipairs(find(SimpleConjureBarSettings, function(f) return f.kind == "DropdownButton" end)) do
+            local radios = {}
+            dd.menuFn(dd, { CreateRadio = function(_, text, _, select) radios[#radios + 1] = { text, select } end })
+            if #radios == #ns.D.STOPCAST_SPELLS
+                and radios[3][1] == ns.LocalName(ns.SpellName(wanted), ns.D.SPELL_NAME_KEYS[wanted]) then
+                radios[3][2]()
+                picked = true
+            end
+        end
+        assert.is_true(picked)
+        assert.are.equal(wanted, SimpleConjureBarDB.macroStopcast)
+
+        -- Two "Create macro" buttons: Ice Block first, stopcasting second
+        local buttons = find(SimpleConjureBarSettings, function(f) return f.text == ns.L.BTN_CREATE_MACRO end)
+        assert.are.equal(2, #buttons)
+        RUNSCRIPT(buttons[2], "OnClick", "LeftButton", false)
+        assert.are.equal("SCB " .. ns.SpellName(wanted), MACROS[1].name)
+        RUNSCRIPT(buttons[1], "OnClick", "LeftButton", false)
+        assert.are.equal("SCB " .. ns.SpellName(ns.D.SPELL_ICE_BLOCK), MACROS[2].name)
+    end)
+end)
+
 describe("the chosen stopcasting spell", function()
     it("defaults to the first stopcasting spell", function()
         local ns, db = login(nil)

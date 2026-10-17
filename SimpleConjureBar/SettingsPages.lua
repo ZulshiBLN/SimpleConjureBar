@@ -405,4 +405,33 @@ do
         function(v) db.macroMarker = v end)
 end
 
+-- A spell's name in the addon's language (ns.LocalName), as a function for ns.SetL
+local function SpellLabel(spellId)
+    return ns.LocalName(ns.SpellName(spellId), D.SPELL_NAME_KEYS[spellId])
+end
+
+-- Ice Block: one button
+UI.AddSeparator()
+UI.AddHeader(function() return SpellLabel(D.SPELL_ICE_BLOCK) end, 6)
+do
+    local create = UI.AddButton(macroPage, "BTN_CREATE_MACRO", function() ns.CreateIceBlockMacro() end)
+    create:SetPoint("TOPLEFT", INSET, Place(22, 6))
+    UI.AddNote(function() return L.MACRO_ICEBLOCK_HELP:format(SpellLabel(D.SPELL_ICE_BLOCK)) end, 8)
+end
+
+-- Stopcasting: the chosen spell, then one button for its macro
+UI.AddSeparator()
+UI.AddHeader("MACRO_STOPCAST_HEADER", 6)
+do
+    local opts = {}
+    for i, id in ipairs(D.STOPCAST_SPELLS) do
+        opts[i] = { value = id, text = function() return SpellLabel(id) end }
+    end
+    UI.AddDropdown("OPT_STOPCAST_SPELL", opts, function() return db.macroStopcast end,
+        function(v) db.macroStopcast = v end)
+    local create = UI.AddButton(macroPage, "BTN_CREATE_MACRO", function() ns.CreateStopcastMacro() end)
+    create:SetPoint("TOPLEFT", INSET, Place(22, 6))
+    UI.AddNote(function() return L.MACRO_STOPCAST_HELP:format(SpellLabel(D.SPELL_COUNTERSPELL)) end, 8, 2)
+end
+
 UI.CreateTabs()

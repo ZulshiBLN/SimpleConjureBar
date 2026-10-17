@@ -10,6 +10,7 @@ local _, ns = ...
 local locales = {}
 
 locales.enUS = {
+    MACRO_STOPCAST_HEADER = "Stopcasting macros", BTN_CREATE_MACRO = "Create macro", OPT_STOPCAST_SPELL = "Spell", MACRO_ICEBLOCK_HELP = "First press: %s. A press during it ends it early.", MACRO_STOPCAST_HELP = "Stops your current cast and casts the chosen spell at once.\n%s aims at your focus first.", SPELL_FIRE_BLAST = "Fire Blast", SPELL_FROST_NOVA = "Frost Nova", SPELL_BLINK = "Blink", SPELL_COUNTERSPELL = "Counterspell", SPELL_ICE_BLOCK = "Ice Block",
     BTN_REPORT_BUG = "Report bug", REPORT_TITLE = "Report a bug", REPORT_STEP1 = "1. What happened? (optional)", REPORT_STEP2 = "2. Copy the report with Ctrl+C (already selected)", REPORT_STEP3 = "3. Paste it as a new issue on GitHub:", REPORT_NO_URL = "3. Send the report to the addon author.", CLOSE = "Close", CMD_BUG = "Open the bug report window",
     BTN_SHOW_MACRO = "Show macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Raid marker",
@@ -92,6 +93,7 @@ locales.enUS = {
 }
 
 locales.deDE = {
+    MACRO_STOPCAST_HEADER = "Stopcasting-Makros", BTN_CREATE_MACRO = "Makro anlegen", OPT_STOPCAST_SPELL = "Zauber", MACRO_ICEBLOCK_HELP = "Erster Druck: %s. Ein Druck während der Wirkung beendet ihn vorzeitig.", MACRO_STOPCAST_HELP = "Bricht den laufenden Zauber ab und wirkt den gewählten sofort.\n%s zielt zuerst auf deinen Fokus.", SPELL_FIRE_BLAST = "Feuerschlag", SPELL_FROST_NOVA = "Frostnova", SPELL_BLINK = "Blinzeln", SPELL_COUNTERSPELL = "Gegenzauber", SPELL_ICE_BLOCK = "Eisblock",
     BTN_REPORT_BUG = "Fehler melden", REPORT_TITLE = "Fehler melden", REPORT_STEP1 = "1. Was ist passiert? (optional)", REPORT_STEP2 = "2. Bericht mit Strg+C kopieren (bereits markiert)", REPORT_STEP3 = "3. Als neues Issue auf GitHub einfügen:", REPORT_NO_URL = "3. Bericht an den Autor des Addons schicken.", CLOSE = "Schließen", CMD_BUG = "Fenster für Fehlerberichte öffnen",
     BTN_SHOW_MACRO = "Makro anzeigen",
     TAB_MACROS = "Makros", OPT_MARKER = "Zielmarkierung",
@@ -175,6 +177,7 @@ locales.deDE = {
 }
 
 locales.frFR = {
+    MACRO_STOPCAST_HEADER = "Macros d'annulation de sort", BTN_CREATE_MACRO = "Créer la macro", OPT_STOPCAST_SPELL = "Sort", MACRO_ICEBLOCK_HELP = "Premier appui : %s. Un appui pendant l'effet y met fin.", MACRO_STOPCAST_HELP = "Annule le sort en cours et lance aussitôt le sort choisi.\n%s cible d'abord votre focalisation.", SPELL_FIRE_BLAST = "Trait de feu", SPELL_FROST_NOVA = "Nova de givre", SPELL_BLINK = "Transfert", SPELL_COUNTERSPELL = "Contresort", SPELL_ICE_BLOCK = "Bloc de glace",
     BTN_REPORT_BUG = "Signaler un bug", REPORT_TITLE = "Signaler un bug", REPORT_STEP1 = "1. Que s'est-il passé ? (facultatif)", REPORT_STEP2 = "2. Copiez le rapport avec Ctrl+C (déjà sélectionné)", REPORT_STEP3 = "3. Collez-le dans un nouveau ticket sur GitHub :", REPORT_NO_URL = "3. Envoyez le rapport à l'auteur de l'addon.", CLOSE = "Fermer", CMD_BUG = "Ouvrir la fenêtre de rapport de bug",
     BTN_SHOW_MACRO = "Afficher la macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Marqueur de cible",
@@ -257,6 +260,7 @@ locales.frFR = {
 }
 
 locales.esES = {
+    MACRO_STOPCAST_HEADER = "Macros de cancelar lanzamiento", BTN_CREATE_MACRO = "Crear macro", OPT_STOPCAST_SPELL = "Hechizo", MACRO_ICEBLOCK_HELP = "Primera pulsación: %s. Una pulsación durante el efecto lo termina.", MACRO_STOPCAST_HELP = "Cancela el hechizo en curso y lanza al instante el elegido.\n%s apunta primero a tu foco.", SPELL_FIRE_BLAST = "Explosión de Fuego", SPELL_FROST_NOVA = "Nova de Escarcha", SPELL_BLINK = "Traslación", SPELL_COUNTERSPELL = "Contrahechizo", SPELL_ICE_BLOCK = "Bloqueo de hielo",
     BTN_REPORT_BUG = "Informar de error", REPORT_TITLE = "Informar de un error", REPORT_STEP1 = "1. ¿Qué ha pasado? (opcional)", REPORT_STEP2 = "2. Copia el informe con Ctrl+C (ya seleccionado)", REPORT_STEP3 = "3. Pégalo como nuevo issue en GitHub:", REPORT_NO_URL = "3. Envía el informe al autor del addon.", CLOSE = "Cerrar", CMD_BUG = "Abrir la ventana de informe de errores",
     BTN_SHOW_MACRO = "Mostrar macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Marcador de objetivo",
@@ -344,6 +348,7 @@ locales.esMX = setmetatable({
 }, { __index = locales.esES })
 
 locales.itIT = {
+    MACRO_STOPCAST_HEADER = "Macro di interruzione lancio", BTN_CREATE_MACRO = "Crea macro", OPT_STOPCAST_SPELL = "Incantesimo", MACRO_ICEBLOCK_HELP = "Prima pressione: %s. Una pressione durante l'effetto lo termina.", MACRO_STOPCAST_HELP = "Interrompe l'incantesimo in corso e lancia subito quello scelto.\n%s mira prima al tuo focus.", SPELL_FIRE_BLAST = "Detonazione di Fuoco", SPELL_FROST_NOVA = "Esplosione Gelida", SPELL_BLINK = "Traslazione", SPELL_COUNTERSPELL = "Controincantesimo", SPELL_ICE_BLOCK = "Blocco di Ghiaccio",
     BTN_REPORT_BUG = "Segnala bug", REPORT_TITLE = "Segnala un bug", REPORT_STEP1 = "1. Cosa è successo? (facoltativo)", REPORT_STEP2 = "2. Copia il rapporto con Ctrl+C (già selezionato)", REPORT_STEP3 = "3. Incollalo come nuova issue su GitHub:", REPORT_NO_URL = "3. Invia il rapporto all'autore dell'addon.", CLOSE = "Chiudi", CMD_BUG = "Apri la finestra di segnalazione bug",
     BTN_SHOW_MACRO = "Mostra macro",
     TAB_MACROS = "Macro", OPT_MARKER = "Segnalino bersaglio",
@@ -426,6 +431,7 @@ locales.itIT = {
 }
 
 locales.ptBR = {
+    MACRO_STOPCAST_HEADER = "Macros de interromper conjuração", BTN_CREATE_MACRO = "Criar macro", OPT_STOPCAST_SPELL = "Feitiço", MACRO_ICEBLOCK_HELP = "Primeiro toque: %s. Um toque durante o efeito o encerra.", MACRO_STOPCAST_HELP = "Interrompe a conjuração atual e lança o feitiço escolhido na hora.\n%s mira primeiro no seu foco.", SPELL_FIRE_BLAST = "Impacto de Fogo", SPELL_FROST_NOVA = "Nova Congelante", SPELL_BLINK = "Lampejo", SPELL_COUNTERSPELL = "Contrafeitiço", SPELL_ICE_BLOCK = "Bloco de Gelo",
     BTN_REPORT_BUG = "Relatar bug", REPORT_TITLE = "Relatar um bug", REPORT_STEP1 = "1. O que aconteceu? (opcional)", REPORT_STEP2 = "2. Copie o relatório com Ctrl+C (já selecionado)", REPORT_STEP3 = "3. Cole como nova issue no GitHub:", REPORT_NO_URL = "3. Envie o relatório ao autor do addon.", CLOSE = "Fechar", CMD_BUG = "Abrir a janela de relatório de bugs",
     BTN_SHOW_MACRO = "Mostrar macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Marcador de alvo",
@@ -508,6 +514,7 @@ locales.ptBR = {
 }
 
 locales.ruRU = {
+    MACRO_STOPCAST_HEADER = "Макросы прерывания", BTN_CREATE_MACRO = "Создать макрос", OPT_STOPCAST_SPELL = "Заклинание", MACRO_ICEBLOCK_HELP = "Первое нажатие: %s. Нажатие во время действия прерывает его.", MACRO_STOPCAST_HELP = "Прерывает текущее заклинание и сразу применяет выбранное.\n%s сначала нацеливается на фокус.", SPELL_FIRE_BLAST = "Огненный взрыв", SPELL_FROST_NOVA = "Кольцо льда", SPELL_BLINK = "Скачок", SPELL_COUNTERSPELL = "Антимагия", SPELL_ICE_BLOCK = "Ледяная глыба",
     BTN_REPORT_BUG = "Сообщить об ошибке", REPORT_TITLE = "Сообщить об ошибке", REPORT_STEP1 = "1. Что произошло? (необязательно)", REPORT_STEP2 = "2. Скопируйте отчёт с помощью Ctrl+C (уже выделен)", REPORT_STEP3 = "3. Вставьте его как новый issue на GitHub:", REPORT_NO_URL = "3. Отправьте отчёт автору аддона.", CLOSE = "Закрыть", CMD_BUG = "Открыть окно отчёта об ошибке",
     BTN_SHOW_MACRO = "Показать макрос",
     TAB_MACROS = "Макросы", OPT_MARKER = "Метка цели",
@@ -592,6 +599,7 @@ locales.ruRU = {
 }
 
 locales.koKR = {
+    MACRO_STOPCAST_HEADER = "시전 중단 매크로", BTN_CREATE_MACRO = "매크로 생성", OPT_STOPCAST_SPELL = "주문", MACRO_ICEBLOCK_HELP = "첫 번째 누름: %s. 효과 중에 다시 누르면 해제됩니다.", MACRO_STOPCAST_HELP = "현재 시전을 중단하고 선택한 주문을 즉시 시전합니다.\n%s 주문은 주시 대상을 먼저 노립니다.", SPELL_FIRE_BLAST = "화염 작열", SPELL_FROST_NOVA = "얼음 회오리", SPELL_BLINK = "점멸", SPELL_COUNTERSPELL = "마법 차단", SPELL_ICE_BLOCK = "얼음 방패",
     BTN_REPORT_BUG = "버그 신고", REPORT_TITLE = "버그 신고", REPORT_STEP1 = "1. 무슨 일이 있었나요? (선택)", REPORT_STEP2 = "2. Ctrl+C로 보고서를 복사하세요 (이미 선택됨)", REPORT_STEP3 = "3. GitHub에 새 이슈로 붙여넣으세요:", REPORT_NO_URL = "3. 보고서를 애드온 제작자에게 보내세요.", CLOSE = "닫기", CMD_BUG = "버그 신고 창 열기",
     BTN_SHOW_MACRO = "매크로 보기",
     TAB_MACROS = "매크로", OPT_MARKER = "대상 징표",
@@ -674,6 +682,7 @@ locales.koKR = {
 }
 
 locales.zhCN = {
+    MACRO_STOPCAST_HEADER = "停止施法宏", BTN_CREATE_MACRO = "创建宏", OPT_STOPCAST_SPELL = "法术", MACRO_ICEBLOCK_HELP = "第一次按下：%s。效果期间再按一次可提前取消。", MACRO_STOPCAST_HELP = "中断当前施法并立即施放所选法术。\n%s会优先以焦点为目标。", SPELL_FIRE_BLAST = "火焰冲击", SPELL_FROST_NOVA = "冰霜新星", SPELL_BLINK = "闪现术", SPELL_COUNTERSPELL = "法术反制", SPELL_ICE_BLOCK = "寒冰屏障",
     BTN_REPORT_BUG = "报告错误", REPORT_TITLE = "报告错误", REPORT_STEP1 = "1. 发生了什么？（可选）", REPORT_STEP2 = "2. 按 Ctrl+C 复制报告（已选中）", REPORT_STEP3 = "3. 在 GitHub 上粘贴为新的 issue：", REPORT_NO_URL = "3. 将报告发送给插件作者。", CLOSE = "关闭", CMD_BUG = "打开错误报告窗口",
     BTN_SHOW_MACRO = "显示宏",
     TAB_MACROS = "宏", OPT_MARKER = "目标标记",
@@ -756,6 +765,7 @@ locales.zhCN = {
 }
 
 locales.zhTW = {
+    MACRO_STOPCAST_HEADER = "停止施法巨集", BTN_CREATE_MACRO = "建立巨集", OPT_STOPCAST_SPELL = "法術", MACRO_ICEBLOCK_HELP = "第一次按下：%s。效果期間再按一次可提前取消。", MACRO_STOPCAST_HELP = "中斷目前施法並立即施放所選法術。\n%s會優先以專注目標為目標。", SPELL_FIRE_BLAST = "火焰衝擊", SPELL_FROST_NOVA = "冰霜新星", SPELL_BLINK = "閃現術", SPELL_COUNTERSPELL = "法術反制", SPELL_ICE_BLOCK = "寒冰屏障",
     BTN_REPORT_BUG = "回報錯誤", REPORT_TITLE = "回報錯誤", REPORT_STEP1 = "1. 發生了什麼事？（選填）", REPORT_STEP2 = "2. 按 Ctrl+C 複製報告（已選取）", REPORT_STEP3 = "3. 在 GitHub 上貼成新的 issue：", REPORT_NO_URL = "3. 將報告寄給插件作者。", CLOSE = "關閉", CMD_BUG = "開啟錯誤回報視窗",
     BTN_SHOW_MACRO = "顯示巨集",
     TAB_MACROS = "巨集", OPT_MARKER = "目標標記",

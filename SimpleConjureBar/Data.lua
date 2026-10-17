@@ -86,6 +86,12 @@ D.MANA_GEMS = {
 D.SPELL_ICE_BLOCK    = 11958
 D.SPELL_COUNTERSPELL = 2139 -- aims at the focus first in its macro
 D.STOPCAST_SPELLS    = { 2136, 122, 1953, D.SPELL_COUNTERSPELL } -- Fire Blast, Frost Nova, Blink
+-- The addon's own translation of each name, shown when the addon language differs from
+-- the client's (ns.LocalName)
+D.SPELL_NAME_KEYS = {
+    [2136] = "SPELL_FIRE_BLAST", [122] = "SPELL_FROST_NOVA", [1953] = "SPELL_BLINK",
+    [D.SPELL_COUNTERSPELL] = "SPELL_COUNTERSPELL", [D.SPELL_ICE_BLOCK] = "SPELL_ICE_BLOCK",
+}
 
 D.ITEM_ARCANE_POWDER = 17020
 D.ITEM_RUNE_TELE     = 17031

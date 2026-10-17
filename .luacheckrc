@@ -3,6 +3,10 @@
 std = "lua51"
 max_line_length = false
 
+-- CI installs Lua and LuaRocks into the checkout (.lua/, .luarocks/); their
+-- code is not ours to check
+exclude_files = { ".lua/**", ".luarocks/**" }
+
 -- WoW's Lua has no file, process or module loading. lua51 would allow them.
 not_globals = { "io", "os", "require", "dofile", "loadfile", "module" }
 

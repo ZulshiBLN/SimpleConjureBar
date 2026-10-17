@@ -1,0 +1,110 @@
+# SimpleConjureBar
+
+A slim mage bar for **WoW Forever** (Classic content on the modern Retail client, Interface 16001).
+It bundles everything a mage conjures, buffs and travels with into one movable bar.
+
+## Buttons
+
+| Button | Left click | Right click | Middle click |
+|---|---|---|---|
+| Armor | Cast the last armor | Open the armor flyout (choice is remembered) | – |
+| Arcane Intellect | Solo: single buff, group: Arcane Brilliance | The other one | – |
+| Mana Gem | Use the best gem | Conjure the highest missing gem | – |
+| Water / Food | Consume the best item | Conjure (rank fitting a targeted player) | Trade water & food to the target |
+| Teleport / Portal | Last destination | Open the destinations (choice is remembered) | – |
+| Handle | Move the bar | Lock / unlock | Open the settings |
+
+- **Arcane Intellect** never buffs your current target: solo it always targets you, in a group the
+  addon picks the next mana user without the buff (members in range first). In a raid, Brilliance
+  goes to the subgroup with the most missing buffs. The button is locked and greyed out in combat.
+  The number on the button shows how many mana users are missing the buff.
+- **Highlights** ("marching ants") show a missing armor, missing Intellect and a missing mana gem.
+- **Rune counts** on Teleport/Portal change color at the warning threshold and at 0.
+- **Auto-buy** buys runes and Arcane Powder at reagent vendors up to the configured amounts and
+  never spends below the configured gold reserve (default 1 gold).
+
+## Settings
+
+Open with `/scb`, the minimap button, the AddOn compartment, a middle click on the handle or
+*Options > AddOns > SimpleConjureBar*. The settings window cannot be opened in combat; an open
+window closes when combat starts and reopens afterwards.
+
+- **General**: language, hide in combat, hide the minimap button, scale, border, background
+  color, orientation, growth direction, demo mode, Report bug, Reload UI
+- **Tracking**: show/hide and colors of Armor, Intellect and Mana Gem, highlight speed
+- **Supplies**: rune warning threshold and colors, auto-buy, gold reserve and target amounts
+- **Order**: drag and drop the button order
+- **Macros**: "Create Polymorph macro", "Show macro" (opens the macro window) and the raid marker
+
+The button "Create Polymorph macro" creates (or updates) the character macro **SCB Polymorph**:
+the first click sets a hostile, living target as focus and marks it with the chosen raid marker
+(default: moon); further clicks cast Polymorph on the focus; a dead focus is cleared automatically.
+
+"Report bug" opens a window with a ready-made report (addon version, client, language, settings
+and this addon's Lua errors from BugGrabber/BugSack) to copy with Ctrl+C and paste as an issue.
+
+## Chat commands
+
+| Command | Action |
+|---|---|
+| `/scb` | Open the settings window |
+| `/scb help` | List all commands |
+| `/scb lock` | Lock or unlock the bar |
+| `/scb minimap` | Show or hide the minimap button |
+| `/scb demo` | Turn demo mode on or off (simulates every button) |
+| `/scb reset` | Reset the bar position |
+| `/scb bug` | Open the bug report window |
+| `/scb debug` | Technical debug output |
+
+`/cbar` still works as an alias from the old addon name "ConjureBar".
+
+## Languages
+
+enUS, deDE, frFR, esES, esMX, itIT, ptBR, ruRU, koKR, zhCN, zhTW. The language follows the client
+and can be overridden in the General tab (saved account-wide, applied without reload).
+
+## Code structure
+
+| File | Content |
+|---|---|
+| `Locales.lua` | All texts per language, locale switching |
+| `Data.lua` | Spell/item IDs, layout constants, defaults |
+| `Core.lua` | API shims, saved variables, helpers, font helpers, language registry |
+| `Bar.lua` | Bar frame, handle, secure buttons, highlights, flyouts, colors |
+| `Buttons.lua` | Button setup, layout (`Rebuild`), counts, bar events |
+| `Intellect.lua` | Group scan, buff targets, buff count, armor highlight |
+| `Merchant.lua` | Reagent auto-buy |
+| `Trade.lua` | Trading water and food |
+| `Macros.lua` | Character macro "SCB Polymorph", macro window |
+| `Report.lua` | Bug report window (report text, BugGrabber errors) |
+| `Settings.lua` | Settings window framework and widgets |
+| `SettingsPages.lua` | The five settings tabs |
+| `Minimap.lua` | Minimap button, AddOn compartment, options panel |
+| `Main.lua` | Startup and chat commands |
+
+Modules share code through the addon namespace (`ns`). Each file is its own Lua chunk, which keeps
+every file far below Lua's limit of 200 local variables per chunk.
+
+## Privacy and security
+
+- No network or addon-channel communication, no chat messages to other players.
+- No dynamic code: secure snippets and macros are built from constants only.
+- Saved settings are validated at login (types and ranges), so damaged files cannot break the addon.
+- No personal data is stored; the trade partner's GUID is only kept in memory for 10 seconds.
+- Bug reports contain no character name, realm or other personal data and are only shared when
+  the user copies and pastes them.
+
+## License
+
+MIT, see [LICENSE](LICENSE). Author: ZulshiBLN.
+
+## Known limits / to verify in game
+
+- Molten Armor uses the WoW Forever spell ID 429307, which is not verified yet.
+- Korean and Chinese texts on Western clients depend on the fonts shipped with the client.
+- With several mana gems in the bags, a left click in combat may still show the shared cooldown
+  message for the second gem line of the macro.
+- Armor and Intellect highlights and the Intellect count are frozen during combat (the client
+  restricts aura data in combat); they update right after combat.
+- Intellect buffs the addon does not know yet can be identified with `/scb debug` (lists your
+  buffs with spell IDs).

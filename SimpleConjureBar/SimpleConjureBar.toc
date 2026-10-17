@@ -1,0 +1,49 @@
+## Interface: 16001
+## Title: SimpleConjureBar
+## IconTexture: Interface\Icons\INV_Drink_06
+## Notes: Slim mage bar: water, food, teleports, portals and reagent shopping
+## Notes-deDE: Schlanke Magier-Leiste: Wasser, Essen, Teleports, Portale und Reagenzien-Einkauf
+## Notes-frFR: Barre de mage compacte : eau, nourriture, téléportations, portails et achat de composants
+## Notes-esES: Barra de mago compacta: agua, comida, teletransportes, portales y compra de componentes
+## Notes-esMX: Barra de mago compacta: agua, comida, teletransportes, portales y compra de componentes
+## Notes-itIT: Barra del mago compatta: acqua, cibo, teletrasporti, portali e acquisto reagenti
+## Notes-ptBR: Barra de mago compacta: água, comida, teletransportes, portais e compra de reagentes
+## Notes-ruRU: Компактная панель мага: вода, еда, телепорты, порталы и покупка реагентов
+## Notes-koKR: 간결한 마법사 바: 물, 음식, 순간이동, 차원문 및 재료 구매
+## Notes-zhCN: 简洁的法师动作条：水、食物、传送、传送门和材料购买
+## Notes-zhTW: 簡潔的法師動作條：水、食物、傳送、傳送門和材料購買
+## Author: ZulshiBLN
+## Version: 1.37
+## X-License: MIT
+## Category: Class
+## Category-deDE: Klasse
+## Category-frFR: Classe
+## Category-esES: Clase
+## Category-esMX: Clase
+## Category-itIT: Classe
+## Category-ptBR: Classe
+## Category-ruRU: Класс
+## Category-koKR: 직업
+## Category-zhCN: 职业
+## Category-zhTW: 職業
+## AddonCompartmentFunc: SimpleConjureBar_OnCompartmentClick
+## AddonCompartmentFuncOnEnter: SimpleConjureBar_OnCompartmentEnter
+## AddonCompartmentFuncOnLeave: SimpleConjureBar_OnCompartmentLeave
+## SavedVariables: SimpleConjureBarGlobalDB
+# ConjureBarDB is only read once to import the settings of the old addon name "ConjureBar"
+## SavedVariablesPerCharacter: SimpleConjureBarDB, ConjureBarDB
+
+Locales.lua
+Data.lua
+Core.lua
+Bar.lua
+Buttons.lua
+Intellect.lua
+Merchant.lua
+Trade.lua
+Macros.lua
+Report.lua
+Settings.lua
+SettingsPages.lua
+Minimap.lua
+Main.lua

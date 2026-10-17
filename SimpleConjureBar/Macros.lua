@@ -50,15 +50,17 @@ function ns.ShowMacroWindow()
     ns.CloseSettings() -- our window would cover the macro window
 end
 
-function ns.CreatePolymorphMacro()
+-- Creates the character macro `name`, or updates it when it exists.
+-- replaceAccountCopy: version 1.33 created "SCB Polymorph" account-wide; that copy is
+-- replaced by the character macro. No other macro of this addon ever existed account-wide.
+local function CreateOrUpdate(name, body, replaceAccountCopy)
     if InCombatLockdown() then ns.Print(L.NOT_IN_COMBAT) return end
-    local body = MacroBody()
     local maxAccount = MAX_ACCOUNT_MACROS or 120
-    local index = GetMacroIndexByName(MACRO_NAME)
+    local index = GetMacroIndexByName(name)
     if index and index > maxAccount then
         -- Character macros use the indexes after the account-wide ones
-        EditMacro(index, MACRO_NAME, MACRO_ICON, body)
-        ns.Print(L.MACRO_UPDATED:format(MACRO_NAME))
+        EditMacro(index, name, MACRO_ICON, body)
+        ns.Print(L.MACRO_UPDATED:format(name))
         return
     end
     local _, characterMacros = GetNumMacros()
@@ -66,9 +68,51 @@ function ns.CreatePolymorphMacro()
         ns.Print(L.MACRO_FULL)
         return
     end
-    -- Version 1.33 created the macro account-wide: that copy is replaced by the character macro
-    if index and index > 0 then DeleteMacro(index) end
+    if replaceAccountCopy and index and index > 0 then DeleteMacro(index) end
     -- 4th argument true = character macro
-    CreateMacro(MACRO_NAME, MACRO_ICON, body, true)
-    ns.Print(L.MACRO_CREATED:format(MACRO_NAME))
+    CreateMacro(name, MACRO_ICON, body, true)
+    ns.Print(L.MACRO_CREATED:format(name))
+end
+
+function ns.CreatePolymorphMacro()
+    CreateOrUpdate(MACRO_NAME, MacroBody(), true)
+end
+
+local MACRO_NAME_MAX = 16 -- characters, WoW's limit for macro names
+
+-- "SCB " plus the client's spell name, cut to the limit. Counted in UTF-8 characters, not
+-- bytes: string.sub would split a Cyrillic or Chinese character in two.
+local function SpellMacroName(spellId)
+    local chars = {}
+    for ch in ("SCB " .. ns.SpellName(spellId)):gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+        if #chars == MACRO_NAME_MAX then break end
+        chars[#chars + 1] = ch
+    end
+    return table.concat(chars)
+end
+
+-- First press: Ice Block. A press inside the block ends it (/cancelaura runs first and
+-- the cast then fails on the cooldown).
+function ns.CreateIceBlockMacro()
+    local spell = ns.SpellName(D.SPELL_ICE_BLOCK)
+    if not spell then return end
+    CreateOrUpdate(SpellMacroName(D.SPELL_ICE_BLOCK), table.concat({
+        "#showtooltip " .. spell,
+        "/cancelaura " .. spell,
+        "/cast " .. spell,
+    }, "\n"))
+end
+
+-- Drops the cast in progress and casts the spell at once. Counterspell aims at the focus
+-- first, which the Polymorph macro sets. spellId defaults to the one chosen in the Macros tab.
+function ns.CreateStopcastMacro(spellId)
+    spellId = spellId or db.macroStopcast
+    local spell = ns.SpellName(spellId)
+    if not spell then return end
+    local target = (spellId == D.SPELL_COUNTERSPELL) and "[@focus,harm,nodead][] " or ""
+    CreateOrUpdate(SpellMacroName(spellId), table.concat({
+        "#showtooltip " .. spell,
+        "/stopcasting",
+        "/cast " .. target .. spell,
+    }, "\n"))
 end

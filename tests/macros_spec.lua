@@ -4,13 +4,148 @@
 local addon = require("addon")
 
 -- A fresh client logging in with `saved` as the character's settings.
-local function login(saved)
-    local ns = addon.load("enUS")
+local function login(saved, adjust)
+    local ns = addon.load("enUS", adjust)
     _G.SimpleConjureBarDB = saved
     FIRE("PLAYER_LOGIN")
     RUNTIMERS()
     return ns, SimpleConjureBarDB
 end
+
+-- The lines of a macro body.
+local function lines(body)
+    local t = {}
+    for line in (body .. "\n"):gmatch("([^\n]*)\n") do t[#t + 1] = line end
+    return t
+end
+
+-- Number of UTF-8 characters, or nil when the string is not valid UTF-8.
+local function utf8Length(s)
+    local n, rest = 0, s
+    while #rest > 0 do
+        local ch = rest:match("^[%z\1-\127]") or rest:match("^[\194-\223][\128-\191]")
+            or rest:match("^[\224-\239][\128-\191][\128-\191]")
+            or rest:match("^[\240-\244][\128-\191][\128-\191][\128-\191]")
+        if not ch then return nil end
+        n, rest = n + 1, rest:sub(#ch + 1)
+    end
+    return n
+end
+
+describe("the new macros", function()
+    local ns
+
+    before_each(function()
+        ns = login(nil)
+        _G.MACROS = {}
+        _G.CHAT = {}
+    end)
+
+    -- Every macro the five buttons can create, with the lines the plan names.
+    -- Spell names come from the mocked client, so they are read the same way.
+    local function cases()
+        local D, name = ns.D, ns.SpellName
+        local list = {
+            { create = ns.CreateIceBlockMacro, spell = D.SPELL_ICE_BLOCK, body = {
+                "#showtooltip " .. name(D.SPELL_ICE_BLOCK),
+                "/cancelaura " .. name(D.SPELL_ICE_BLOCK),
+                "/cast " .. name(D.SPELL_ICE_BLOCK) } },
+        }
+        for _, id in ipairs(D.STOPCAST_SPELLS) do
+            local target = (id == D.SPELL_COUNTERSPELL) and "[@focus,harm,nodead][] " or ""
+            list[#list + 1] = { create = function() ns.CreateStopcastMacro(id) end, spell = id, body = {
+                "#showtooltip " .. name(id), "/stopcasting", "/cast " .. target .. name(id) } }
+        end
+        return list
+    end
+
+    it("creates one character macro per spell with exactly the planned lines", function()
+        for _, case in ipairs(cases()) do
+            _G.MACROS = {}
+            case.create()
+            assert.are.equal(1, #MACROS, case.spell)
+            assert.are.equal("SCB " .. ns.SpellName(case.spell), MACROS[1].name)
+            assert.is_true(MACROS[1].perChar)
+            assert.are.same(case.body, lines(MACROS[1].body), case.spell)
+        end
+    end)
+
+    it("aims only Counterspell at the focus", function()
+        for _, case in ipairs(cases()) do
+            local aims = case.body[3]:find("@focus", 1, true) ~= nil
+            assert.are.equal(case.spell == ns.D.SPELL_COUNTERSPELL, aims, case.spell)
+        end
+        for _, id in ipairs(ns.D.STOPCAST_SPELLS) do
+            _G.MACROS = {}
+            ns.CreateStopcastMacro(id)
+            assert.are.equal(id == ns.D.SPELL_COUNTERSPELL,
+                MACROS[1].body:find("[@focus,harm,nodead]", 1, true) ~= nil, id)
+        end
+    end)
+
+    it("updates a macro on the second click instead of adding one", function()
+        for _, case in ipairs(cases()) do
+            _G.MACROS = {}
+            case.create()
+            MACROS[1].body = "old"
+            case.create()
+            assert.are.equal(1, #MACROS, case.spell)
+            assert.are_not.equal("old", MACROS[1].body)
+        end
+    end)
+
+    it("uses the chosen stopcasting spell when none is given", function()
+        SimpleConjureBarDB.macroStopcast = ns.D.STOPCAST_SPELLS[3]
+        ns.CreateStopcastMacro()
+        assert.are.equal("SCB " .. ns.SpellName(ns.D.STOPCAST_SPELLS[3]), MACROS[1].name)
+    end)
+
+    it("cuts a long Cyrillic name to 16 whole characters", function()
+        local cyrillic = "Ледяная глыба" -- 13 letters
+        local iceBlock = ns.D.SPELL_ICE_BLOCK
+        local fresh = login(nil, function()
+            local original = C_Spell.GetSpellName
+            C_Spell.GetSpellName = function(id)
+                if id == iceBlock then return cyrillic end
+                return original(id)
+            end
+        end)
+        _G.MACROS = {}
+        fresh.CreateIceBlockMacro()
+        local name = MACROS[1].name
+        assert.are.equal(16, utf8Length(name), name)
+        assert.are.equal("SCB Ледяная глыб", name)
+        assert.are.equal("/cast " .. cyrillic, lines(MACROS[1].body)[3])
+    end)
+
+    it("creates nothing without a free character slot, and says so", function()
+        for i = 1, (MAX_CHARACTER_MACROS or 18) do
+            MACROS[#MACROS + 1] = { name = "M" .. i, body = "", perChar = true }
+        end
+        local before = #MACROS
+        ns.CreateIceBlockMacro()
+        ns.CreateStopcastMacro(ns.D.STOPCAST_SPELLS[1])
+        assert.are.equal(before, #MACROS)
+        assert.are.same({ ns.L.MACRO_FULL, ns.L.MACRO_FULL },
+            { CHAT[1]:match(": (.*)$"), CHAT[2]:match(": (.*)$") })
+    end)
+
+    it("creates nothing in combat, and says so", function()
+        STATE.combat = true
+        ns.CreateIceBlockMacro()
+        ns.CreateStopcastMacro(ns.D.STOPCAST_SPELLS[1])
+        STATE.combat = false
+        assert.are.equal(0, #MACROS)
+        assert.are.equal(ns.L.NOT_IN_COMBAT, CHAT[1]:match(": (.*)$"))
+        assert.are.equal(ns.L.NOT_IN_COMBAT, CHAT[2]:match(": (.*)$"))
+    end)
+
+    it("leaves the Polymorph macro's name and text as they were", function()
+        ns.CreatePolymorphMacro()
+        assert.are.equal("SCB Polymorph", MACROS[1].name)
+        assert.are.equal("#showtooltip " .. ns.SpellName(118), lines(MACROS[1].body)[1])
+    end)
+end)
 
 describe("the chosen stopcasting spell", function()
     it("defaults to the first stopcasting spell", function()

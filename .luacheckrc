@@ -71,7 +71,6 @@ read_globals = {
 -- Unused locals in 1.37, named one by one so a new one is still reported.
 -- Each goes with the first change to its file (ruleset archive/decisions.md).
 files["SimpleConjureBar/Bar.lua"] = { ignore = { "211/GAP" } }
-files["SimpleConjureBar/Macros.lua"] = { ignore = { "211/D" } }
 files["SimpleConjureBar/Report.lua"] = { ignore = { "211/L" } }
 
 -- Specs run in plain Lua 5.1 under busted, where file access is how they read

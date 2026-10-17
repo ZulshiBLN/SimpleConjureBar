@@ -24,10 +24,13 @@ function M.tocFiles()
 end
 
 -- A fresh mocked client with the addon loaded; `locale` is what GetLocale
--- answers. Returns the addon's namespace.
-function M.load(locale)
+-- answers. `adjust`, if given, runs between the mock and the addon - the
+-- addon captures API functions while it loads, so changes must come first.
+-- Returns the addon's namespace.
+function M.load(locale, adjust)
     assert(loadfile("tests/helpers/mock.lua"))()
     STATE.locale = locale or "deDE"
+    if adjust then adjust() end
     local ns = {}
     for _, file in ipairs(M.tocFiles()) do
         local chunk = assert(loadstring(M.read(ADDON .. "/" .. file), "@" .. ADDON .. "/" .. file))

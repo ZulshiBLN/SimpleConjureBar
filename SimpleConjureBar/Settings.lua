@@ -383,6 +383,9 @@ end
 -- options = { { value =, text = function }, ... }. Uses the Retail menu dropdown when
 -- available, otherwise the classic UIDropDownMenu. Returns its refresh function.
 local DD_WIDTH = 180
+-- Room a dropdown keeps beside its text: the text inset and the arrow
+local DD_TEXT_PAD = 50
+UI.DD_TEXT_PAD = DD_TEXT_PAD
 local ddCount = 0
 function UI.AddDropdown(labelKey, options, get, set)
     local ROW = 28
@@ -401,6 +404,22 @@ function UI.AddDropdown(labelKey, options, get, set)
         return ""
     end
 
+    -- Entry lengths differ per language ("简体中文 (Chinese S.)" was cut short at a fixed
+    -- 180 px), so the dropdown grows to its longest entry, measured in its own font.
+    local width = DD_WIDTH
+    local probe = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    probe:Hide()
+    local function FitWidth(textRegion)
+        local font = textRegion and textRegion:GetFontObject()
+        if font then probe:SetFontObject(font) end
+        local widest = 0
+        for _, opt in ipairs(options) do
+            probe:SetText(opt.text())
+            widest = math.max(widest, probe:GetStringWidth())
+        end
+        width = math.max(DD_WIDTH, math.ceil(widest) + DD_TEXT_PAD)
+    end
+
     -- Feature detection: creating the frame fails on clients without the menu dropdown
     -- (the "DropdownButton" frame type or the template does not exist there)
     local refresh
@@ -414,6 +433,8 @@ function UI.AddDropdown(labelKey, options, get, set)
         local isSetup = false
         refresh = function()
             if not db then return end
+            FitWidth(dd.Text)
+            dd:SetWidth(width)
             if not isSetup then
                 isSetup = true
                 dd:SetupMenu(function(_, root)
@@ -446,12 +467,15 @@ function UI.AddDropdown(labelKey, options, get, set)
             end
         end)
         refresh = function()
-            if db then UIDropDownMenu_SetText(dd, CurrentText()) end
+            if not db then return end
+            FitWidth(_G[dd:GetName() .. "Text"])
+            UIDropDownMenu_SetWidth(dd, width - 30)
+            UIDropDownMenu_SetText(dd, CurrentText())
         end
     end
 
     refreshers[#refreshers + 1] = refresh
-    measures[#measures + 1] = function() return t:GetStringWidth() + 16 + DD_WIDTH end
+    measures[#measures + 1] = function() return t:GetStringWidth() + 16 + width end
     stretchers[#stretchers + 1] = function(w) row:SetWidth(w) end
     return refresh
 end

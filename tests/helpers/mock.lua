@@ -82,6 +82,8 @@ function CreateFrame(kind, name, parent, template)
   local o = New(kind, name, parent)
   o.template = template
   if template and template:find("Secure") then o.protected = true end
+  -- The menu dropdown template carries its selection text in .Text
+  if template == "WowStyle1DropdownTemplate" then o.Text = New("FontString", nil, o) end
   if name then _G[name] = o end
   o.shown = true
   return o

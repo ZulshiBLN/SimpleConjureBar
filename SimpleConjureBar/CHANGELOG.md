@@ -11,6 +11,10 @@ Checked in game on WoW Forever 1.60.1.70450 (interface 16001).
 - README: two known limits are gone, both verified in game. Russian, Korean and Chinese texts
   render on an English client, and Molten Armor's WoW Forever spell ID (429307) is correct.
 
+### Fixed
+- Settings: the language menu no longer cuts the Chinese language names short. Every dropdown
+  now grows to fit its longest entry in the current language.
+
 ## 1.37
 - New "Report bug" button (General tab, bottom left) and `/scb bug`: opens a window with an
   optional description field and a ready-made, pre-selected report (addon version, client,

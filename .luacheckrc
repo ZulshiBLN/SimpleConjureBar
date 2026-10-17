@@ -78,7 +78,13 @@ files["SimpleConjureBar/Report.lua"] = { ignore = { "211/L" } }
 -- the addon's sources.
 files["tests/"] = {
     std = "lua51+busted",
-    read_globals = { "io", "require", "loadfile" },
+    read_globals = {
+        "io", "require", "loadfile",
+        -- What tests/helpers/mock.lua provides to drive the mocked client,
+        -- and the named frames the addon creates there
+        "NEWOBJ", "FIRE", "RUNTIMERS", "RUNSCRIPT", "TICK", "STATE",
+        "SimpleConjureBarSettings",
+    },
 }
 
 -- The mock *is* the WoW API: defining client globals is its whole job, and

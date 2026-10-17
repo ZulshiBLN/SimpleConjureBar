@@ -14,10 +14,15 @@ Checked in game on WoW Forever 1.60.1.70450 (interface 16001).
   focus first. Macro names follow the client's language, cut to 16 characters.
 
 ### Changed
+- Macros tab: the Polymorph part is laid out like the other sections - its name as header, the
+  raid marker, then "Create macro". "Show macro" moved to the bottom right corner and leaves the
+  settings window open.
 - README: two known limits are gone, both verified in game. Russian, Korean and Chinese texts
   render on an English client, and Molten Armor's WoW Forever spell ID (429307) is correct.
 
 ### Fixed
+- Macros tab: "Show macro" opens the macro window on the character tab, where the SCB macros
+  are, instead of the general one.
 - Settings: the language menu no longer cuts the Chinese language names short. Every dropdown
   now grows to fit its longest entry in the current language.
 

@@ -35,9 +35,10 @@ window closes when combat starts and reopens afterwards.
 - **Supplies**: rune warning threshold and colors, auto-buy, gold reserve and target amounts
 - **Order**: drag and drop the button order
 - **Macros**: the Polymorph macro with its raid marker, the Ice Block macro, the stopcasting
-  macros, and "Show macro" (opens the macro window)
+  macros, and "Show macro" in the bottom right corner (opens the macro window on the
+  character tab; the settings window stays open)
 
-The button "Create Polymorph macro" creates (or updates) the character macro **SCB Polymorph**:
+In the Polymorph section, "Create macro" creates (or updates) the character macro **SCB Polymorph**:
 the first click sets a hostile, living target as focus and marks it with the chosen raid marker
 (default: moon); further clicks cast Polymorph on the focus; a dead focus is cleared automatically.
 

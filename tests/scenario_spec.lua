@@ -134,11 +134,24 @@ describe("the addon in a mocked client", function()
     end)
 
     it("fills the trade window only for the player that was clicked", function()
+        -- The best water and food in the bags, as Trade.lua picks them.
+        local function best(list)
+            for _, id in ipairs(list) do
+                if (ITEMS[id] or 0) > 0 then return id end
+            end
+        end
         STATE.target = true
+
+        -- Someone else opens the trade after the click: nothing goes in.
+        _G.TRADE_SLOTS = {}
         RUNSCRIPT(b.Water, "OnClick", "MiddleButton", false)
         STATE.tradeGuid = "Player-1-other"; FIRE("TRADE_SHOW")
+        assert.are.same({}, TRADE_SLOTS)
+
+        -- The clicked player, a mana class here, gets water and food.
         RUNSCRIPT(b.Water, "OnClick", "MiddleButton", false)
-        STATE.tradeGuid = "Player-1-target"; FIRE("TRADE_SHOW")
+        STATE.tradeGuid = UnitGUID("target"); FIRE("TRADE_SHOW")
+        assert.are.same({ best(ns.D.WATER_ITEMS), best(ns.D.FOOD_ITEMS) }, TRADE_SLOTS)
     end)
 
     it("keeps the settings closed in combat", function()

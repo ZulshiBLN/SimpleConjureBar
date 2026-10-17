@@ -164,8 +164,13 @@ GetTime = function() return 100 end
 ReloadUI = noop
 CheckInteractDistance = function() return true end
 InitiateTrade = noop
-GetTradePlayerItemLink = function() return nil end
-ClearCursor = noop; ClickTradeButton = noop
+-- Trade: what the cursor holds, and what each of our trade slots received.
+-- A click on a slot moves the held bag item into it, as the client does.
+CURSOR = nil
+TRADE_SLOTS = {}
+GetTradePlayerItemLink = function(i) return TRADE_SLOTS[i] and ("item:" .. TRADE_SLOTS[i]) or nil end
+ClearCursor = function() CURSOR = nil end
+ClickTradeButton = function(i) if CURSOR then TRADE_SLOTS[i] = CURSOR; CURSOR = nil end end
 SlashCmdList = {}
 NUM_BAG_SLOTS = 4
 C_Spell = {
@@ -182,11 +187,13 @@ C_Item = {
   GetItemNameByID = function(id) return "Item" .. id end,
   GetItemInfo = function(id) return "Item"..id, nil, nil, nil, 55 end,
 }
+-- Bag 0 holds the best water and food the scenario owns; other bags are empty.
+BAGS = { [0] = { { itemID = 8079, stackCount = 20 }, { itemID = 8076, stackCount = 20 } } }
 C_Container = {
   GetItemCooldown = function() return 0, 0 end,
-  GetContainerNumSlots = function() return 2 end,
-  PickupContainerItem = noop,
-  GetContainerItemInfo = function(bag, slot) if bag == 0 and slot == 1 then return { itemID = 8079, stackCount = 20 } end end,
+  GetContainerNumSlots = function(bag) return BAGS[bag] and #BAGS[bag] or 0 end,
+  PickupContainerItem = function(bag, slot) local s = BAGS[bag] and BAGS[bag][slot]; CURSOR = s and s.itemID end,
+  GetContainerItemInfo = function(bag, slot) return BAGS[bag] and BAGS[bag][slot] end,
 }
 C_UnitAuras = { GetAuraDataBySpellName = function(u, name) if AURAS[u .. name] then return {} end end }
 AURAS = {}

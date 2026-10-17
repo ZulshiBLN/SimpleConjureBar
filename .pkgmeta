@@ -1,0 +1,12 @@
+# BigWigs packager layout. The addon sits in SimpleConjureBar/, beside the
+# repository's README, LICENSE and tooling: the packager copies the checkout to
+# .release/SimpleConjureBar/, moves the addon's files up into that folder and
+# zips only it (ruleset: release pipeline plan, RESEARCH). Dotfiles are left out
+# by the packager itself.
+package-as: SimpleConjureBar
+
+move-folders:
+  SimpleConjureBar/SimpleConjureBar: SimpleConjureBar
+
+ignore:
+  - tests

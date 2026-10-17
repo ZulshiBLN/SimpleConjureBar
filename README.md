@@ -34,11 +34,22 @@ window closes when combat starts and reopens afterwards.
 - **Tracking**: show/hide and colors of Armor, Intellect and Mana Gem, highlight speed
 - **Supplies**: rune warning threshold and colors, auto-buy, gold reserve and target amounts
 - **Order**: drag and drop the button order
-- **Macros**: "Create Polymorph macro", "Show macro" (opens the macro window) and the raid marker
+- **Macros**: the Polymorph macro with its raid marker, the Ice Block macro, the stopcasting
+  macros, and "Show macro" (opens the macro window)
 
 The button "Create Polymorph macro" creates (or updates) the character macro **SCB Polymorph**:
 the first click sets a hostile, living target as focus and marks it with the chosen raid marker
 (default: moon); further clicks cast Polymorph on the focus; a dead focus is cleared automatically.
+
+The other macros are named "SCB " plus the spell's name in your client's language (at most 16
+characters) and are created or updated the same way, as character macros:
+
+- **Ice Block**: the first press casts Ice Block, a press during it ends it early.
+- **Stopcasting macros**: pick Fire Blast, Frost Nova, Blink or Counterspell and click "Create
+  macro". The macro stops your current cast and casts the spell at once; Counterspell aims at
+  your focus first - the one the Polymorph macro sets - and at your target without one.
+
+A macro for a spell you have not learned yet shows a question mark until you learn it.
 
 "Report bug" opens a window with a ready-made report (addon version, client, language, settings
 and this addon's Lua errors from BugGrabber/BugSack) to copy with Ctrl+C and paste as an issue.

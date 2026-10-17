@@ -7,6 +7,12 @@ versions follow [Semantic Versioning](https://semver.org/). Earlier entries stay
 
 Checked in game on WoW Forever 1.60.1.70450 (interface 16001).
 
+### Added
+- Macros tab: an Ice Block macro - the first press casts it, a press during it ends it early.
+- Macros tab: stopcasting macros for Fire Blast, Frost Nova, Blink and Counterspell, chosen in a
+  dropdown. Each stops the current cast and casts its spell at once; Counterspell aims at the
+  focus first. Macro names follow the client's language, cut to 16 characters.
+
 ### Changed
 - README: two known limits are gone, both verified in game. Russian, Korean and Chinese texts
   render on an English client, and Molten Armor's WoW Forever spell ID (429307) is correct.

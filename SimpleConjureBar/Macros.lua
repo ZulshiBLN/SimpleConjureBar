@@ -78,7 +78,9 @@ function ns.CreatePolymorphMacro()
     CreateOrUpdate(MACRO_NAME, MacroBody(), true)
 end
 
-local MACRO_NAME_MAX = 16 -- characters, WoW's limit for macro names
+-- The macro window's name field holds 16 characters. CreateMacro itself stores longer names
+-- uncut (checked on build 1.60.1.70450), so a name kept within 16 survives being edited there.
+local MACRO_NAME_MAX = 16
 
 -- "SCB " plus the client's spell name, cut to the limit. Counted in UTF-8 characters, not
 -- bytes: string.sub would split a Cyrillic or Chinese character in two.

@@ -5,9 +5,6 @@
 # Lua tooling
 luacov.*.out
 
-# Python (tests/run.py, until the busted port replaces it)
-__pycache__/
-
 # IDE / editor
 .vscode/
 .idea/

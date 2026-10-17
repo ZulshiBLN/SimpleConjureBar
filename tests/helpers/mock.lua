@@ -199,7 +199,7 @@ C_Container = {
 }
 C_UnitAuras = { GetAuraDataBySpellName = function(u, name) if AURAS[u .. name] then return {} end end }
 AURAS = {}
-C_AddOns = { GetAddOnMetadata = function() return "1.27" end }
+C_AddOns = { GetAddOnMetadata = function() return "1.0.0" end }
 C_CurrencyInfo = { GetCoinTextureString = function(m) return m .. "c" end }
 UIDropDownMenu_SetWidth = noop
 UnitGUID = function(u) if u == "NPC" then return STATE.tradeGuid end return "Player-1-" .. u end

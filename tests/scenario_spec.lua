@@ -1,4 +1,4 @@
--- The smoke scenario of 1.37, ported from the Python/lupa runner: one mocked
+-- The smoke scenario of the unpublished build 1.37, ported from the Python/lupa runner: one mocked
 -- client, played through in order - login with the old-name import, solo,
 -- group, combat, raid, the settings window and chat commands, demo mode, the
 -- language switch, merchant, trade, macro and bug report. Each block builds on

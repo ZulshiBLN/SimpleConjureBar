@@ -27,8 +27,9 @@ globals = {
 --
 -- Several names here are Classic-era fallbacks Forever no longer has
 -- (GetSpellInfo, GetItemInfo, UnitBuff, UIDropDownMenu_*, InterfaceOptions_*,
--- OpacitySliderFrame). 1.37 predates the ruleset; they are listed so the code
--- passes as it stands, and go when the code that reads them goes
+-- OpacitySliderFrame). The code of the unpublished build 1.37 predates the
+-- ruleset; they are listed so the code passes as it stands, and go when the
+-- code that reads them goes
 -- (ruleset archive/decisions.md).
 read_globals = {
     "BackdropTemplateMixin", "BugGrabber", "BuyMerchantItem",
@@ -72,7 +73,7 @@ read_globals = {
     } },
 }
 
--- Unused locals in 1.37, named one by one so a new one is still reported.
+-- Unused locals in the unpublished build 1.37, named one by one so a new one is still reported.
 -- Each goes with the first change to its file (ruleset archive/decisions.md).
 files["SimpleConjureBar/Bar.lua"] = { ignore = { "211/GAP" } }
 files["SimpleConjureBar/Report.lua"] = { ignore = { "211/L" } }

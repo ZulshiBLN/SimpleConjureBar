@@ -54,8 +54,9 @@ function ns.ShowMacroWindow()
 end
 
 -- Creates the character macro `name`, or updates it when it exists.
--- replaceAccountCopy: version 1.33 created "SCB Polymorph" account-wide; that copy is
--- replaced by the character macro. No other macro of this addon ever existed account-wide.
+-- replaceAccountCopy: the unpublished build 1.33 created "SCB Polymorph" account-wide;
+-- that copy is replaced by the character macro. No other macro of this addon ever existed
+-- account-wide.
 local function CreateOrUpdate(name, body, replaceAccountCopy)
     if InCombatLockdown() then ns.Print(L.NOT_IN_COMBAT) return end
     local maxAccount = MAX_ACCOUNT_MACROS or 120

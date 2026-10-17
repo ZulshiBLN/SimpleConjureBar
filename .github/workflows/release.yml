@@ -1,0 +1,67 @@
+# Publishes a release on a v* tag: a GitHub release with the zip and
+# release.json, which WowUp offers to WoW Forever clients. A published release
+# reaches players at once and cannot be called back (ruleset: releasing.md),
+# so every check runs first and publishing is the last step.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  # A tag created on GitHub never meets the pre-push hook; this is its check.
+  ref:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Refuse a tag that is not a release merge in main
+        run: bash .github/scripts/check-release-ref.sh "$GITHUB_SHA"
+
+  checks:
+    needs: ref
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: checks
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write # gh release create
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Build the zip without publishing
+        uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0 # v2.6.1
+        with:
+          args: -d
+          pandoc: "false"
+
+      - name: Write release.json
+        run: |
+          zip=$(ls .release/*.zip)
+          [ "$(echo "$zip" | wc -l)" = 1 ] || { echo "expected one zip, found: $zip"; exit 1; }
+          bash .github/scripts/write-release-json.sh "$zip" "$GITHUB_REF_NAME" .release/release.json
+
+      - name: Check the zip, release.json and the version
+        run: bash .github/scripts/check-package.sh .release/*.zip .release/release.json "$GITHUB_REF_NAME"
+
+      - name: Release notes from the CHANGELOG
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="## [$version]" 'index($0, v) == 1 { on = 1; next } on && /^## / { exit } on { print }' \
+              SimpleConjureBar/CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          [ -s "$RUNNER_TEMP/notes.md" ] || { echo "no CHANGELOG entry for $version"; exit 1; }
+
+      # Last, after every check: from here on the release is public.
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" .release/*.zip .release/release.json \
+              --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag

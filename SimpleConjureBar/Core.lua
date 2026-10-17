@@ -99,6 +99,12 @@ function ns.InitDB()
     db.goldReserve  = Num(db.goldReserve, 0, D.GOLD_RESERVE_MAX, V.goldReserve, true)
     db.minimapAngle = Num(db.minimapAngle, 0, 360, V.minimapAngle)
     db.macroMarker  = Num(db.macroMarker, 1, 8, V.macroMarker, true)
+    -- A number is not enough: only the stopcasting spells may be chosen
+    local stopcastKnown = false
+    for _, id in ipairs(D.STOPCAST_SPELLS) do
+        if db.macroStopcast == id then stopcastKnown = true end
+    end
+    if not stopcastKnown then db.macroStopcast = V.macroStopcast end
     for _, key in ipairs({ "antsSpeed", "armorAntsSpeed", "gemAntsSpeed" }) do
         db[key] = Num(db[key], 1, #D.ANTS_STEPS, V[key], true)
     end

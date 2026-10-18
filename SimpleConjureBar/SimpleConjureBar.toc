@@ -16,6 +16,7 @@
 ## Version: 1.0.1
 ## X-License: MIT
 ## X-Curse-Project-ID: 1751327
+## X-Wago-ID: x61xWVN1
 ## Category: Class
 ## Category-deDE: Klasse
 ## Category-frFR: Classe

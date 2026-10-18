@@ -6,9 +6,13 @@ name: CI
 on:
   push:
     branches: [develop, main]
-  # The release workflow runs these same checks before it publishes, and
-  # passes exactly the two upload tokens the dry runs need
+  # The release workflow runs these same checks before it publishes, with its
+  # tag, and passes exactly the two upload tokens the rehearsal needs
   workflow_call:
+    inputs:
+      tag:
+        type: string
+        default: ""
     secrets:
       CF_API_TOKEN:
         required: true
@@ -62,120 +66,21 @@ jobs:
           grep -q "fails on purpose" control.log || { cat control.log; echo "the control spec did not run"; exit 1; }
           echo "busted failed on the control spec, as it must"
 
-  # The zip and release.json, built and checked on every push exactly as the
-  # release workflow builds them - but never published from here. GitHub
-  # starts workflows by hand only from main, which holds none before the
-  # first release, so these checks run on pushes instead.
-  package:
+  # The zip, release.json and notes, built and checked once per run. On a
+  # push nothing is published from here; the release workflow passes its tag.
+  build:
     needs: test
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0 # the packager versions from history, the tag check needs main
+    uses: ./.github/workflows/build.yml
+    with:
+      tag: ${{ inputs.tag }}
 
-      - name: Build the zip without publishing
-        uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0 # v2.6.1
-        with:
-          args: -d
-          pandoc: "false"
-
-      - name: Write release.json
-        run: |
-          zip=$(ls .release/*.zip)
-          [ "$(echo "$zip" | wc -l)" = 1 ] || { echo "expected one zip, found: $zip"; exit 1; }
-          version=$(basename "$zip" .zip)
-          version=${version#SimpleConjureBar-}
-          version=${version%-forever}
-          bash .github/scripts/write-release-json.sh "$zip" "$version" .release/release.json
-
-      - name: Check the zip and release.json
-        run: bash .github/scripts/check-package.sh .release/*.zip .release/release.json
-
-      # The checks must be able to refuse: a zip without its TOC, a release.json
-      # for the wrong flavor, a tag that is not the TOC's version.
-      - name: Control - the checks refuse a wrong package
-        run: |
-          zip=$(ls .release/*.zip)
-          bad="$RUNNER_TEMP/bad"
-          mkdir -p "$bad" && unzip -q "$zip" -d "$bad"
-          rm "$bad/SimpleConjureBar/SimpleConjureBar.toc"
-          (cd "$bad" && zip -q -r "$RUNNER_TEMP/$(basename "$zip")" SimpleConjureBar)
-          if bash .github/scripts/check-package.sh "$RUNNER_TEMP/$(basename "$zip")" .release/release.json; then
-              echo "the check accepted a zip without its TOC"; exit 1
-          fi
-          jq '.releases[0].metadata[0].flavor = "mainline"' .release/release.json > "$RUNNER_TEMP/release.json"
-          if bash .github/scripts/check-package.sh "$zip" "$RUNNER_TEMP/release.json"; then
-              echo "the check accepted a release.json without flavor forever"; exit 1
-          fi
-          if bash .github/scripts/check-package.sh "$zip" .release/release.json v0.0.0; then
-              echo "the check accepted a tag that is not the TOC's version"; exit 1
-          fi
-          echo "the checks refused all three wrong packages, as they must"
-
-      - name: Release notes from the CHANGELOG
-        run: |
-          version=$(grep -m1 -E '^## Version:' SimpleConjureBar/SimpleConjureBar.toc | sed -E 's/^## Version:[[:space:]]*//' | tr -d '\r[:space:]')
-          awk -v v="## [$version]" 'index($0, v) == 1 { on = 1; next } on && /^## / { exit } on { print }' \
-              SimpleConjureBar/CHANGELOG.md > "$RUNNER_TEMP/notes.md"
-          [ -s "$RUNNER_TEMP/notes.md" ] || { echo "no CHANGELOG entry for $version"; exit 1; }
-
-      # The version rule on fixed lists, the interface mapping, and the check
-      # that no upload script can print a token - each able to go red.
-      - name: Upload controls
-        run: bash .github/scripts/test-upload-controls.sh
-
-      # The same rule through each site's script and data format: a list
-      # without Forever must fail, a version above all listed must fall back
-      # with the warning.
-      - name: Upload controls - site formats
-        run: |
-          zip=$(ls .release/*.zip)
-          notes="$RUNNER_TEMP/notes.md"
-          cf="$RUNNER_TEMP/cf.json"
-          wago="$RUNNER_TEMP/wago.json"
-          check_fallback() { # <site> <log>
-              grep -q "Forever 1.60.1" "$2" && grep -q WARNING "$2" \
-                  || { cat "$2"; echo "$1: 1.99.9 did not fall back to 1.60.1 with a warning"; exit 1; }
-          }
-          echo '[{"id":1,"gameVersionTypeID":517,"name":"11.2.5"}]' > "$cf"
-          if CF_VERSIONS_FILE="$cf" bash .github/scripts/upload-curseforge.sh --dry-run "$zip" "$notes"; then
-              echo "CurseForge: a list without Forever was accepted"; exit 1
-          fi
-          echo '[{"id":7,"gameVersionTypeID":88568,"name":"1.50.0"},{"id":8,"gameVersionTypeID":88568,"name":"1.60.1"},{"id":9,"gameVersionTypeID":517,"name":"11.2.5"}]' > "$cf"
-          CF_VERSIONS_FILE="$cf" GAME_VERSION=1.99.9 bash .github/scripts/upload-curseforge.sh --dry-run "$zip" "$notes" > "$RUNNER_TEMP/cf.log" 2>&1
-          check_fallback CurseForge "$RUNNER_TEMP/cf.log"
-          grep -q "(id 8)" "$RUNNER_TEMP/cf.log" || { cat "$RUNNER_TEMP/cf.log"; echo "CurseForge: wrong version id"; exit 1; }
-          echo '{"patches":{"retail":["11.2.5"]}}' > "$wago"
-          if WAGO_VERSIONS_FILE="$wago" bash .github/scripts/upload-wago.sh --dry-run "$zip" "$notes"; then
-              echo "Wago: a list without Forever was accepted"; exit 1
-          fi
-          echo '{"patches":{"forever":["1.50.0","1.60.1"],"retail":["11.2.5"]}}' > "$wago"
-          WAGO_VERSIONS_FILE="$wago" GAME_VERSION=1.99.9 bash .github/scripts/upload-wago.sh --dry-run "$zip" "$notes" > "$RUNNER_TEMP/wago.log" 2>&1
-          check_fallback Wago "$RUNNER_TEMP/wago.log"
-          echo "both sites refused a list without Forever and fell back with a warning, as they must"
-
-      # Against the real sites, with the real tokens, uploading nothing. Each
-      # token is set on its one step only - never on the job or the packager.
-      - name: CurseForge dry run
-        env:
-          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        run: bash .github/scripts/upload-curseforge.sh --dry-run .release/*.zip "$RUNNER_TEMP/notes.md"
-
-      - name: Wago dry run
-        env:
-          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
-        run: bash .github/scripts/upload-wago.sh --dry-run .release/*.zip "$RUNNER_TEMP/notes.md"
-
-      # A develop commit is never a merge in main, so the release workflow's
-      # first check must refuse it; on main, and on a release tag, it must pass.
-      - name: Tag check
-        run: |
-          if [ "$GITHUB_REF_NAME" = develop ]; then
-              if bash .github/scripts/check-release-ref.sh "$GITHUB_SHA"; then
-                  echo "the tag check accepted a develop commit"; exit 1
-              fi
-              echo "the tag check refused the develop commit, as it must"
-          else
-              bash .github/scripts/check-release-ref.sh "$GITHUB_SHA"
-          fi
+  # The whole publish chain in dry-run mode, before any tag exists: each
+  # channel's job takes the artifact and does everything but send it.
+  rehearsal:
+    needs: build
+    uses: ./.github/workflows/publish.yml
+    with:
+      dry_run: true
+    secrets:
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}

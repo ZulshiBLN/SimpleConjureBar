@@ -35,7 +35,7 @@ while IFS= read -r line; do
 done < "$toc"
 
 # Nothing of the repository's tooling ships
-for path in tests .github .luacheckrc .busted .pkgmeta .gitignore .gitattributes .previews; do
+for path in tests .github .luacheckrc .busted .pkgmeta .gitignore .gitattributes .previews .media; do
     [ ! -e "$dir/$path" ] || fail "$path must not ship"
 done
 

@@ -125,12 +125,17 @@ jobs:
           check_fallback Wago "$RUNNER_TEMP/wago.log"
           echo "both sites refused a list without Forever and fell back with a warning, as they must"
 
+      # upload-artifact skips hidden directories such as .release, so the three
+      # checked files move to a plain one rather than allowing hidden files.
+      - name: Collect the artifact
+        run: |
+          mkdir artifact
+          cp .release/*.zip .release/release.json .release/notes.md artifact/
+          ls -l artifact
+
       # Everything checked above, as one artifact the publish jobs only send
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release
-          path: |
-            .release/*.zip
-            .release/release.json
-            .release/notes.md
+          path: artifact/
           if-no-files-found: error

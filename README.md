@@ -5,9 +5,17 @@ It bundles everything a mage conjures, buffs and travels with into one movable b
 
 ## Installation
 
+SimpleConjureBar is published on
+[CurseForge](https://www.curseforge.com/wow/addons/simpleconjurebar),
+[Wago](https://addons.wago.io/addons/simpleconjurebar) and
+[GitHub](https://github.com/ZulshiBLN/SimpleConjureBar/releases) - the same files on all three.
+
 **With WowUp** (2.24 or later, which knows WoW Forever): choose your WoW Forever installation,
-then *Get Addons* → *Install from URL* and enter
-`https://github.com/ZulshiBLN/SimpleConjureBar`. WowUp offers every later release as an update.
+then *Get Addons* and search for **SimpleConjureBar**. If the search does not find it yet, use
+*Install from URL* with `https://github.com/ZulshiBLN/SimpleConjureBar`. WowUp offers every later
+release as an update.
+
+**With the CurseForge or Wago app:** search for SimpleConjureBar in your WoW Forever installation.
 
 **By hand:** download `SimpleConjureBar-<version>-forever.zip` from the
 [releases](https://github.com/ZulshiBLN/SimpleConjureBar/releases) and unpack it into

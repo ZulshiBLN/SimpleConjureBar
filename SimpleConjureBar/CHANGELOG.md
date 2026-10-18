@@ -3,6 +3,12 @@
 This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-10-18
+
+### Added
+- SimpleConjureBar is also published on CurseForge and Wago, so the WowUp app finds it by
+  search.
+
 ## [1.0.0] - 2026-10-18
 
 First public release. Checked in game on WoW Forever 1.60.1.70450 (interface 16001).

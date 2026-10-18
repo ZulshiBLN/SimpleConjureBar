@@ -6,8 +6,18 @@ name: CI
 on:
   push:
     branches: [develop, main]
-  # The release workflow runs these same checks before it publishes
+  # The release workflow runs these same checks before it publishes, with its
+  # tag, and passes exactly the two upload tokens the rehearsal needs
   workflow_call:
+    inputs:
+      tag:
+        type: string
+        default: ""
+    secrets:
+      CF_API_TOKEN:
+        required: true
+      WAGO_API_TOKEN:
+        required: true
 
 permissions:
   contents: read
@@ -56,66 +66,21 @@ jobs:
           grep -q "fails on purpose" control.log || { cat control.log; echo "the control spec did not run"; exit 1; }
           echo "busted failed on the control spec, as it must"
 
-  # The zip and release.json, built and checked on every push exactly as the
-  # release workflow builds them - but never published from here. GitHub
-  # starts workflows by hand only from main, which holds none before the
-  # first release, so these checks run on pushes instead.
-  package:
+  # The zip, release.json and notes, built and checked once per run. On a
+  # push nothing is published from here; the release workflow passes its tag.
+  build:
     needs: test
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0 # the packager versions from history, the tag check needs main
+    uses: ./.github/workflows/build.yml
+    with:
+      tag: ${{ inputs.tag }}
 
-      - name: Build the zip without publishing
-        uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0 # v2.6.1
-        with:
-          args: -d
-          pandoc: "false"
-
-      - name: Write release.json
-        run: |
-          zip=$(ls .release/*.zip)
-          [ "$(echo "$zip" | wc -l)" = 1 ] || { echo "expected one zip, found: $zip"; exit 1; }
-          version=$(basename "$zip" .zip)
-          version=${version#SimpleConjureBar-}
-          version=${version%-forever}
-          bash .github/scripts/write-release-json.sh "$zip" "$version" .release/release.json
-
-      - name: Check the zip and release.json
-        run: bash .github/scripts/check-package.sh .release/*.zip .release/release.json
-
-      # The checks must be able to refuse: a zip without its TOC, a release.json
-      # for the wrong flavor, a tag that is not the TOC's version.
-      - name: Control - the checks refuse a wrong package
-        run: |
-          zip=$(ls .release/*.zip)
-          bad="$RUNNER_TEMP/bad"
-          mkdir -p "$bad" && unzip -q "$zip" -d "$bad"
-          rm "$bad/SimpleConjureBar/SimpleConjureBar.toc"
-          (cd "$bad" && zip -q -r "$RUNNER_TEMP/$(basename "$zip")" SimpleConjureBar)
-          if bash .github/scripts/check-package.sh "$RUNNER_TEMP/$(basename "$zip")" .release/release.json; then
-              echo "the check accepted a zip without its TOC"; exit 1
-          fi
-          jq '.releases[0].metadata[0].flavor = "mainline"' .release/release.json > "$RUNNER_TEMP/release.json"
-          if bash .github/scripts/check-package.sh "$zip" "$RUNNER_TEMP/release.json"; then
-              echo "the check accepted a release.json without flavor forever"; exit 1
-          fi
-          if bash .github/scripts/check-package.sh "$zip" .release/release.json v0.0.0; then
-              echo "the check accepted a tag that is not the TOC's version"; exit 1
-          fi
-          echo "the checks refused all three wrong packages, as they must"
-
-      # A develop commit is never a merge in main, so the release workflow's
-      # first check must refuse it; on main, and on a release tag, it must pass.
-      - name: Tag check
-        run: |
-          if [ "$GITHUB_REF_NAME" = develop ]; then
-              if bash .github/scripts/check-release-ref.sh "$GITHUB_SHA"; then
-                  echo "the tag check accepted a develop commit"; exit 1
-              fi
-              echo "the tag check refused the develop commit, as it must"
-          else
-              bash .github/scripts/check-release-ref.sh "$GITHUB_SHA"
-          fi
+  # The whole publish chain in dry-run mode, before any tag exists: each
+  # channel's job takes the artifact and does everything but send it.
+  rehearsal:
+    needs: build
+    uses: ./.github/workflows/publish.yml
+    with:
+      dry_run: true
+    secrets:
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}

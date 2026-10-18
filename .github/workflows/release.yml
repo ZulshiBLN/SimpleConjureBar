@@ -25,6 +25,9 @@ jobs:
   checks:
     needs: ref
     uses: ./.github/workflows/ci.yml
+    secrets: # exactly the two the dry runs need, not secrets: inherit
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
 
   publish:
     needs: checks

@@ -6,8 +6,14 @@ name: CI
 on:
   push:
     branches: [develop, main]
-  # The release workflow runs these same checks before it publishes
+  # The release workflow runs these same checks before it publishes, and
+  # passes exactly the two upload tokens the dry runs need
   workflow_call:
+    secrets:
+      CF_API_TOKEN:
+        required: true
+      WAGO_API_TOKEN:
+        required: true
 
 permissions:
   contents: read
@@ -106,6 +112,60 @@ jobs:
               echo "the check accepted a tag that is not the TOC's version"; exit 1
           fi
           echo "the checks refused all three wrong packages, as they must"
+
+      - name: Release notes from the CHANGELOG
+        run: |
+          version=$(grep -m1 -E '^## Version:' SimpleConjureBar/SimpleConjureBar.toc | sed -E 's/^## Version:[[:space:]]*//' | tr -d '\r[:space:]')
+          awk -v v="## [$version]" 'index($0, v) == 1 { on = 1; next } on && /^## / { exit } on { print }' \
+              SimpleConjureBar/CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          [ -s "$RUNNER_TEMP/notes.md" ] || { echo "no CHANGELOG entry for $version"; exit 1; }
+
+      # The version rule on fixed lists, the interface mapping, and the check
+      # that no upload script can print a token - each able to go red.
+      - name: Upload controls
+        run: bash .github/scripts/test-upload-controls.sh
+
+      # The same rule through each site's script and data format: a list
+      # without Forever must fail, a version above all listed must fall back
+      # with the warning.
+      - name: Upload controls - site formats
+        run: |
+          zip=$(ls .release/*.zip)
+          notes="$RUNNER_TEMP/notes.md"
+          cf="$RUNNER_TEMP/cf.json"
+          wago="$RUNNER_TEMP/wago.json"
+          check_fallback() { # <site> <log>
+              grep -q "Forever 1.60.1" "$2" && grep -q WARNING "$2" \
+                  || { cat "$2"; echo "$1: 1.99.9 did not fall back to 1.60.1 with a warning"; exit 1; }
+          }
+          echo '[{"id":1,"gameVersionTypeID":517,"name":"11.2.5"}]' > "$cf"
+          if CF_VERSIONS_FILE="$cf" bash .github/scripts/upload-curseforge.sh --dry-run "$zip" "$notes"; then
+              echo "CurseForge: a list without Forever was accepted"; exit 1
+          fi
+          echo '[{"id":7,"gameVersionTypeID":88568,"name":"1.50.0"},{"id":8,"gameVersionTypeID":88568,"name":"1.60.1"},{"id":9,"gameVersionTypeID":517,"name":"11.2.5"}]' > "$cf"
+          CF_VERSIONS_FILE="$cf" GAME_VERSION=1.99.9 bash .github/scripts/upload-curseforge.sh --dry-run "$zip" "$notes" > "$RUNNER_TEMP/cf.log" 2>&1
+          check_fallback CurseForge "$RUNNER_TEMP/cf.log"
+          grep -q "(id 8)" "$RUNNER_TEMP/cf.log" || { cat "$RUNNER_TEMP/cf.log"; echo "CurseForge: wrong version id"; exit 1; }
+          echo '{"patches":{"retail":["11.2.5"]}}' > "$wago"
+          if WAGO_VERSIONS_FILE="$wago" bash .github/scripts/upload-wago.sh --dry-run "$zip" "$notes"; then
+              echo "Wago: a list without Forever was accepted"; exit 1
+          fi
+          echo '{"patches":{"forever":["1.50.0","1.60.1"],"retail":["11.2.5"]}}' > "$wago"
+          WAGO_VERSIONS_FILE="$wago" GAME_VERSION=1.99.9 bash .github/scripts/upload-wago.sh --dry-run "$zip" "$notes" > "$RUNNER_TEMP/wago.log" 2>&1
+          check_fallback Wago "$RUNNER_TEMP/wago.log"
+          echo "both sites refused a list without Forever and fell back with a warning, as they must"
+
+      # Against the real sites, with the real tokens, uploading nothing. Each
+      # token is set on its one step only - never on the job or the packager.
+      - name: CurseForge dry run
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: bash .github/scripts/upload-curseforge.sh --dry-run .release/*.zip "$RUNNER_TEMP/notes.md"
+
+      - name: Wago dry run
+        env:
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+        run: bash .github/scripts/upload-wago.sh --dry-run .release/*.zip "$RUNNER_TEMP/notes.md"
 
       # A develop commit is never a merge in main, so the release workflow's
       # first check must refuse it; on main, and on a release tag, it must pass.

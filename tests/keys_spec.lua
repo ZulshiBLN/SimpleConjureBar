@@ -43,6 +43,11 @@ describe("Bindings.xml", function()
         local expected = {}
         for name in pairs(BINDINGS) do expected[name] = "BINDING_HEADER_SIMPLECONJUREBAR" end
         assert.are.same(expected, found)
+        -- In the order SmartBlessingBar lists its keys: buff, Buff & Run, settings (Michel)
+        local order = {}
+        for name in xml:gmatch('<Binding%s+name="([^"]+)"') do order[#order + 1] = name end
+        assert.are.same({ "CLICK " .. BUFF_KEY .. ":LeftButton", "CLICK SimpleConjureBar_Intellect:MiddleButton",
+            "CLICK " .. SETTINGS_KEY .. ":LeftButton" }, order)
         login()
         assert.is_not_nil(_G[BUFF_KEY]); assert.is_not_nil(_G[SETTINGS_KEY])
     end)

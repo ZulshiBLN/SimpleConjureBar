@@ -120,8 +120,8 @@ In a section of their own under *Options > Key Bindings > SimpleConjureBar*:
 | Key | Action |
 |---|---|
 | Cast next buff | One press, one cast: what the first highlighted button of the bar (in the bar's order) would fix - your armor, Arcane Intellect on the next member, a mana gem conjured. Nothing when nothing is highlighted. In combat it keeps what it held when the fight started - your armor, if nothing was highlighted then - and never casts Arcane Intellect, as the button does not. |
-| Open Settings | Opens or closes the settings window; not in combat. |
 | Buff & Run | The Arcane Intellect button's middle click: buffs the target, then targets the next friendly player. Also with the button hidden. One player per press. |
+| Open Settings | Opens or closes the settings window; not in combat. |
 
 ## Languages
 
@@ -137,7 +137,7 @@ and can be overridden in the General tab (saved account-wide, applied without re
 | `Core.lua` | AddOn compartment entry points, API shims, saved variables, helpers, font helpers, language registry |
 | `Bar.lua` | Bar frame, handle, secure buttons, glow, flyouts, the "Cast next buff" key, colors |
 | `Buttons.lua` | Button setup, layout (`Rebuild`), flyout direction and auto-close, counts, the buff key's action, bar events |
-| `Bindings.xml` | The two keys the game's Key Bindings offer |
+| `Bindings.xml` | The three keys the game's Key Bindings offer |
 | `Intellect.lua` | Group scan, buff targets, buff count, armor highlight, Buff & Run |
 | `Merchant.lua` | Reagent auto-buy |
 | `Trade.lua` | Trading water and food |

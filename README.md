@@ -48,6 +48,8 @@ The addon loads for mages only.
 - **Flyouts** (armor, teleports, portals): a left click on an entry only chooses it; the button on
   the bar casts the choice. They close by themselves a few seconds after the mouse has
   left them, also in combat. The bar cannot be moved in combat; the handle says so.
+- **Teleport and Portal** are greyed out in combat, where the game refuses them; their flyout
+  still lets you choose the next destination.
 
 ## Settings
 
@@ -103,7 +105,7 @@ In a section of their own under *Options > Key Bindings > SimpleConjureBar*:
 
 | Key | Action |
 |---|---|
-| Cast next buff | One press, one cast: what the first highlighted button of the bar (in the bar's order) would fix - your armor, Arcane Intellect on the next member, a mana gem conjured. Nothing when nothing is highlighted. In combat it never casts Arcane Intellect, as the button does not. |
+| Cast next buff | One press, one cast: what the first highlighted button of the bar (in the bar's order) would fix - your armor, Arcane Intellect on the next member, a mana gem conjured. Nothing when nothing is highlighted. In combat it keeps what it held when the fight started - your armor, if nothing was highlighted then - and never casts Arcane Intellect, as the button does not. |
 | Open Settings | Opens or closes the settings window; not in combat. |
 
 ## Languages

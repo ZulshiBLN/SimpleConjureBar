@@ -63,6 +63,9 @@ function Methods:CreateAnimationGroup()
   return group
 end
 function Methods:SetAtlas(a) self.atlas = a end
+function Methods:SetDesaturated(v) self.desaturated = v and true or false end
+function Methods:SetAlpha(a) self.alpha = a end
+function Methods:GetAlpha() return self.alpha or 1 end
 function Methods:SetTexture(t) self.texture = t end
 function Methods:SetVertexColor(r, g, b, a) self.vertexColor = { r, g, b, a } end
 -- The anchors a region was last given, in order (ClearAllPoints empties them)

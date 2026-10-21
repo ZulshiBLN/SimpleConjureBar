@@ -256,14 +256,11 @@ end
 -- "Cast next buff" key (Bar.lua): the action that clears the first glowing, shown button in the
 -- bar's order - Armor's and Intellect's left click, the Mana Gem's right click (conjure). It is
 -- set again on every glow change, after a rebuild and a buff update. The key is protected:
--- a change in combat waits for its end.
+-- a change in combat waits for its end, which sets the key again.
 ---------------------------------------------------------------------------
 local KEY_CLICK = { Armor = "1", Intellect = "1", ManaGem = "2" }
-local keyPending = false
 function ns.UpdateBuffKey()
-    if not db then return end
-    if InCombatLockdown() then keyPending = true return end
-    keyPending = false
+    if not db or InCombatLockdown() then return end
     local source, n
     for _, k in ipairs(db.order) do
         local b = buttons[k]
@@ -276,6 +273,18 @@ function ns.UpdateBuffKey()
     SetAttr(key, "unit1", b and n == "1" and b:GetAttribute("unit1") or nil)
     -- Demo mode writes no action; a press prints this spell instead
     key.demoSpell = b and (b.isGem and b.conjureSpell or b.leftSpell or b.spellId) or nil
+end
+
+-- Combat freezes the key; with nothing glowing at its start it casts Armor, as the button on
+-- the bar does (Michel, 2026-10-21). PLAYER_REGEN_DISABLED comes right before the lockdown,
+-- the last moment the key can be written; combat's end sets it from the glow again.
+local function ArmorForCombat()
+    local key = ns.buffKey
+    if InCombatLockdown() or key:GetAttribute("scbsource") or not armor:IsShown() then return end
+    SetAttr(key, "scbsource", "Armor")
+    SetAttr(key, "type1", armor:GetAttribute("type1"))
+    SetAttr(key, "spell1", armor:GetAttribute("spell1"))
+    key.demoSpell = armor.spellId
 end
 
 ---------------------------------------------------------------------------
@@ -379,9 +388,12 @@ events:RegisterEvent("GROUP_ROSTER_UPDATE")
 events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("BAG_UPDATE_COOLDOWN")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
+events:RegisterEvent("PLAYER_REGEN_DISABLED")
 events:SetScript("OnEvent", function(_, event)
     if not db then return end
-    if event == "PLAYER_TARGET_CHANGED" then
+    if event == "PLAYER_REGEN_DISABLED" then
+        ArmorForCombat()
+    elseif event == "PLAYER_TARGET_CHANGED" then
         UpdateConjureForTarget()
     elseif event == "BAG_UPDATE_COOLDOWN" then
         UpdateCounts() -- cooldown and numbers only, no full rebuild
@@ -392,7 +404,7 @@ events:SetScript("OnEvent", function(_, event)
         elseif conjurePending then
             UpdateConjureForTarget()
         end
-        if keyPending then ns.UpdateBuffKey() end
+        ns.UpdateBuffKey() -- drops the Armor of ArmorForCombat, and applies what waited
     else
         ns.QueueRebuild()
     end

@@ -131,6 +131,28 @@ describe("Cast next buff", function()
         assert.are.same({}, STATE.errors)
     end)
 
+    -- Michel, 2026-10-21: with nothing glowing when combat starts, the key casts Armor, as the
+    -- button on the bar does; after combat it holds nothing again
+    it("casts Armor in a combat that started with nothing glowing", function()
+        local ns = login()
+        local b, key = ns.buttons, _G[BUFF_KEY]
+        _G.AURAS["player" .. ns.SpellName(ns.D.ARMOR_BUFF_IDS[1])] = true
+        _G.AURAS["player" .. ns.SpellName(ns.D.SPELL_ARCANE_INTELLECT)] = true
+        auras(ns)
+        assert.are.same({}, action(key))
+
+        FIRE("PLAYER_REGEN_DISABLED") -- before the lockdown, as the client sends it
+        STATE.combat = true
+        assert.are.same(clears(b.Armor), action(key))
+        _G.STATE.casts = {}
+        RUNCLICK(key, "LeftButton", false)
+        assert.are.same({ { spell = b.Armor:GetAttribute("spell1") } }, STATE.casts)
+
+        STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.are.same({}, action(key))
+        assert.are.same({}, STATE.errors)
+    end)
+
     it("casts Armor in combat, and takes an armor chosen there but not a teleport", function()
         local ns = login()
         local b, key = ns.buttons, _G[BUFF_KEY]

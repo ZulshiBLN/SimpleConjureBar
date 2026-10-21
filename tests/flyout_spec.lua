@@ -149,7 +149,11 @@ describe("a choice in a flyout", function()
                 assert.is_false(main.fly:IsShown(), key)
                 assert.are.equal(icon:GetAttribute("spell"), main:GetAttribute("spell1"), key)
                 RUNCLICK(main, "LeftButton", false)
-                assert.are.same({ { spell = icon:GetAttribute("spell") } }, STATE.casts, key)
+                if inCombat and key == "Teleport" then
+                    assert.are.same({}, STATE.casts, key) -- refused in combat, see below
+                else
+                    assert.are.same({ { spell = icon:GetAttribute("spell") } }, STATE.casts, key)
+                end
                 STATE.combat = false
             end
             assert.are.same({}, STATE.errors)
@@ -167,6 +171,35 @@ describe("a choice in a flyout", function()
         RUNCLICK(icon, "MiddleButton", false)
         assert.are.equal(before, main:GetAttribute("spell1"))
         assert.is_true(main.fly:IsShown())
+    end)
+end)
+
+-- Michel, 2026-10-21: the game refuses teleports and portals in combat; their buttons are
+-- greyed and their left click dropped then, as Intellect's. Choosing still works.
+describe("Teleport and Portal in combat", function()
+    it("are greyed and cast nothing, but still choose, and are back after combat", function()
+        local ns = login(nil)
+        for _, key in ipairs({ "Teleport", "Portal" }) do
+            local b = ns.buttons[key]
+            STATE.combat = true; FIRE("PLAYER_REGEN_DISABLED")
+            assert.is_true(b.icon.desaturated, key)
+            assert.is_true(b.icon:GetAlpha() < 1, key)
+            _G.STATE.casts = {}
+            RUNCLICK(b, "LeftButton", true); RUNCLICK(b, "LeftButton", false)
+            assert.are.same({}, STATE.casts, key)
+            RUNCLICK(b, "RightButton", false)
+            assert.is_true(b.fly:IsShown(), key)
+            local icon = b.fly.buttons[2]
+            RUNCLICK(icon, "LeftButton", false)
+            assert.are.equal(icon:GetAttribute("spell"), b:GetAttribute("spell1"), key)
+
+            STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED")
+            assert.is_false(b.icon.desaturated, key)
+            assert.are.equal(1, b.icon:GetAlpha(), key)
+            RUNCLICK(b, "LeftButton", false)
+            assert.are.same({ { spell = icon:GetAttribute("spell") } }, STATE.casts, key)
+        end
+        assert.are.same({}, STATE.errors)
     end)
 end)
 

@@ -183,7 +183,7 @@ combatEvents:RegisterEvent("PLAYER_REGEN_DISABLED")
 combatEvents:RegisterEvent("PLAYER_REGEN_ENABLED")
 combatEvents:SetScript("OnEvent", function(_, event)
     local inCombat = (event == "PLAYER_REGEN_DISABLED")
-    ns.ApplyIntellectCombatLook(inCombat)
+    ns.ApplyCombatLook(inCombat)
     if inCombat then
         StopDrag()
     elseif db then
@@ -467,6 +467,11 @@ tele.rune, portal.rune = D.ITEM_RUNE_TELE, D.ITEM_RUNE_PORTAL
 for _, b in ipairs({ tele, portal }) do
     ns.SetLatinFont(b.count, NumberFontNormal, 14, "OUTLINE") -- digits only
     b.count:SetDrawLayer("OVERLAY", 7)
+    -- The game refuses teleports and portals in combat (in game, 2026-10-21): the left click
+    -- is dropped then, as Intellect's; the right click still opens the menu to choose
+    header:WrapScript(b, "OnClick", [[
+        if button == "LeftButton" and PlayerInCombat() then return false end
+    ]])
 end
 
 ns.buttons = {
@@ -582,8 +587,11 @@ function ns.ApplyLook()
     end
 end
 
--- Intellect is greyed out in combat (it cannot be used then)
-function ns.ApplyIntellectCombatLook(inCombat)
-    intel.icon:SetDesaturated(inCombat)
-    intel.icon:SetAlpha(inCombat and 0.6 or 1)
+-- Intellect, Teleport and Portal are greyed out in combat: their clicks are dropped then
+local COMBAT_LOCKED = { intel, tele, portal }
+function ns.ApplyCombatLook(inCombat)
+    for _, b in ipairs(COMBAT_LOCKED) do
+        b.icon:SetDesaturated(inCombat)
+        b.icon:SetAlpha(inCombat and 0.6 or 1)
+    end
 end

@@ -12,10 +12,13 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   them, also in combat.
 - Two keys under Options > Key Bindings > SimpleConjureBar. "Cast next buff" casts, one press at a
   time, what the first highlighted button of the bar would fix: your armor, Arcane Intellect on
-  the next member, a mana gem conjured. In combat it never casts Arcane Intellect, as the button
+  the next member, a mana gem conjured. In combat it keeps what it held when the fight started -
+  your armor, if nothing was highlighted then - and never casts Arcane Intellect, as the button
   does not. "Open Settings" opens or closes the settings window.
 
 ### Changed
+- Teleport and Portal are greyed out in combat and a left click on them does nothing then, as
+  the game refuses them in combat; their flyout still lets you choose.
 - A click in the armor, teleport or portal flyout only chooses, and the flyout closes; the button
   on the bar casts the choice. Before, the click in the flyout cast at once.
 - Armor, Arcane Intellect and the mana gem are highlighted with the modern client's glow, as a

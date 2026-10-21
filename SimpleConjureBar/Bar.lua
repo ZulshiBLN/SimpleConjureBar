@@ -38,7 +38,7 @@ if bar.SetBackdrop then
     })
 end
 
--- Drag handle; only visible while the mouse is over it (or while dragging)
+-- Drag handle; visible while the mouse is over it, while dragging or with "Show anchor"
 local handle = CreateFrame("Frame", nil, bar)
 ns.handle = handle
 handle:SetSize(10, SIZE)
@@ -93,6 +93,14 @@ function ns.ApplyScale()
     end
 end
 
+-- The handle shows while "Show anchor" is on, the mouse is over it or a drag runs; players
+-- did not find it hidden (ruleset plan 2026-10-21-toggle-anchor). Alpha is not protected, so
+-- this also runs in combat; the handle takes the mouse before login, when db is still nil.
+function ns.ApplyHandle()
+    local shown = (db and db.showAnchor) or handle:IsMouseOver() or handle.moving
+    handle:SetAlpha(shown and 1 or 0)
+end
+
 -- Locked = red, unlocked = blue. The handle stays usable (to unlock and to open the settings).
 function ns.ApplyLock()
     if db.locked then
@@ -100,7 +108,7 @@ function ns.ApplyLock()
     else
         handleTex:SetColorTexture(0.41, 0.8, 0.94, 0.6)
     end
-    handle:SetAlpha(0)
+    ns.ApplyHandle()
 end
 
 function ns.ToggleLock()
@@ -140,8 +148,8 @@ handle:SetScript("OnEnter", function(self)
     self:SetAlpha(1)
     ShowHandleTooltip(self)
 end)
-handle:SetScript("OnLeave", function(self)
-    if not self.moving then self:SetAlpha(0) end
+handle:SetScript("OnLeave", function()
+    ns.ApplyHandle()
     GameTooltip_Hide()
 end)
 
@@ -172,7 +180,7 @@ local function StopDrag()
     bar:StopMovingOrSizing()
     -- The automatic flyout direction depends on the screen half the bar now sits in
     ns.Rebuild()
-    if not handle:IsMouseOver() then handle:SetAlpha(0) end
+    ns.ApplyHandle()
 end
 handle:SetScript("OnMouseUp", StopDrag)
 

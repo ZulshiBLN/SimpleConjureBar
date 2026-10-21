@@ -112,7 +112,10 @@ do
     end
 end
 
-UI.AddCheck("OPT_BORDER", "showBorder", function() ns.ApplyLook() end)
+UI.AddCheckRow({
+    { label = "OPT_BORDER",      key = "showBorder", onChange = function() ns.ApplyLook() end },
+    { label = "OPT_SHOW_ANCHOR", key = "showAnchor", onChange = function() ns.ApplyHandle() end },
+})
 UI.AddSwatch("OPT_BG", "bg", 8)
 UI.AddSeparator()
 

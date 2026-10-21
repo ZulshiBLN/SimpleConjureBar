@@ -64,7 +64,8 @@ Open with `/scb`, the minimap button, the AddOn compartment, a middle click on t
 *Options > AddOns > SimpleConjureBar*. The settings window cannot be opened in combat; an open
 window closes when combat starts and reopens afterwards.
 
-- **General**: language, hide in combat, hide the minimap button, scale, border, background
+- **General**: language, hide in combat, hide the minimap button, scale, border, show anchor
+  (keeps the handle visible; off by default, then it shows only under the mouse), background
   color, orientation, growth direction, flyout direction (automatic by screen half, or a fixed
   side), how long an open flyout waits for the mouse (1-5 s), demo mode, Buff & Run (on by default)
   with "Allow PvP buffing" (off by default), Report bug, Reload UI

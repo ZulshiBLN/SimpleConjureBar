@@ -341,11 +341,19 @@ buffRun:RegisterForClicks("AnyUp", "AnyDown")
 ns.LogClicks(buffRun, buffRun:GetName(), true) -- clicked only by the macro's "/click ... 1"
 local BUFF_RUN_MACRO = "/click SimpleConjureBarBuffRun LeftButton 1\n/targetfriendplayer"
 
+-- The mage is flagged for good - by /pvp, the portrait menu, a battleground, an arena or a
+-- PvP zone - when the flag has no timer; one that runs out came by accident, from buffing a
+-- flagged player, say (ruleset plan 2026-10-22-pvp-self-flag)
+local function FlaggedForGood()
+    return UnitIsPVP("player") and not IsPVPTimerRunning()
+end
+
 -- The Arcane Intellect rank for the unit - never Brilliance: nil unless it is a friendly
--- player of a mana class, alive, online, in range, still in need, and not flagged for PvP
--- unless allowed (buffing him would flag the mage too). Nothing while auras are secret: a
--- buff could not be seen, and every target would look in need. Without a spell the second
--- value says why, for the bug report's action log.
+-- player of a mana class, alive, online, in range and still in need. A player flagged for PvP
+-- is passed - buffing him would flag the mage - unless allowed, or the mage is flagged for
+-- good and loses nothing. Nothing while auras are secret: a buff could not be seen, and every
+-- target would look in need. Without a spell the second value says why, for the bug report's
+-- action log.
 function ns.BuffRunSpell(unit)
     if C_Secrets and C_Secrets.ShouldAurasBeSecret and C_Secrets.ShouldAurasBeSecret() then return nil, "auras secret" end
     if not (UnitExists(unit) and UnitIsPlayer(unit) and UnitCanAssist("player", unit)) then
@@ -353,7 +361,7 @@ function ns.BuffRunSpell(unit)
     end
     if not UnitIsConnected(unit) or UnitIsDeadOrGhost(unit) then return nil, "offline or dead" end
     if not MANA_CLASSES[select(2, UnitClass(unit))] then return nil, "no mana user" end
-    if not db.pvpBuff and UnitIsPVP(unit) then return nil, "flagged for PvP" end
+    if UnitIsPVP(unit) and not db.pvpBuff and not FlaggedForGood() then return nil, "flagged for PvP" end
     local level = UnitLevel(unit)
     if level and level <= 0 then level = nil end -- "??": unknown, not rank 1
     local spell = IntellectSpell(level)

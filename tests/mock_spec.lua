@@ -146,6 +146,14 @@ describe("the mock", function()
         assert.are.same({ "first", "second", "third" }, order)
     end)
 
+    it("answers the player's PvP flag and its timer", function()
+        assert.is_false(UnitIsPVP("player"))
+        assert.is_false(IsPVPTimerRunning())
+        STATE.units.player = { pvp = true }
+        STATE.pvpTimer = true
+        assert.are.same({ true, true }, { UnitIsPVP("player"), IsPVPTimerRunning() })
+    end)
+
     it("knows who owns the tooltip until it is hidden", function()
         local f = CreateFrame("Frame")
         GameTooltip:SetOwner(f, "ANCHOR_LEFT")

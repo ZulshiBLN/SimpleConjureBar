@@ -49,7 +49,9 @@ The addon loads for mages only.
   user who still needs it; anyone else is passed. The game picks the next player, sometimes one
   out of range: then the click only moves on. A click during the global cooldown does nothing,
   so nobody is skipped; in combat nothing happens. A player flagged for PvP is passed - buffing
-  him would flag you - unless "Allow PvP buffing" is on. Both are switched on the General tab.
+  him would flag you - unless "Allow PvP buffing" is on, or you are flagged yourself without the
+  5-minute timer: by `/pvp`, in a battleground, an arena or a PvP zone. Flagged only by the timer,
+  as after buffing a flagged player, you still pass them. Both are switched on the General tab.
 - **Highlights** - the modern client's glow - show a missing or expiring armor, missing or expiring
   Intellect and a missing mana gem. An armor glows from its renew time on (3 minutes by default).
 - **Rune counts** on Teleport/Portal change color at the warning threshold and at 0.
@@ -71,7 +73,8 @@ window closes when combat starts and reopens afterwards.
   (keeps the handle visible; on by default - off, it shows only under the mouse), background
   color, orientation, growth direction, flyout direction (automatic by screen half, or a fixed
   side), how long an open flyout waits for the mouse (1-5 s), demo mode, Buff & Run (on by default)
-  with "Allow PvP buffing" (off by default), Report bug, Reload UI
+  with "Allow PvP buffing" (off by default; while you are flagged without a timer, flagged players
+  are buffed anyway), Report bug, Reload UI
 - **Tracking**: show/hide and colors of Armor, Intellect and Mana Gem, highlight speed; how many
   minutes before it runs out Arcane Intellect (0-15, default 5) and the armor (0-5, default 3)
   count as needed again - 0 means only once they are gone

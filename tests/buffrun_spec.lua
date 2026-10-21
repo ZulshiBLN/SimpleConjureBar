@@ -93,6 +93,50 @@ local function toggle(cb)
     RUNSCRIPT(cb, "OnClick")
 end
 
+describe("Buff & Run and the PvP flag", function()
+    -- The mage: not flagged, flagged with the flag running out (the "accidental" one), or
+    -- flagged for good - /pvp, a battleground, a PvP zone (ruleset plan 2026-10-22-pvp-self-flag)
+    local SELF = {
+        unflagged = { pvp = false, timer = false },
+        ["flagged, timer running"] = { pvp = true, timer = true },
+        ["flagged for good"] = { pvp = true, timer = false },
+    }
+    local function as(state)
+        STATE.units.player = { pvp = state.pvp }
+        STATE.pvpTimer = state.timer
+    end
+
+    it("passes flagged players unless the mage is flagged for good or the box allows it", function()
+        local ns, db = login()
+        for name, state in pairs(SELF) do
+            as(state)
+            db.pvpBuff = false
+            local flagged = choice(ns, { class = "PRIEST", pvp = true })
+            if name == "flagged for good" then
+                assert.is_not_nil(flagged, name)
+            else
+                assert.is_nil(flagged, name)
+            end
+            assert.is_not_nil(choice(ns, { class = "PRIEST" }), name .. ", unflagged target")
+            db.pvpBuff = true
+            assert.is_not_nil(choice(ns, { class = "PRIEST", pvp = true }), name .. ", box on")
+        end
+    end)
+
+    it("logs why a flagged player was passed while the mage's flag runs out", function()
+        local ns = login()
+        as(SELF["flagged, timer running"])
+        STATE.units.target = { class = "PRIEST", pvp = true }
+        STATE.friends = { { class = "MAGE" } }
+        middle(ns)
+        local found
+        for _, l in ipairs(ns.LogLines()) do
+            if l:find("buffrun none: flagged for PvP", 1, true) then found = true end
+        end
+        assert.is_true(found)
+    end)
+end)
+
 describe("the Buff & Run cooldown check", function()
     it("takes a spell the client answers no cooldown for, as an unlearned rank in demo mode", function()
         local ns = login()

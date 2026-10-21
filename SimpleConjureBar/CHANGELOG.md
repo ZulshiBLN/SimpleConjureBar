@@ -10,7 +10,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   friendly player, one click per player. It casts Arcane Intellect only, never Brilliance, in the
   rank the player's level accepts, and passes anyone who is no mana user or already has it. It
   does nothing in combat or during the global cooldown, and passes players flagged for PvP unless
-  "Allow PvP buffing" is on. Both switches are on the General tab; Buff & Run is on by default.
+  "Allow PvP buffing" is on or you are flagged yourself without the 5-minute timer - by `/pvp`,
+  in a battleground, an arena or a PvP zone. Both switches are on the General tab; Buff & Run is
+  on by default.
   It has its own key binding.
 - Arcane Intellect and the armor are renewed before they run out: on the Tracking tab you set how
   many minutes before (Intellect 0-15, default 5; armor 0-5, default 3). From then on the button

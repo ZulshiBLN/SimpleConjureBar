@@ -362,6 +362,7 @@ UnitExists = function(u) if U(u) then return true end return u ~= "target" or ST
 UnitIsPlayer = function(u) local r = U(u) return not r or r.player ~= false end
 UnitCanAssist = function(_, u) local r = U(u) return not r or r.assist ~= false end
 UnitIsPVP = function(u) local r = U(u) return r and r.pvp == true or false end
+IsPVPTimerRunning = function() return STATE.pvpTimer == true end
 UnitIsUnit = function(a, b) return a == b end
 UnitIsFriend = function() return true end
 UnitLevel = function(u) local r = U(u) return r and r.level or 60 end

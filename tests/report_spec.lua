@@ -394,6 +394,23 @@ describe("the report's privacy", function()
         _G.issecretvalue = nil
     end)
 
+    it("builds nothing new while a name turns secret after the window opened", function()
+        local ns, db
+        ns, db = login(nil)
+        poisonedClient()
+        poison(db)
+        ns.OpenBugReport()
+        local f = SimpleConjureBarReport
+        local before = f.report:GetText()
+        _G.issecretvalue = function(v) return v == "Targetguy" end
+        _G.CHAT = {}
+        f.desc:SetText("Testplayer saw it"); RUNSCRIPT(f.desc, "OnTextChanged", true)
+        assert.are.equal(before, f.report:GetText())
+        assert.is_nil((ns.ReportCode.Decode(f.report:GetText()) or ""):find("Testplayer", 1, true))
+        assert.is_truthy(CHAT[#CHAT]:find(ns.L.REPORT_SECRET, 1, true))
+        _G.issecretvalue = nil
+    end)
+
     it("stays under 20,000 bytes, cut at a whole character, and shows the data list", function()
         local ns = login()
         local errors = {}

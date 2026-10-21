@@ -226,7 +226,9 @@ end
 -- 2026-10-17-bug-report-details). form: { description, area (a key of D.REPORT_AREAS), details }
 local function BuildReport(form)
     ns.LogSettings()
-    local names = ns.KnownNames() or {}
+    -- A secret name could not be filtered: no report at all, not one without the filter
+    local names = ns.KnownNames()
+    if not names then return nil end
     local version, build, _, interface = GetBuildInfo()
     local _, classFile = UnitClass("player")
     local lines = {
@@ -306,9 +308,15 @@ local function ShowBox()
     SetL(frame.toggle, frame.showContent and "REPORT_SHOW_CODE" or "REPORT_SHOW_CONTENT")
 end
 
+-- Each keystroke rebuilds the report; while a name is secret the last clean one stays
 local function Refresh()
-    frame.reportText = BuildReport(FormValues())
-    frame.codeText = ns.ReportCode.Encode(frame.reportText)
+    local text = BuildReport(FormValues())
+    if not text then
+        ns.Print(L.REPORT_SECRET)
+        return
+    end
+    frame.reportText = text
+    frame.codeText = ns.ReportCode.Encode(text)
     ShowBox()
 end
 

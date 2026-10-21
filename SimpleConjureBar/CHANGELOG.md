@@ -3,6 +3,12 @@
 This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - Unreleased
+
+### Fixed
+- On a character of another class, hovering or clicking SimpleConjureBar in the AddOn menu next
+  to the minimap raised a Lua error. The entry now does nothing there.
+
 ## [1.0.1] - 2026-10-18
 
 ### Added

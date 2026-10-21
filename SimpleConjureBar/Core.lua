@@ -5,6 +5,19 @@
 local ADDON_NAME, ns = ...
 local D, L = ns.D, ns.L
 
+-- The AddOn compartment: the TOC names these three functions for every class, so they exist
+-- before the mage check below. For a mage Minimap.lua sets what they call; for any other
+-- class a click does nothing.
+function SimpleConjureBar_OnCompartmentClick(...)
+    if ns.CompartmentClick then ns.CompartmentClick(...) end
+end
+function SimpleConjureBar_OnCompartmentEnter(...)
+    if ns.CompartmentEnter then ns.CompartmentEnter(...) end
+end
+function SimpleConjureBar_OnCompartmentLeave(...)
+    if ns.CompartmentLeave then ns.CompartmentLeave(...) end
+end
+
 -- The addon is mage-only. Every module checks this flag and stops loading otherwise.
 local _, playerClass = UnitClass("player")
 ns.enabled = (playerClass == "MAGE")

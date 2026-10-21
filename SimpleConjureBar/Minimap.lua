@@ -88,18 +88,18 @@ minimapBtn:SetScript("OnEnter", function(self) ShowEntryTooltip(self, "ANCHOR_LE
 minimapBtn:SetScript("OnLeave", GameTooltip_Hide)
 
 ---------------------------------------------------------------------------
--- AddOn compartment (Retail addon menu next to the minimap). The TOC points to these
--- globals, which is why they are deliberately global.
+-- AddOn compartment (Retail addon menu next to the minimap). The globals the TOC names
+-- live in Core.lua, ahead of the mage check, and call these.
 ---------------------------------------------------------------------------
-function SimpleConjureBar_OnCompartmentClick(_, button)
+function ns.CompartmentClick(_, button)
     if button == "RightButton" then ToggleLockWithMessage() else ns.ToggleSettings() end
 end
 
-function SimpleConjureBar_OnCompartmentEnter(_, menuButton)
+function ns.CompartmentEnter(_, menuButton)
     ShowEntryTooltip(menuButton, "ANCHOR_RIGHT")
 end
 
-function SimpleConjureBar_OnCompartmentLeave()
+function ns.CompartmentLeave()
     GameTooltip_Hide()
 end
 

@@ -44,12 +44,13 @@ end
 
 -- When the aura runs out (GetTime() scale), or nil for one that does not, or whose time cannot
 -- be read: aura values may be secret, and arithmetic on a secret errors
+local function ReadExpiry(aura)
+    local e = aura.expirationTime
+    if type(e) == "number" and e > 0 then return e + 0 end
+end
 local function ExpiresAt(aura)
     if type(aura) ~= "table" then return nil end
-    local ok, at = pcall(function()
-        local e = aura.expirationTime
-        if type(e) == "number" and e > 0 then return e + 0 end
-    end)
+    local ok, at = pcall(ReadExpiry, aura) -- no closure per aura: this runs every second in a group
     return ok and at or nil
 end
 
@@ -119,8 +120,8 @@ local function NeedsIntellect(unit, aiName, abName)
     local ours = IntellectSpell(level and level > 0 and level or nil)
     local oursValue = ours and D.INTELLECT_BUFFS[ours] or 0
     local found, latest = false, nil
-    for _, name in ipairs({ aiName, abName }) do
-        local aura = FindBuff(unit, name)
+    for i = 1, 2 do -- Intellect, then Brilliance; no table per unit and scan
+        local aura = FindBuff(unit, i == 1 and aiName or abName)
         if aura then
             local ok, value = pcall(rawget, D.INTELLECT_BUFFS, type(aura) == "table" and aura.spellId or nil)
             local at = ExpiresAt(aura)

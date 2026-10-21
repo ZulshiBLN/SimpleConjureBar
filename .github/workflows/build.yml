@@ -58,18 +58,23 @@ jobs:
           TAG: ${{ inputs.tag }}
         run: bash .github/scripts/check-package.sh .release/*.zip .release/release.json $TAG
 
-      # The checks must be able to refuse: a zip without its TOC, a release.json
-      # for the wrong flavor, a tag that is not the TOC's version.
+      # The checks must be able to refuse: a zip without its TOC or without
+      # Bindings.xml (the client reads it unlisted, so no TOC line catches it),
+      # a release.json for the wrong flavor, a tag that is not the TOC's version.
       - name: Control - the checks refuse a wrong package
         run: |
           zip=$(ls .release/*.zip)
-          bad="$RUNNER_TEMP/bad"
-          mkdir -p "$bad" && unzip -q "$zip" -d "$bad"
-          rm "$bad/SimpleConjureBar/SimpleConjureBar.toc"
-          (cd "$bad" && zip -q -r "$RUNNER_TEMP/$(basename "$zip")" SimpleConjureBar)
-          if bash .github/scripts/check-package.sh "$RUNNER_TEMP/$(basename "$zip")" .release/release.json; then
-              echo "the check accepted a zip without its TOC"; exit 1
-          fi
+          for missing in SimpleConjureBar.toc Bindings.xml; do
+              bad="$RUNNER_TEMP/bad-$missing"
+              mkdir -p "$bad" && unzip -q "$zip" -d "$bad"
+              rm "$bad/SimpleConjureBar/$missing"
+              out="$RUNNER_TEMP/$missing/$(basename "$zip")"
+              mkdir -p "$(dirname "$out")"
+              (cd "$bad" && zip -q -r "$out" SimpleConjureBar)
+              if bash .github/scripts/check-package.sh "$out" .release/release.json; then
+                  echo "the check accepted a zip without $missing"; exit 1
+              fi
+          done
           jq '.releases[0].metadata[0].flavor = "mainline"' .release/release.json > "$RUNNER_TEMP/release.json"
           if bash .github/scripts/check-package.sh "$zip" "$RUNNER_TEMP/release.json"; then
               echo "the check accepted a release.json without flavor forever"; exit 1
@@ -77,7 +82,7 @@ jobs:
           if bash .github/scripts/check-package.sh "$zip" .release/release.json v0.0.0; then
               echo "the check accepted a tag that is not the TOC's version"; exit 1
           fi
-          echo "the checks refused all three wrong packages, as they must"
+          echo "the checks refused all four wrong packages, as they must"
 
       # A develop commit is never a merge in main, so the release workflow's
       # first check must refuse it; on main, and on a release tag, it must pass.

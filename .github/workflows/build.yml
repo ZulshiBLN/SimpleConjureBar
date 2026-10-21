@@ -23,6 +23,15 @@ jobs:
         with:
           fetch-depth: 0 # the packager versions from history, the tag check needs main
 
+      # On a branch push the packager builds nothing when HEAD already carries
+      # a tag, leaving that to the tag's run. A release merge pushed together
+      # with its tag hit this, and the main CI went red with no zip (v1.0.1);
+      # every re-run of it would too. A run without a tag checks the branch,
+      # so it drops HEAD's tags in this checkout only.
+      - name: Build the branch, not a pending tag
+        if: inputs.tag == ''
+        run: git tag --points-at HEAD | xargs -r git tag -d
+
       - name: Build the zip without publishing
         uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0 # v2.6.1
         with:

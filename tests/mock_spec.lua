@@ -121,6 +121,20 @@ describe("the mock", function()
         assert.is_false(late:IsCancelled())
     end)
 
+    it("shows a dropdown's selected text as of its last generation", function()
+        local dd = CreateFrame("DropdownButton", nil, nil, "WowStyle1DropdownTemplate")
+        local label, chosen = "one", "a"
+        dd:SetupMenu(function(_, root)
+            root:CreateRadio(label, function() return chosen == "a" end)
+            root:CreateRadio("two", function() return chosen == "b" end)
+        end)
+        assert.are.equal("one", dd.selectedText)
+        label = "eins"
+        assert.are.equal("one", dd.selectedText) -- not before the menu is generated again
+        dd:GenerateMenu()
+        assert.are.equal("eins", dd.selectedText)
+    end)
+
     it("records an edit box's selection and focus", function()
         local box = CreateFrame("EditBox")
         local gained = 0

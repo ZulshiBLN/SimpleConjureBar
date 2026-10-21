@@ -108,7 +108,16 @@ function Methods:SetValue(v) self.value = v; Run(self, "OnValueChanged", v) end
 function Methods:RegisterEvent(e) self.events[e] = true; eventFrames[self] = true end
 function Methods:UnregisterEvent(e) self.events[e] = nil end
 function Methods:GetObjectType() return self.kind end
-function Methods:SetupMenu(f) self.menuFn = f end
+-- A menu dropdown shows the text of its selected radio; the client takes it when the menu is
+-- generated - at SetupMenu and at GenerateMenu - not when a text changes later
+function Methods:GenerateMenu()
+  if not self.menuFn then return end
+  self.selectedText = nil
+  self.menuFn(self, { CreateRadio = function(_, text, isSelected)
+    if isSelected and isSelected() then self.selectedText = text end
+  end })
+end
+function Methods:SetupMenu(f) self.menuFn = f; self:GenerateMenu() end
 function Methods:Cancel() self.cancelled = true end
 function Methods:GetColorRGB() return 1, 1, 1 end
 function Methods:GetFrameLevel() return 1 end

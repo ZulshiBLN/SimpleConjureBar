@@ -212,6 +212,20 @@ describe("the report form", function()
         for i, key in ipairs(ns.D.REPORT_AREAS) do assert.are.equal(ns.L["AREA_" .. key], offered[i]) end
     end)
 
+    it("names the chosen area in the language just switched to", function()
+        local ns = login()
+        grabber({}, 1)
+        ns.OpenBugReport()
+        local menu = SimpleConjureBarReport.areaMenu
+        assert.are.equal(ns.locales.enUS.AREA_OTHER, menu.selectedText)
+        for _, code in ipairs({ "ruRU", "koKR", "zhCN" }) do
+            ns.ApplyLanguage(code)
+            assert.are.equal(ns.locales[code].AREA_OTHER, menu.selectedText, code)
+        end
+        SimpleConjureBarReport.SetArea("TRAVEL")
+        assert.are.equal(ns.locales.zhCN.AREA_TRAVEL, menu.selectedText)
+    end)
+
     it("dates nothing: times are relative to now and to the login", function()
         local ns = login()
         grabber({ ourError(time() - 90, 1) }, 1)

@@ -388,8 +388,12 @@ local function CreateWindow()
     frame.areaMenu = menu
     function frame.SetArea(key)
         frame.area = key
+        menu:GenerateMenu()
         Refresh()
     end
+    -- The dropdown shows its selection's text as of its last generation: a language switch
+    -- kept the old language's word (in game, 2026-10-21)
+    ns.OnLanguageChanged(function() menu:GenerateMenu() end)
 
     local detailsLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     detailsLabel:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 0, -16)
@@ -503,6 +507,7 @@ function ns.OpenBugReport()
     frame.desc:SetText("")
     frame.details:SetText("")
     frame.area = "OTHER"
+    frame.areaMenu:GenerateMenu()
     frame.showContent = false
     if frame:IsShown() then Refresh() SelectReport() else frame:Show() end
 end

@@ -308,16 +308,23 @@ local function ShowBuffCount(count)
     intel.hint2 = count > 0 and L.BUFF_MISSING:format(ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT"), count) or nil
 end
 
--- Armor: highlight while none of the mage armors is active
+-- Armor: highlight while none of the mage armors is active, or the active one has at most its
+-- renew time left. Returns the moment it falls due, if it will.
 local function UpdateArmorHighlight()
     if not armor:IsShown() then return end
-    local missing = true
+    local needed, due = true, nil
     if not IsDemo() then
         for _, id in ipairs(D.ARMOR_BUFF_IDS) do
-            if FindBuff("player", ns.SpellName(id)) then missing = false break end
+            local aura = FindBuff("player", ns.SpellName(id))
+            if aura then
+                due = RenewAt(ExpiresAt(aura), db.armorRenewMinutes)
+                needed = due ~= nil and due <= GetTime()
+                break
+            end
         end
     end
-    ns.SetAnts(armor, missing)
+    ns.SetAnts(armor, needed)
+    if not needed then return due end
 end
 
 ---------------------------------------------------------------------------
@@ -404,6 +411,22 @@ local function UpdateTicker()
     end
 end
 
+-- No event fires when a buff crosses its renew time: one timer waits for the earliest crossing
+-- and runs the update then. It is replaced only when that moment moves, so the group ticker's
+-- updates every second do not pile timers up.
+local renewTimer, renewAt
+local function ScheduleRenew(at)
+    if at == renewAt then return end
+    if renewTimer then renewTimer:Cancel() end
+    renewTimer, renewAt = nil, at
+    if at then
+        renewTimer = C_Timer.NewTimer(at - GetTime(), function()
+            renewTimer, renewAt = nil, nil
+            ns.UpdateBuffState()
+        end)
+    end
+end
+
 -- Count, targets and armor highlight. In combat everything stays frozen at the state of combat
 -- start: the client restricts aura data in combat (every buff would look missing), and
 -- Intellect cannot be cast then anyway. Everything is re-checked once combat ends.
@@ -414,18 +437,20 @@ function ns.UpdateBuffState()
         UpdateTicker()
         return
     end
-    UpdateArmorHighlight()
+    local due = UpdateArmorHighlight()
     if intel:IsShown() then
         if IsDemo() then
             ShowBuffCount(IsInGroup() and 3 or 1)
             ApplyTargets(intel, "player", "player")
         else
             local probe = IntellectSpell()
-            local missing, singleUnit, groupUnit = ScanGroup(probe)
+            local missing, singleUnit, groupUnit, intellectDue = ScanGroup(probe)
             ShowBuffCount(missing)
             ApplyTargets(intel, singleUnit, groupUnit)
+            if intellectDue and (not due or intellectDue < due) then due = intellectDue end
         end
     end
+    ScheduleRenew(due)
     UpdateTicker()
     ArmBuffRun()
     -- A new Intellect target changes no glow, but the buff key casts on it (Buttons.lua)

@@ -120,6 +120,79 @@ describe("Arcane Intellect", function()
     end)
 end)
 
+-- The timers still waiting
+local function pending()
+    local list = {}
+    for _, t in ipairs(DELAYED) do if not t.cancelled then list[#list + 1] = t end end
+    return list
+end
+
+-- An armor with `minutes` left
+local function armorAura(D, minutes)
+    return { id = D.ARMOR_BUFF_IDS[1], expires = GetTime() + minutes * 60 }
+end
+
+describe("the armor", function()
+    it("glows within its renew time and the buff key holds it, not before", function()
+        local ns = login()
+        local D = ns.D
+        STATE.units.player = { auras = { armorAura(D, 2), intellect(D, 30) } }
+        ns.UpdateBuffState()
+        assert.is_true(ns.buttons.Armor.antsShown)
+        assert.are.equal("Armor", ns.buffKey:GetAttribute("scbsource"))
+        STATE.units.player = { auras = { armorAura(D, 10), intellect(D, 30) } }
+        ns.UpdateBuffState()
+        assert.is_false(ns.buttons.Armor.antsShown)
+        assert.is_nil(ns.buffKey:GetAttribute("scbsource"))
+    end)
+end)
+
+describe("the renew timer", function()
+    it("waits for the earliest crossing and wakes the glow without an aura event", function()
+        local ns, db = login()
+        local D = ns.D
+        STATE.units.player = { auras = { armorAura(D, 10), intellect(D, 30) } }
+        ns.UpdateBuffState()
+        local timers = pending()
+        assert.are.equal(1, #timers)
+        -- armor: 10 minutes left, renewed 3 before the end; Intellect would come at 25
+        local wait = (10 - db.armorRenewMinutes) * 60
+        assert.are.equal(wait, timers[1].delay)
+        ns.UpdateBuffState()
+        assert.are.same({ timers[1] }, pending()) -- the same crossing keeps its timer
+
+        assert.is_false(ns.buttons.Armor.antsShown)
+        ADVANCE(wait)
+        assert.is_true(ns.buttons.Armor.antsShown)
+        -- the next one is Intellect's
+        assert.are.equal((30 - db.intellectRenewMinutes) * 60 - wait, pending()[1].delay)
+        assert.are.same({}, STATE.errors)
+    end)
+
+    it("sets none when nothing will fall due", function()
+        local ns = login()
+        local D = ns.D
+        STATE.units.player = { auras = { D.ARMOR_BUFF_IDS[1], D.SPELL_ARCANE_INTELLECT } }
+        ns.UpdateBuffState()
+        assert.are.same({}, pending())
+    end)
+
+    it("writes nothing in combat and catches up when it ends", function()
+        local ns, db = login()
+        local D = ns.D
+        STATE.units.player = { auras = { armorAura(D, 10), intellect(D, 30) } }
+        ns.UpdateBuffState()
+        FIRE("PLAYER_REGEN_DISABLED")
+        STATE.combat = true
+        ADVANCE((10 - db.armorRenewMinutes) * 60)
+        assert.is_false(ns.buttons.Armor.antsShown)
+        STATE.combat = false
+        FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.is_true(ns.buttons.Armor.antsShown)
+        assert.are.same({}, STATE.errors)
+    end)
+end)
+
 describe("the renew times", function()
     it("are in settings version 4 with their defaults, clamped and kept", function()
         local ns, db = login({ dbVersion = 3 })

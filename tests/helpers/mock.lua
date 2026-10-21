@@ -269,7 +269,7 @@ end
 TICKERS = {}
 -- NewTimer keeps its delay and waits for ADVANCE: RUNTIMERS would fire it at once, and with the
 -- clock standing still a timer that re-arms itself would run 50 rounds.
-local delayed = {}
+DELAYED = {} -- timers waiting for ADVANCE, visible to specs
 C_Timer = {
   After = function(_, f) table.insert(timers, f) end,
   NewTicker = function(_, f) local t = New("Ticker"); t.fn = f; TICKERS[#TICKERS + 1] = t; return t end,
@@ -277,20 +277,21 @@ C_Timer = {
     local t = { delay = delay, due = GetTime() + delay, fn = f, cancelled = false }
     function t:Cancel() self.cancelled = true end
     function t:IsCancelled() return self.cancelled end
-    delayed[#delayed + 1] = t
+    DELAYED[#DELAYED + 1] = t
     return t
   end,
 }
 -- Moves the clock and runs the timers now due, earliest first
 function ADVANCE(seconds)
   STATE.now = STATE.now + seconds
-  while true do
+  for round = 1, 100 do -- a timer re-arming itself at the same moment would loop forever
+    if round == 100 then table.insert(STATE.errors, "ADVANCE: timers keep re-arming") break end
     local nextT, at
-    for i, t in ipairs(delayed) do
-      if not t.cancelled and t.due <= STATE.now and (not nextT or t.due < delayed[at].due) then nextT, at = t, i end
+    for i, t in ipairs(DELAYED) do
+      if not t.cancelled and t.due <= STATE.now and (not nextT or t.due < DELAYED[at].due) then nextT, at = t, i end
     end
     if not nextT then break end
-    table.remove(delayed, at)
+    table.remove(DELAYED, at)
     local ok, err = pcall(nextT.fn)
     if not ok then table.insert(STATE.errors, "timer: " .. err) end
   end

@@ -98,6 +98,9 @@ describe("the mock", function()
         assert.are.equal(0, C_UnitAuras.GetAuraDataBySpellName("party1", "Spell99").expirationTime)
         local indexed = C_UnitAuras.GetAuraDataByIndex("party1", 2)
         assert.are.same({ 1460, 400 }, { indexed.spellId, indexed.expirationTime })
+        -- a higher rank answers to the spell's one name
+        STATE.units.party2 = { auras = { { id = 10157, as = 1459 } } }
+        assert.are.equal(10157, C_UnitAuras.GetAuraDataBySpellName("party2", "Spell1459").spellId)
 
         local fired = {}
         local early = C_Timer.NewTimer(50, function() fired[#fired + 1] = "early" end)

@@ -264,7 +264,13 @@ function ns.UpdateBuffKey()
     local source, n
     for _, k in ipairs(db.order) do
         local b = buttons[k]
-        if KEY_CLICK[k] and b:IsShown() and b.antsShown then source, n = k, KEY_CLICK[k] break end
+        -- A glowing button whose click has nothing to do - Brilliance with every needy raid group
+        -- out of range - is passed, so it hides no missing armor (demo mode writes no types)
+        if KEY_CLICK[k] and b:IsShown() and b.antsShown
+            and (ns.IsDemo() or b:GetAttribute("type" .. KEY_CLICK[k])) then
+            source, n = k, KEY_CLICK[k]
+            break
+        end
     end
     local key, b = ns.buffKey, source and buttons[source]
     SetAttr(key, "scbsource", source)

@@ -395,17 +395,20 @@ C_Container = {
   GetContainerItemInfo = function(bag, slot) return BAGS[bag] and BAGS[bag][slot] end,
 }
 -- Buffs by name: AURAS[unit .. name], or a spell in a described unit's auras. An aura is a
--- spell ID (no expiry) or { id = ..., expires = GetTime() value }.
+-- spell ID (no expiry) or { id = ..., expires = GetTime() value, as = spell ID whose name it
+-- carries }: in the client every rank answers to the spell's one name.
 local function Aura(a)
-  if type(a) == "table" then return { spellId = a.id, expirationTime = a.expires or 0, name = "A" .. a.id } end
-  return { spellId = a, expirationTime = 0, name = "A" .. a }
+  if type(a) == "table" then
+    return { spellId = a.id, expirationTime = a.expires or 0, name = "A" .. a.id, as = a.as or a.id }
+  end
+  return { spellId = a, expirationTime = 0, name = "A" .. a, as = a }
 end
 C_UnitAuras = { GetAuraDataBySpellName = function(u, name)
   if AURAS[u .. name] then return { expirationTime = 0 } end
   local r = U(u)
   for _, a in ipairs(r and r.auras or {}) do
     local aura = Aura(a)
-    if "Spell" .. aura.spellId == name then return aura end
+    if "Spell" .. aura.as == name then return aura end
   end
 end }
 AURAS = {}

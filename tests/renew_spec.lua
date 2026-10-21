@@ -222,7 +222,7 @@ describe("the renew sliders", function()
         local D, L = ns.D, ns.L
         ns.ToggleSettings()
         local intelRow, intelSlider, intelBox = rowOf(ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT"))
-        local armorRow, armorSlider, armorBox = rowOf(L.TRACK_ARMOR)
+        local armorRow, armorSlider, armorBox = rowOf(L.ARMOR)
         assert.is_not_nil(intelRow); assert.is_not_nil(intelBox); assert.is_not_nil(intelSlider)
         assert.is_not_nil(armorRow); assert.is_not_nil(armorBox); assert.is_not_nil(armorSlider)
         local _, ix, iy = intelRow:GetPoint() -- TOPLEFT, x, y

@@ -217,7 +217,7 @@ UI.AddHeader("RENEW_LABEL", 6)
 for _, s in ipairs({
     { key = "intellectRenewMinutes", max = D.INTELLECT_RENEW_MAX, column = "left",
       label = function() return ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT") end },
-    { key = "armorRenewMinutes", max = D.ARMOR_RENEW_MAX, column = "right", label = "TRACK_ARMOR" },
+    { key = "armorRenewMinutes", max = D.ARMOR_RENEW_MAX, column = "right", label = "ARMOR" },
 }) do
     UI.AddNumberSlider({
         label = s.label, min = 0, max = s.max, column = s.column,

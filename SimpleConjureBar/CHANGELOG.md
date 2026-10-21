@@ -9,6 +9,10 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 - Armor, Arcane Intellect and the mana gem are highlighted with the modern client's glow, as a
   spell ready to use is, instead of the marching ants. Its color and speed are set as before; a
   change of the speed shows at once.
+- The Arcane Intellect tooltip names what a left click casts and on whom, as it did for the right
+  click: the member for a single buff, "your group" for Arcane Brilliance, in a raid its group by
+  number.
+- A left click on the handle in combat says that the bar cannot move then.
 
 ### Fixed
 - On a character of another class, hovering or clicking SimpleConjureBar in the AddOn menu next

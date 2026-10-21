@@ -147,7 +147,10 @@ end)
 
 handle:SetScript("OnMouseDown", function(self, btn)
     if btn == "LeftButton" then
-        if not db.locked and not InCombatLockdown() then
+        -- The bar holds secure buttons, so it is protected in combat and cannot move
+        if InCombatLockdown() then
+            ns.Print(L.NOT_IN_COMBAT)
+        elseif not db.locked then
             self.moving = true
             bar:StartMoving()
         end
@@ -242,6 +245,7 @@ function ns.ShowTooltip(self)
     local hint = self.hintKey and L[self.hintKey] or self.hint
     if hint then
         GameTooltip:AddLine(" ")
+        if self.hintLeft then GameTooltip:AddLine(self.hintLeft, 0, 1, 0) end
         GameTooltip:AddLine(hint, 0, 1, 0)
         if self.hint2 then GameTooltip:AddLine(self.hint2, 0, 1, 0) end
     end

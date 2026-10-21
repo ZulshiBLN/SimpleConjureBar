@@ -168,6 +168,29 @@ local function UnitShortName(unit)
     return (UnitName(unit)) or unit
 end
 
+-- Whom a click's spell reaches, for its tooltip line: Brilliance covers the target's group -
+-- in a raid its subgroup, by number - a single buff the member. Solo there is nobody to name.
+local function TargetText(spell, unit)
+    if not IsInGroup() then return ns.SpellName(spell) or "?" end
+    local whom
+    if spell == D.SPELL_ARCANE_BRILLIANCE then
+        whom = L.TARGET_GROUP
+        if IsInRaid() then
+            local index = tonumber(unit:match("^raid(%d+)$"))
+            if not index then
+                for i = 1, GetNumGroupMembers() do
+                    if UnitIsUnit(RAID_UNITS[i], unit) then index = i break end
+                end
+            end
+            local sub = index and select(3, GetRaidRosterInfo(index))
+            if sub then whom = L.TARGET_SUBGROUP:format(sub) end
+        end
+    else
+        whom = UnitShortName(unit)
+    end
+    return (ns.SpellName(spell) or "?") .. " > " .. whom
+end
+
 -- Sets spells, fixed target units and the tooltip hint (out of combat only)
 local function ApplyTargets(b, singleUnit, groupUnit)
     -- Rank fitting the chosen player's level
@@ -195,9 +218,8 @@ local function ApplyTargets(b, singleUnit, groupUnit)
     if b.leftSpell ~= left then b.icon:SetTexture(GetSpellTex(left)) end
     b.leftSpell, b.rightSpell, b.spellId = left, right, left
     b.leftItem = nil
-    local rightText = ns.SpellName(right) or "?"
-    if grouped then rightText = rightText .. " > " .. UnitShortName(rightUnit) end
-    b.hint = L.HINT_RIGHT:format(rightText)
+    b.hintLeft = L.HINT_LEFT:format(TargetText(left, leftUnit))
+    b.hint = L.HINT_RIGHT:format(TargetText(right, rightUnit))
 
     if IsDemo() then
         SetAttr(b, "type1", nil)

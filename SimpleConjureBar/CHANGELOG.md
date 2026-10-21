@@ -6,6 +6,12 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 ## [1.1.0] - Unreleased
 
 ### Added
+- Buff & Run: a middle click on Arcane Intellect buffs your target and then targets the next
+  friendly player, one click per player. It casts Arcane Intellect only, never Brilliance, in the
+  rank the player's level accepts, and passes anyone who is no mana user or already has it. It
+  does nothing in combat or during the global cooldown, and passes players flagged for PvP unless
+  "Allow PvP buffing" is on. Both switches are on the General tab; Buff & Run is on by default.
+  It has its own key binding.
 - The flyouts of Armor, Teleport and Portal open in a direction you choose on the General tab -
   automatic by screen half as before, up or down for a horizontal bar, right or left for a
   vertical one - and close by themselves 1 to 5 seconds (3 by default) after the mouse has left

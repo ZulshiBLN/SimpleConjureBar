@@ -29,7 +29,7 @@ The addon loads for mages only.
 | Button | Left click | Right click | Middle click |
 |---|---|---|---|
 | Armor | Cast the last armor | Open the armor flyout (choice is remembered) | – |
-| Arcane Intellect | Solo: single buff, group: Arcane Brilliance | The other one | – |
+| Arcane Intellect | Solo: single buff, group: Arcane Brilliance | The other one | Buff & Run |
 | Mana Gem | Use the best gem | Conjure the highest missing gem | – |
 | Water / Food | Consume the best item | Conjure (rank fitting a targeted player) | Trade water & food to the target |
 | Teleport / Portal | Last destination | Open the destinations (choice is remembered) | – |
@@ -40,6 +40,13 @@ The addon loads for mages only.
   goes to the subgroup with the most missing buffs. The button is locked and greyed out in combat.
   The number on the button shows how many mana users are missing the buff; its tooltip names what
   each click casts and on whom - the member, "your group" for Brilliance, in a raid its group.
+- **Buff & Run** - a middle click on Arcane Intellect buffs the player you target and then targets
+  the next friendly player, so you can buff passing players by clicking again and again. Only
+  Arcane Intellect, never Brilliance, in the highest rank his level accepts, and only for a mana
+  user who still needs it; anyone else is passed. The game picks the next player, sometimes one
+  out of range: then the click only moves on. A click during the global cooldown does nothing,
+  so nobody is skipped; in combat nothing happens. A player flagged for PvP is passed - buffing
+  him would flag you - unless "Allow PvP buffing" is on. Both are switched on the General tab.
 - **Highlights** - the modern client's glow - show a missing armor, missing Intellect and a missing
   mana gem.
 - **Rune counts** on Teleport/Portal change color at the warning threshold and at 0.
@@ -59,7 +66,8 @@ window closes when combat starts and reopens afterwards.
 
 - **General**: language, hide in combat, hide the minimap button, scale, border, background
   color, orientation, growth direction, flyout direction (automatic by screen half, or a fixed
-  side), how long an open flyout waits for the mouse (1-5 s), demo mode, Report bug, Reload UI
+  side), how long an open flyout waits for the mouse (1-5 s), demo mode, Buff & Run (on by default)
+  with "Allow PvP buffing" (off by default), Report bug, Reload UI
 - **Tracking**: show/hide and colors of Armor, Intellect and Mana Gem, highlight speed
 - **Supplies**: rune warning threshold and colors, auto-buy, gold reserve and target amounts
 - **Order**: drag and drop the button order
@@ -107,6 +115,7 @@ In a section of their own under *Options > Key Bindings > SimpleConjureBar*:
 |---|---|
 | Cast next buff | One press, one cast: what the first highlighted button of the bar (in the bar's order) would fix - your armor, Arcane Intellect on the next member, a mana gem conjured. Nothing when nothing is highlighted. In combat it keeps what it held when the fight started - your armor, if nothing was highlighted then - and never casts Arcane Intellect, as the button does not. |
 | Open Settings | Opens or closes the settings window; not in combat. |
+| Buff & Run | The Arcane Intellect button's middle click: buffs the target, then targets the next friendly player. Also with the button hidden. One player per press. |
 
 ## Languages
 
@@ -123,7 +132,7 @@ and can be overridden in the General tab (saved account-wide, applied without re
 | `Bar.lua` | Bar frame, handle, secure buttons, glow, flyouts, the "Cast next buff" key, colors |
 | `Buttons.lua` | Button setup, layout (`Rebuild`), flyout direction and auto-close, counts, the buff key's action, bar events |
 | `Bindings.xml` | The two keys the game's Key Bindings offer |
-| `Intellect.lua` | Group scan, buff targets, buff count, armor highlight |
+| `Intellect.lua` | Group scan, buff targets, buff count, armor highlight, Buff & Run |
 | `Merchant.lua` | Reagent auto-buy |
 | `Trade.lua` | Trading water and food |
 | `Macros.lua` | Character macro "SCB Polymorph", macro window |

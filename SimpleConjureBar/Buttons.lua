@@ -227,7 +227,8 @@ local function SetupFlyout(main)
     for i, id in ipairs(known) do
         local c = ns.GetFlyoutChild(main, i)
         c.spellId = id
-        SetAttr(c, "type", (not IsDemo()) and "spell" or nil)
+        -- An icon only chooses (no "type", so a click casts nothing); its secure snippet hands
+        -- the spell to the main button, which casts it (Bar.lua GetFlyoutChild)
         SetAttr(c, "spell", id)
         c.icon:SetTexture(GetSpellTex(id))
         if c.label then

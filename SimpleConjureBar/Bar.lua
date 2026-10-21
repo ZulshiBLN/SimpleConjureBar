@@ -499,19 +499,23 @@ function ns.GetFlyoutChild(main, i)
     local c = fly.buttons[i]
     if c then return c end
 
+    -- An icon has no "type": a click on it chooses and casts nothing; the main button casts
+    -- (Michel, 2026-10-21, as in SmartBlessingBar)
     c = CreateSecureButton(fly:GetName() .. i, fly)
-    c:SetAttribute("type", "spell")
     c:SetScript("OnEnter", ShowTooltip)
     c:SetScript("OnLeave", GameTooltip_Hide)
 
-    -- After the click: copy the spell to the main button and close the menu (secure, works in
-    -- combat). An armor chosen also reaches the buff key while it holds Armor's click; the line
-    -- is in the Armor menu's snippet only, so a teleport never reaches the key.
+    -- A left click chooses: copy the spell to the main button and close the menu (secure, works
+    -- in combat). An armor chosen also reaches the buff key while it holds Armor's click; the
+    -- line is in the Armor menu's snippet only, so a teleport never reaches the key.
     local toKey = main.isArmor and [[
         local key = owner:GetFrameRef("buffkey")
         if key:GetAttribute("scbsource") == "Armor" then key:SetAttribute("spell1", self:GetAttribute("spell")) end
     ]] or ""
-    header:WrapScript(c, "OnClick", [[ return nil, "done" ]], toKey .. (([[
+    header:WrapScript(c, "OnClick", [[
+        if button ~= "LeftButton" then return false end
+        return nil, "done"
+    ]], toKey .. (([[
         local main = owner:GetFrameRef("main_KEY")
         main:SetAttribute("spell1", self:GetAttribute("spell"))
         if not down then
@@ -524,7 +528,8 @@ function ns.GetFlyoutChild(main, i)
     if main.isArmor then AddArmorLabel(c) end
 
     -- Remember the choice and update the main button icon
-    c:HookScript("OnClick", function(self, _, down)
+    c:HookScript("OnClick", function(self, button, down)
+        if button ~= "LeftButton" then return end
         db.last[main.key] = self.spellId
         main.spellId = self.spellId
         main.icon:SetTexture(GetSpellTex(self.spellId))

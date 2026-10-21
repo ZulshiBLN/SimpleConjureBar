@@ -45,7 +45,8 @@ The addon loads for mages only.
 - **Rune counts** on Teleport/Portal change color at the warning threshold and at 0.
 - **Auto-buy** buys runes and Arcane Powder at reagent vendors up to the configured amounts and
   never spends below the configured gold reserve (default 1 gold).
-- **Flyouts** (armor, teleports, portals) close by themselves a few seconds after the mouse has
+- **Flyouts** (armor, teleports, portals): a left click on an entry only chooses it; the button on
+  the bar casts the choice. They close by themselves a few seconds after the mouse has
   left them, also in combat. The bar cannot be moved in combat; the handle says so.
 
 ## Settings

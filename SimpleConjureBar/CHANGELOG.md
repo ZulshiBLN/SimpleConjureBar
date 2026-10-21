@@ -16,6 +16,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   does not. "Open Settings" opens or closes the settings window.
 
 ### Changed
+- A click in the armor, teleport or portal flyout only chooses, and the flyout closes; the button
+  on the bar casts the choice. Before, the click in the flyout cast at once.
 - Armor, Arcane Intellect and the mana gem are highlighted with the modern client's glow, as a
   spell ready to use is, instead of the marching ants. Its color and speed are set as before; a
   change of the speed shows at once.
@@ -25,6 +27,10 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 - A left click on the handle in combat says that the bar cannot move then.
 
 ### Fixed
+- No flyout opened in combat while one of them held no spell yet - the portals before you learn
+  them - and BugSack showed "Invalid frame handle".
+- With the flyout direction on automatic, a flyout kept opening towards where the bar had been
+  before you moved it.
 - On a character of another class, hovering or clicking SimpleConjureBar in the AddOn menu next
   to the minimap raised a Lua error. The entry now does nothing there.
 

@@ -131,6 +131,45 @@ describe("the flyout direction", function()
     end)
 end)
 
+-- Michel, 2026-10-21, as in SmartBlessingBar: a click in a flyout only chooses; the main
+-- button casts
+describe("a choice in a flyout", function()
+    for _, inCombat in ipairs({ false, true }) do
+        it("casts nothing and makes the main button cast it" .. (inCombat and ", in combat" or ""), function()
+            local ns = login(nil)
+            for _, key in ipairs({ "Armor", "Teleport" }) do
+                local main = ns.buttons[key]
+                RUNCLICK(main, "RightButton", false)
+                STATE.combat = inCombat
+                local icon = main.fly.buttons[2]
+                _G.STATE.casts = {}
+                RUNCLICK(icon, "LeftButton", true)
+                RUNCLICK(icon, "LeftButton", false)
+                assert.are.same({}, STATE.casts, key)
+                assert.is_false(main.fly:IsShown(), key)
+                assert.are.equal(icon:GetAttribute("spell"), main:GetAttribute("spell1"), key)
+                RUNCLICK(main, "LeftButton", false)
+                assert.are.same({ { spell = icon:GetAttribute("spell") } }, STATE.casts, key)
+                STATE.combat = false
+            end
+            assert.are.same({}, STATE.errors)
+        end)
+    end
+
+    it("is made by the left button only", function()
+        local ns = login(nil)
+        local main = ns.buttons.Armor
+        local before = main:GetAttribute("spell1")
+        RUNCLICK(main, "RightButton", false)
+        local icon = main.fly.buttons[2]
+        assert.are_not.equal(before, icon:GetAttribute("spell"))
+        RUNCLICK(icon, "RightButton", false)
+        RUNCLICK(icon, "MiddleButton", false)
+        assert.are.equal(before, main:GetAttribute("spell1"))
+        assert.is_true(main.fly:IsShown())
+    end)
+end)
+
 describe("the flyout auto-close", function()
     it("closes a flyout once the mouse has left it and its button that long", function()
         local ns, db = login(nil)

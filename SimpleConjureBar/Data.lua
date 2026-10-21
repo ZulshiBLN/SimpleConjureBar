@@ -181,7 +181,8 @@ D.REPORT_SAFE = {
     "^%l%l%u%u$", "^auto$",                                 -- locale codes
     "^/use item:%d+$", "^/click SimpleConjureBarBuffRun LeftButton 1$", "^/targetfriendplayer$",
 }
-D.BUG_REPORT_URL = "https://github.com/ZulshiBLN/SimpleConjureBar/issues"
+-- The issue form with one field for the code (.github/ISSUE_TEMPLATE/bug_report.yml)
+D.BUG_REPORT_URL = "https://github.com/ZulshiBLN/SimpleConjureBar/issues/new?template=bug_report.yml"
 
 D.ADDON_ICON = "Interface\\Icons\\INV_Drink_06" -- same icon as in the AddOn list (TOC IconTexture)
 

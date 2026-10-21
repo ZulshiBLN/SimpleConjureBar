@@ -96,6 +96,11 @@ function Methods:IsMouseOver() return false end
 function Methods:GetTop() return 400 end
 function Methods:GetPushedTexture() return New("Texture", nil, self) end
 function Methods:GetHighlightTexture() return New("Texture", nil, self) end
+-- An edit box's selection: "all" for HighlightText(), "none" for HighlightText(0, 0); focus
+-- runs OnEditFocusGained, as in the client
+function Methods:HighlightText(a, b) self.selection = (a == nil and b == nil) and "all" or (a == b and "none" or "part") end
+function Methods:SetFocus() self.focused = true; Run(self, "OnEditFocusGained") end
+function Methods:ClearFocus() self.focused = false end
 function Methods:GetChecked() return self.checked end
 function Methods:SetChecked(v) self.checked = v end
 function Methods:GetValue() return self.value or 0 end

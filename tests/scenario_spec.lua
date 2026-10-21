@@ -245,7 +245,8 @@ describe("the addon in a mocked client", function()
         SlashCmdList.SIMPLECONJUREBAR("bug")
         local r = SimpleConjureBarReport
         assert.is_true(r and r:IsShown())
-        local text = r.report:GetText() or ""
+        -- the box holds the report as a code (ruleset plan 2026-10-21-bug-report-code)
+        local text = ns.ReportCode.Decode(r.report:GetText() or "") or ""
         assert.is_truthy(text:find("Addon version: " .. ns.VERSION, 1, true))
         assert.is_truthy(text:find("Bar.lua:10", 1, true))
         assert.is_falsy(text:find("OtherAddon", 1, true))
@@ -253,7 +254,7 @@ describe("the addon in a mocked client", function()
         assert.is_falsy(text:find("Name_player", 1, true))
 
         r.desc:SetText("Bar vanished"); RUNSCRIPT(r.desc, "OnTextChanged", true)
-        assert.is_truthy((r.report:GetText() or ""):find("Bar vanished", 1, true))
+        assert.is_truthy((ns.ReportCode.Decode(r.report:GetText() or "") or ""):find("Bar vanished", 1, true))
 
         -- Where to send it: the repository's issues, shown and selectable
         assert.is_truthy(ns.D.BUG_REPORT_URL:find("^https://github%.com/ZulshiBLN/SimpleConjureBar/issues"))

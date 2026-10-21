@@ -41,6 +41,46 @@ describe("the report code", function()
     end)
 end)
 
+-- A button of the report window by its label
+local function button(label)
+    for _, c in ipairs(SimpleConjureBarReport.children) do
+        if c.kind == "Button" and c.text == label then return c end
+    end
+end
+
+describe("the report window", function()
+    it("offers the code selected, the content to read, and the form's link", function()
+        local RC, ns = codec()
+        local L = ns.L
+        ns.OpenBugReport()
+        local f = SimpleConjureBarReport
+        local box = f.report
+        assert.is_truthy(box:GetText():find("^SCB1:"))
+        assert.are.equal("## SimpleConjureBar bug report", (RC.Decode(box:GetText())):match("^[^\n]+"))
+        assert.are.equal("all", box.selection)
+
+        local toggle = button(L.REPORT_SHOW_CONTENT)
+        assert.is_not_nil(toggle)
+        RUNSCRIPT(toggle, "OnClick")
+        assert.is_truthy(box:GetText():find("^## SimpleConjureBar bug report"))
+        assert.are.equal("none", box.selection)
+        box:SetFocus()
+        assert.are.equal("none", box.selection) -- a focus does not select the content
+        -- typing into it restores the content, not the code
+        box:SetText("edited"); RUNSCRIPT(box, "OnTextChanged", true)
+        assert.is_truthy(box:GetText():find("^## SimpleConjureBar bug report"))
+        assert.are.equal(L.REPORT_SHOW_CODE, toggle.text)
+
+        RUNSCRIPT(toggle, "OnClick")
+        assert.is_truthy(box:GetText():find("^SCB1:"))
+        assert.are.equal("all", box.selection)
+        assert.are.equal(L.REPORT_SHOW_CONTENT, toggle.text)
+
+        assert.are.equal("https://github.com/ZulshiBLN/SimpleConjureBar/issues/new?template=bug_report.yml",
+            ns.D.BUG_REPORT_URL)
+    end)
+end)
+
 describe("the decoder", function()
     local decoder = dofile("tools/decode-report.lua")
     local function run(input)

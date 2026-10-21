@@ -282,19 +282,34 @@ end
 local frame
 local MAX_TEXT = 500 -- letters of the description and of the details
 
+-- The box shows the code, selected for Ctrl+C, or - "Show content" - the readable report,
+-- never selected, so what gets copied is the code (ruleset plan 2026-10-21-bug-report-code)
+local function Shown() return frame.showContent and frame.reportText or frame.codeText end
+
+local function MarkSelection()
+    if frame.showContent then frame.report:HighlightText(0, 0) else frame.report:HighlightText() end
+end
+
 local function SelectReport()
     frame.report:SetFocus()
-    frame.report:HighlightText()
+    MarkSelection()
 end
 
 local function FormValues()
     return { description = frame.desc:GetText(), area = frame.area, details = frame.details:GetText() }
 end
 
+local function ShowBox()
+    frame.report:SetText(Shown())
+    frame.report:SetCursorPosition(0)
+    MarkSelection()
+    SetL(frame.toggle, frame.showContent and "REPORT_SHOW_CODE" or "REPORT_SHOW_CONTENT")
+end
+
 local function Refresh()
     frame.reportText = BuildReport(FormValues())
-    frame.report:SetText(frame.reportText)
-    frame.report:SetCursorPosition(0)
+    frame.codeText = ns.ReportCode.Encode(frame.reportText)
+    ShowBox()
 end
 
 -- A one-line text field: typing rebuilds the report, Enter selects it for copying
@@ -400,12 +415,12 @@ local function CreateWindow()
     report:SetFontObject(ChatFontNormal or GameFontHighlightSmall)
     report:SetWidth(W - 2 * PAD - 30)
     report:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    report:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
-    -- Read-only: user edits are undone right away
+    report:SetScript("OnEditFocusGained", MarkSelection)
+    -- Read-only: user edits are undone right away, back to what the box shows
     report:SetScript("OnTextChanged", function(self, userInput)
         if userInput then
-            self:SetText(frame.reportText or "")
-            self:HighlightText()
+            self:SetText(Shown() or "")
+            MarkSelection()
         end
     end)
     scroll:SetScrollChild(report)
@@ -438,6 +453,15 @@ local function CreateWindow()
     done:SetPoint("BOTTOMRIGHT", -PAD, 16)
     SetL(done, "CLOSE")
     done:SetScript("OnClick", function() frame:Hide() end)
+
+    local toggle = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    toggle:SetSize(160, 22)
+    toggle:SetPoint("BOTTOMLEFT", PAD, 16)
+    toggle:SetScript("OnClick", function()
+        frame.showContent = not frame.showContent
+        ShowBox()
+    end)
+    frame.toggle = toggle
 
     -- Built out of combat only: names and auras are readable then (phase 1 research - aura
     -- reads raise an error in combat). The window closes when combat starts and comes back
@@ -479,5 +503,6 @@ function ns.OpenBugReport()
     frame.desc:SetText("")
     frame.details:SetText("")
     frame.area = "OTHER"
+    frame.showContent = false
     if frame:IsShown() then Refresh() SelectReport() else frame:Show() end
 end

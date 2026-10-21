@@ -160,6 +160,7 @@ D.VALUE_DEFAULTS = {
     hideCombat    = false,
     autoBuy       = true,
     showBorder    = true,
+    showAnchor    = false, -- the handle stays visible, not only under the mouse
     showIntellect = true,
     showArmor     = true,
     showGem       = true,

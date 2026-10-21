@@ -1,0 +1,8 @@
+<!-- The keys the game's Key Bindings offer in a section of their own, SimpleConjureBar (ruleset
+     plan 2026-10-21-bar-alignment). The client reads this file by itself; Locales.lua names the
+     section (BINDING_HEADER_SIMPLECONJUREBAR) and the keys. No header attribute: in
+     SmartBlessingBar it added a sub-header of the same name that broke the list in game. -->
+<Bindings>
+    <Binding name="CLICK SimpleConjureBarBuffAll:LeftButton" category="BINDING_HEADER_SIMPLECONJUREBAR"/>
+    <Binding name="CLICK SimpleConjureBarSettingsKey:LeftButton" category="BINDING_HEADER_SIMPLECONJUREBAR"/>
+</Bindings>

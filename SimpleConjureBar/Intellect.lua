@@ -303,6 +303,8 @@ function ns.UpdateBuffState()
         end
     end
     UpdateTicker()
+    -- A new Intellect target changes no glow, but the buff key casts on it (Buttons.lua)
+    ns.UpdateBuffKey()
 end
 local UpdateBuffState = ns.UpdateBuffState
 

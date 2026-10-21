@@ -87,6 +87,13 @@ end)
 minimapBtn:SetScript("OnEnter", function(self) ShowEntryTooltip(self, "ANCHOR_LEFT") end)
 minimapBtn:SetScript("OnLeave", GameTooltip_Hide)
 
+-- "Settings" key (Bindings.xml): a plain hidden button. The window refuses to open in combat
+-- itself (Settings.lua), with its message.
+local settingsKey = CreateFrame("Button", "SimpleConjureBarSettingsKey", UIParent)
+settingsKey:Hide()
+settingsKey:RegisterForClicks("AnyUp")
+settingsKey:SetScript("OnClick", function() ns.ToggleSettings() end)
+
 ---------------------------------------------------------------------------
 -- AddOn compartment (Retail addon menu next to the minimap). The globals the TOC names
 -- live in Core.lua, ahead of the mage check, and call these.

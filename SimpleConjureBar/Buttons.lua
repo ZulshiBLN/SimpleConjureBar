@@ -252,6 +252,32 @@ local function SetupFlyout(main)
 end
 
 ---------------------------------------------------------------------------
+-- "Cast next buff" key (Bar.lua): the action that clears the first glowing, shown button in the
+-- bar's order - Armor's and Intellect's left click, the Mana Gem's right click (conjure). It is
+-- set again on every glow change, after a rebuild and a buff update. The key is protected:
+-- a change in combat waits for its end.
+---------------------------------------------------------------------------
+local KEY_CLICK = { Armor = "1", Intellect = "1", ManaGem = "2" }
+local keyPending = false
+function ns.UpdateBuffKey()
+    if not db then return end
+    if InCombatLockdown() then keyPending = true return end
+    keyPending = false
+    local source, n
+    for _, k in ipairs(db.order) do
+        local b = buttons[k]
+        if KEY_CLICK[k] and b:IsShown() and b.antsShown then source, n = k, KEY_CLICK[k] break end
+    end
+    local key, b = ns.buffKey, source and buttons[source]
+    SetAttr(key, "scbsource", source)
+    SetAttr(key, "type1", b and b:GetAttribute("type" .. n) or nil)
+    SetAttr(key, "spell1", b and b:GetAttribute("spell" .. n) or nil)
+    SetAttr(key, "unit1", b and n == "1" and b:GetAttribute("unit1") or nil)
+    -- Demo mode writes no action; a press prints this spell instead
+    key.demoSpell = b and (b.isGem and b.conjureSpell or b.leftSpell or b.spellId) or nil
+end
+
+---------------------------------------------------------------------------
 -- Rebuild (out of combat only)
 ---------------------------------------------------------------------------
 -- Each builder returns true when its button is shown
@@ -319,6 +345,7 @@ function ns.Rebuild()
     end
     UpdateCounts()
     ns.UpdateBuffState()
+    ns.UpdateBuffKey()
 end
 local Rebuild = ns.Rebuild
 
@@ -364,6 +391,7 @@ events:SetScript("OnEvent", function(_, event)
         elseif conjurePending then
             UpdateConjureForTarget()
         end
+        if keyPending then ns.UpdateBuffKey() end
     else
         ns.QueueRebuild()
     end

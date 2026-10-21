@@ -84,6 +84,7 @@ describe(".luacheckrc", function()
             "function SimpleConjureBar_OnCompartmentClick() end",
             "function SimpleConjureBar_OnCompartmentEnter() end",
             "function SimpleConjureBar_OnCompartmentLeave() end",
+            'BINDING_HEADER_SIMPLECONJUREBAR = "x"',
         }, "\n") .. "\n"
         assert.are.equal(0, warningsFor(allowed))
     end)

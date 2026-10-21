@@ -19,6 +19,9 @@ globals = {
     "SimpleConjureBar_OnCompartmentClick",
     "SimpleConjureBar_OnCompartmentEnter",
     "SimpleConjureBar_OnCompartmentLeave",
+    -- The Key Bindings section's name. The keys' own names contain spaces, are written
+    -- through _G[...] and luacheck cannot see them; keys_spec checks every global written.
+    "BINDING_HEADER_SIMPLECONJUREBAR",
 }
 
 -- The WoW API the addon reads, listed by hand so a typo or a removed API is

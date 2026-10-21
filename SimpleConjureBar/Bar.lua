@@ -341,6 +341,8 @@ function ns.SetAnts(btn, shown)
         btn.ants:Hide()
         btn.antsAnim:Stop()
     end
+    -- The buff key casts what clears the first glowing button (Buttons.lua)
+    if ns.UpdateBuffKey then ns.UpdateBuffKey() end
 end
 
 ---------------------------------------------------------------------------
@@ -465,6 +467,25 @@ ns.buttons = {
     Food = food, Teleport = tele, Portal = portal,
 }
 
+---------------------------------------------------------------------------
+-- "Cast next buff" key (Bindings.xml): a hidden secure button holding what clears the first
+-- glowing button of the bar. ns.UpdateBuffKey (Buttons.lua) writes it out of combat.
+---------------------------------------------------------------------------
+local buffKey = CreateFrame("Button", "SimpleConjureBarBuffAll", UIParent, "SecureActionButtonTemplate")
+buffKey:Hide()
+buffKey:RegisterForClicks("AnyUp", "AnyDown")
+ns.buffKey = buffKey
+header:SetFrameRef("buffkey", buffKey)
+-- Intellect is locked in combat on the key as on its button
+header:WrapScript(buffKey, "OnClick", [[
+    if PlayerInCombat() and self:GetAttribute("scbsource") == "Intellect" then return false end
+]])
+buffKey:HookScript("OnClick", function(self, _, down)
+    if IsDemo() and not down and self.demoSpell then
+        DemoPrint(L.DEMO_CAST, ns.SpellName(self.demoSpell) or "?")
+    end
+end)
+
 -- Flyout child buttons are created on demand
 function ns.GetFlyoutChild(main, i)
     local fly = main.fly
@@ -476,8 +497,14 @@ function ns.GetFlyoutChild(main, i)
     c:SetScript("OnEnter", ShowTooltip)
     c:SetScript("OnLeave", GameTooltip_Hide)
 
-    -- After the click: copy the spell to the main button and close the menu (secure, works in combat)
-    header:WrapScript(c, "OnClick", [[ return nil, "done" ]], (([[
+    -- After the click: copy the spell to the main button and close the menu (secure, works in
+    -- combat). An armor chosen also reaches the buff key while it holds Armor's click; the line
+    -- is in the Armor menu's snippet only, so a teleport never reaches the key.
+    local toKey = main.isArmor and [[
+        local key = owner:GetFrameRef("buffkey")
+        if key:GetAttribute("scbsource") == "Armor" then key:SetAttribute("spell1", self:GetAttribute("spell")) end
+    ]] or ""
+    header:WrapScript(c, "OnClick", [[ return nil, "done" ]], toKey .. (([[
         local main = owner:GetFrameRef("main_KEY")
         main:SetAttribute("spell1", self:GetAttribute("spell"))
         if not down then
@@ -498,6 +525,7 @@ function ns.GetFlyoutChild(main, i)
         if IsDemo() and not down then
             DemoPrint(main.isArmor and L.DEMO_CAST or L.DEMO_PICKED, ns.SpellName(self.spellId) or "?")
         end
+        ns.UpdateBuffKey()
     end)
 
     fly.buttons[i] = c

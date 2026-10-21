@@ -119,13 +119,13 @@ D.AMOUNT_MAX       = 100  -- highest auto-buy target amount per reagent
 D.RUNE_WARN_MAX    = 20
 D.GOLD_RESERVE_MAX = 1000 -- gold
 
--- "Marching ants" highlight: Blizzard flip book with 22 frames of 48 px in a 256 px texture
-D.ANTS_TEX    = "Interface\\SpellActivationOverlay\\IconAlertAnts"
-D.ANTS_FRAMES = 22
-D.ANTS_COLS   = 5
-D.ANTS_CELL   = 48 / 256
--- Seconds per frame, speed 1 (slow) to 5 (fast); 3 is the default
-D.ANTS_STEPS  = { 0.04, 0.02, 0.01, 0.0075, 0.005 }
+-- Highlight: the modern client's proc glow, Blizzard's flipbook atlas of 6 x 5 cells, 30 frames,
+-- drawn 1.4 times the button (as SmartBlessingBar, ruleset plan 2026-10-21-bar-alignment)
+D.GLOW_ATLAS = "UI-HUD-ActionBar-Proc-Loop-Flipbook"
+D.GLOW_ROWS, D.GLOW_COLUMNS, D.GLOW_FRAMES = 6, 5, 30
+D.GLOW_SCALE = 1.4
+-- Seconds per loop, speed 1 (slow) to 5 (fast); 3 is the default, Blizzard's own second
+D.GLOW_DURATIONS = { 2, 1.5, 1, 0.75, 0.5 }
 
 -- Where bug reports go (shown in the report window). Empty = no link, the window asks the user
 -- to send the report to the addon author instead.

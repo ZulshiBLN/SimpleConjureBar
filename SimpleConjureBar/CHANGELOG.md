@@ -5,6 +5,11 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 
 ## [1.1.0] - Unreleased
 
+### Changed
+- Armor, Arcane Intellect and the mana gem are highlighted with the modern client's glow, as a
+  spell ready to use is, instead of the marching ants. Its color and speed are set as before; a
+  change of the speed shows at once.
+
 ### Fixed
 - On a character of another class, hovering or clicking SimpleConjureBar in the AddOn menu next
   to the minimap raised a Lua error. The entry now does nothing there.

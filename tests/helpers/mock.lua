@@ -42,7 +42,33 @@ function Methods:GetScript(s) return self.scripts[s] end
 function Methods:HookScript(s, f) self.hooks[s] = self.hooks[s] or {}; table.insert(self.hooks[s], f) end
 function Methods:CreateFontString(n) return New("FontString", n, self) end
 function Methods:CreateTexture(n) return New("Texture", n, self) end
-function Methods:CreateAnimationGroup() return New("AnimationGroup", nil, nil) end
+-- Animation groups as the client's: they record their animations, looping and play state;
+-- the client plays them, a spec reads what was set
+function Methods:CreateAnimationGroup()
+  local group = { animations = {}, playing = false }
+  group.SetLooping = function(g, v) g.looping = v end
+  group.Play = function(g) g.playing = true end
+  group.Stop = function(g) g.playing = false end
+  group.IsPlaying = function(g) return g.playing end
+  group.CreateAnimation = function(g, kind)
+    local a = { kind = kind }
+    a.SetFlipBookRows = function(x, n) x.rows = n end
+    a.SetFlipBookColumns = function(x, n) x.columns = n end
+    a.SetFlipBookFrames = function(x, n) x.frames = n end
+    a.SetDuration = function(x, s) x.duration = s end
+    a.GetDuration = function(x) return x.duration end
+    table.insert(g.animations, a)
+    return a
+  end
+  return group
+end
+function Methods:SetAtlas(a) self.atlas = a end
+function Methods:SetTexture(t) self.texture = t end
+function Methods:SetVertexColor(r, g, b, a) self.vertexColor = { r, g, b, a } end
+-- The anchors a region was last given, in order (ClearAllPoints empties them)
+function Methods:SetPoint(...) self.points = rawget(self, "points") or {}; table.insert(self.points, { ... }) end
+function Methods:ClearAllPoints() self.points = {} end
+function Methods:GetPoint(i) local p = (rawget(self, "points") or {})[i or 1]; if p then return unpack(p) end end
 function Methods:GetFontString() if not self.fs then self.fs = New("FontString", nil, self) end return self.fs end
 function Methods:GetRegions() return unpack(self.regions) end
 function Methods:GetChildren() return unpack(self.children) end

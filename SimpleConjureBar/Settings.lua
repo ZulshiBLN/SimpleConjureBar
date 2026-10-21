@@ -196,7 +196,7 @@ end
 local MakeSlider = UI.MakeSlider
 
 -- Integer slider with label and value text. fmt(v) returns the displayed value.
-function UI.AddIntSlider(labelKey, key, minV, maxV, fmt, gap)
+function UI.AddIntSlider(labelKey, key, minV, maxV, fmt, gap, onChange)
     local ROW = 36
     local row = CreateFrame("Frame", nil, page)
     row:SetHeight(ROW)
@@ -229,6 +229,7 @@ function UI.AddIntSlider(labelKey, key, minV, maxV, fmt, gap)
         v = math.floor(v + 0.5)
         db[key] = v
         value:SetText(fmt(v))
+        if onChange then onChange(v) end
         ns.UpdateCounts()
     end)
     slider:SetScript("OnMouseWheel", function(self, delta) self:SetValue(self:GetValue() + delta) end)
@@ -326,11 +327,11 @@ function UI.AddNumberSlider(o)
     end
 end
 
--- Highlight speed: 5 steps, 3 = default
+-- Highlight speed: 5 steps, 3 = default. The glow's duration follows at once (ns.ApplyLook).
 function UI.AddSpeedSlider(key)
-    UI.AddIntSlider("OPT_ANTS_SPEED", key, 1, 5, function(v)
+    UI.AddIntSlider("OPT_ANTS_SPEED", key, 1, #D.GLOW_DURATIONS, function(v)
         return v == 3 and (v .. " (" .. L.DEFAULT .. ")") or tostring(v)
-    end)
+    end, nil, function() ns.ApplyLook() end)
 end
 
 -- Centered separator line in WoW style: 2 px gold, strong in the middle, fading to the ends.

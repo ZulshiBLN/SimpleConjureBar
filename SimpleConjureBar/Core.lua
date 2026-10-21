@@ -119,7 +119,7 @@ function ns.InitDB()
     end
     if not stopcastKnown then db.macroStopcast = V.macroStopcast end
     for _, key in ipairs({ "antsSpeed", "armorAntsSpeed", "gemAntsSpeed" }) do
-        db[key] = Num(db[key], 1, #D.ANTS_STEPS, V[key], true)
+        db[key] = Num(db[key], 1, #D.GLOW_DURATIONS, V[key], true)
     end
     for key, color in pairs(D.COLOR_DEFAULTS) do
         local c = db[key]

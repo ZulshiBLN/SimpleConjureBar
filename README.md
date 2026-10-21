@@ -39,7 +39,8 @@ The addon loads for mages only.
   addon picks the next mana user without the buff (members in range first). In a raid, Brilliance
   goes to the subgroup with the most missing buffs. The button is locked and greyed out in combat.
   The number on the button shows how many mana users are missing the buff.
-- **Highlights** ("marching ants") show a missing armor, missing Intellect and a missing mana gem.
+- **Highlights** - the modern client's glow - show a missing armor, missing Intellect and a missing
+  mana gem.
 - **Rune counts** on Teleport/Portal change color at the warning threshold and at 0.
 - **Auto-buy** buys runes and Arcane Powder at reagent vendors up to the configured amounts and
   never spends below the configured gold reserve (default 1 gold).

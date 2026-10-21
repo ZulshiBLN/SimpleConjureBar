@@ -1,6 +1,6 @@
 -- SimpleConjureBar - bar frame and buttons
 -- The bar, its drag handle, position/scale/lock handling, the secure buttons with their
--- highlight ("marching ants"), the flyout menus and the colors.
+-- highlight (the client's proc glow), the flyout menus and the colors.
 --
 -- Armor          : left = last armor, right = open the armor flyout (choice is remembered)
 -- Intellect      : left = default (solo: single, group: Brilliance), right = the other one
@@ -296,54 +296,46 @@ local function CreateMainButton(key)
 end
 
 ---------------------------------------------------------------------------
--- Highlight ("marching ants" like spell procs in the Retail client).
--- The Blizzard texture is desaturated and tinted so the color can be chosen freely.
--- The animation only runs (OnUpdate) while the highlight is visible.
+-- Highlight: the modern client's proc glow (ruleset plan 2026-10-21-bar-alignment; the
+-- "marching ants" before, whose names the code and the settings keep). It sits on its own
+-- frame above the button and is desaturated, so its colour can be chosen freely; the client
+-- plays its flipbook only while it is shown. ns.ApplyLook colours it and sets its speed.
 ---------------------------------------------------------------------------
-local function AttachAnts(btn, speedKey)
+local antsButtons = {}
+local function AttachAnts(btn, colorKey, speedKey)
     local holder = CreateFrame("Frame", nil, btn)
     holder:SetAllPoints()
     holder:SetFrameLevel(btn:GetFrameLevel() + 2)
 
     local ants = holder:CreateTexture(nil, "OVERLAY")
-    ants:SetTexture(D.ANTS_TEX)
+    ants:SetAtlas(D.GLOW_ATLAS)
     ants:SetDesaturated(true)
-    ants:SetBlendMode("ADD")
     ants:SetPoint("CENTER")
-    ants:SetSize(SIZE * 1.42, SIZE * 1.42)
+    ants:SetSize(SIZE * D.GLOW_SCALE, SIZE * D.GLOW_SCALE)
     ants:Hide()
 
-    local cols, cell, frames = D.ANTS_COLS, D.ANTS_CELL, D.ANTS_FRAMES
-    local frame, timer = 0, 0
-    local function SetFrame(i)
-        local col, row = i % cols, math.floor(i / cols)
-        ants:SetTexCoord(col * cell, (col + 1) * cell, row * cell, (row + 1) * cell)
-    end
-    SetFrame(0)
+    local anim = ants:CreateAnimationGroup()
+    anim:SetLooping("REPEAT")
+    local flip = anim:CreateAnimation("FlipBook")
+    flip:SetFlipBookRows(D.GLOW_ROWS)
+    flip:SetFlipBookColumns(D.GLOW_COLUMNS)
+    flip:SetFlipBookFrames(D.GLOW_FRAMES)
 
-    local function OnUpdate(_, elapsed)
-        local step = D.ANTS_STEPS[db and db[speedKey] or 3] or 0.01
-        timer = timer + elapsed
-        if timer < step then return end
-        frame = (frame + math.floor(timer / step)) % frames
-        timer = timer % step
-        SetFrame(frame)
-    end
-
-    btn.ants, btn.antsHolder, btn.antsUpdate = ants, holder, OnUpdate
-    return ants, holder
+    btn.ants, btn.antsHolder, btn.antsAnim, btn.antsFlip = ants, holder, anim, flip
+    btn.antsColorKey, btn.antsSpeedKey = colorKey, speedKey
+    antsButtons[#antsButtons + 1] = btn
 end
 
--- Shows or hides a button's highlight and starts/stops its animation
+-- Shows or hides a button's highlight and starts or stops its animation
 function ns.SetAnts(btn, shown)
     if shown == btn.antsShown then return end
     btn.antsShown = shown
     if shown then
         btn.ants:Show()
-        btn.antsHolder:SetScript("OnUpdate", btn.antsUpdate)
+        btn.antsAnim:Play()
     else
         btn.ants:Hide()
-        btn.antsHolder:SetScript("OnUpdate", nil)
+        btn.antsAnim:Stop()
     end
 end
 
@@ -362,7 +354,7 @@ intel.count:ClearAllPoints()
 intel.count:SetPoint("CENTER", intel, "CENTER", 0, 0)
 ns.SetLatinFont(intel.count, NumberFontNormal, 20, "THICKOUTLINE") -- digits only
 intel.count:SetJustifyH("CENTER")
-AttachAnts(intel, "antsSpeed")
+AttachAnts(intel, "antsColor", "antsSpeed")
 -- The number sits above the highlight
 intel.count:SetParent(intel.antsHolder)
 intel.count:SetDrawLayer("OVERLAY", 7)
@@ -375,7 +367,7 @@ food.spells, food.items = D.FOOD_SPELLS, D.FOOD_ITEMS
 -- Mana Gem: highlight while no gem is in the bags; cooldown swipe
 local gem = CreateMainButton("ManaGem")
 gem.isGem = true
-AttachAnts(gem, "gemAntsSpeed")
+AttachAnts(gem, "gemAntsColor", "gemAntsSpeed")
 gem.cooldown = CreateFrame("Cooldown", nil, gem, "CooldownFrameTemplate")
 gem.cooldown:SetAllPoints(gem.icon)
 
@@ -432,7 +424,7 @@ end
 
 local armor = CreateFlyoutButton("Armor", ns.KnownArmor, "HINT_PICK_ARMOR", ns.NormalizeArmor)
 armor.isArmor = true
-AttachAnts(armor, "armorAntsSpeed")
+AttachAnts(armor, "armorAntsColor", "armorAntsSpeed")
 
 -- Short label centered at the bottom of the icon
 local function AddArmorLabel(btn, parent)
@@ -515,13 +507,13 @@ function ns.ApplyLook()
     end
     if IsDemo() then demoLabel:Show() else demoLabel:Hide() end
 
-    local cc, ac = db.countColor, db.antsColor
+    local cc = db.countColor
     intel.count:SetTextColor(cc.r, cc.g, cc.b, cc.a)
-    intel.ants:SetVertexColor(ac.r, ac.g, ac.b, ac.a)
-    local rc = db.armorAntsColor
-    armor.ants:SetVertexColor(rc.r, rc.g, rc.b, rc.a)
-    local gc = db.gemAntsColor
-    gem.ants:SetVertexColor(gc.r, gc.g, gc.b, gc.a)
+    for _, b in ipairs(antsButtons) do
+        local a = db[b.antsColorKey]
+        b.ants:SetVertexColor(a.r, a.g, a.b, a.a)
+        b.antsFlip:SetDuration(D.GLOW_DURATIONS[db[b.antsSpeedKey]])
+    end
 
     local lc = db.armorLabelColor
     armor.label:SetTextColor(lc.r, lc.g, lc.b, lc.a)

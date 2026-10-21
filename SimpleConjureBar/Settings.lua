@@ -255,12 +255,21 @@ end
 
 -- Integer slider with an input box on the right.
 -- o = { label (key or function), icon (function -> texture, optional), min, max, get, set,
---       gap, rows (table that collects the row frames, optional) }
+--       gap, rows (table that collects the row frames, optional),
+--       column ("left" or "right": two sliders share a row, the right one takes the left's) }
+local COLUMN_GAP = 20
 function UI.AddNumberSlider(o)
     local ROW = 42
     local row = CreateFrame("Frame", nil, page)
     row:SetHeight(ROW)
-    row:SetPoint("TOPLEFT", INSET, Place(ROW, o.gap or 6))
+    local y
+    if o.column == "right" then
+        y = page.columnY
+    else
+        y = Place(ROW, o.gap or 6)
+        page.columnY = y
+    end
+    row:SetPoint("TOPLEFT", INSET, y)
     if o.rows then o.rows[#o.rows + 1] = row end
 
     local x = 0
@@ -323,10 +332,20 @@ function UI.AddNumberSlider(o)
         updating = false
         box:SetText(tostring(o.get()))
     end
-    measures[#measures + 1] = function() return x + label:GetStringWidth() + 16 + 40 end
+    -- A column needs room for two halves its width, so no label in either is cut
+    measures[#measures + 1] = function()
+        local need = x + label:GetStringWidth() + 16 + 40
+        if o.column then return 2 * need + COLUMN_GAP end
+        return need
+    end
     stretchers[#stretchers + 1] = function(w)
-        row:SetWidth(w)
-        slider:SetWidth(w - 4)
+        local rowW = o.column and (w - COLUMN_GAP) / 2 or w
+        row:SetWidth(rowW)
+        slider:SetWidth(rowW - 4)
+        if o.column == "right" then
+            row:ClearAllPoints()
+            row:SetPoint("TOPLEFT", INSET + (w + COLUMN_GAP) / 2, y)
+        end
     end
 end
 

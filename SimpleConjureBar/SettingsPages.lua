@@ -209,6 +209,22 @@ UI.AddToggleColorRow("OPT_SHOW_BUTTON", "showGem", Rebuild, {
     { label = "LBL_HIGHLIGHT", key = "gemAntsColor" },
 })
 UI.AddSpeedSlider("gemAntsSpeed")
+UI.AddSeparator()
+
+-- Minutes before a buff runs out at which it glows and is cast again (ruleset plan
+-- 2026-10-21-buff-renew); 0 = only once it is gone
+UI.AddHeader("RENEW_LABEL", 6)
+for _, s in ipairs({
+    { key = "intellectRenewMinutes", max = D.INTELLECT_RENEW_MAX, column = "left",
+      label = function() return ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT") end },
+    { key = "armorRenewMinutes", max = D.ARMOR_RENEW_MAX, column = "right", label = "TRACK_ARMOR" },
+}) do
+    UI.AddNumberSlider({
+        label = s.label, min = 0, max = s.max, column = s.column,
+        get = function() return db[s.key] end,
+        set = function(v) db[s.key] = v; ns.UpdateBuffState() end,
+    })
+end
 
 ---------------------------------------------------------------------------
 -- Tab 3: Supplies (reagent tracking and auto-buy)

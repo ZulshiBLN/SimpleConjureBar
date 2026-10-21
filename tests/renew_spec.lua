@@ -193,6 +193,64 @@ describe("the renew timer", function()
     end)
 end)
 
+-- The slider row with this label text, and the slider and input box in it (a section header
+-- may carry the same text, so only rows holding a slider count)
+local function rowOf(label)
+    local function parts(frame)
+        local slider, box
+        for _, c in ipairs(frame.children) do
+            if c.kind == "Slider" then slider = c elseif c.kind == "EditBox" then box = c end
+        end
+        return slider, box
+    end
+    local function find(frame)
+        local slider, box = parts(frame)
+        if slider then
+            for _, r in ipairs(frame.regions) do if r.text == label then return frame, slider, box end end
+        end
+        for _, c in ipairs(frame.children) do
+            local row, s, b = find(c)
+            if row then return row, s, b end
+        end
+    end
+    return find(SimpleConjureBarSettings)
+end
+
+describe("the renew sliders", function()
+    it("sit side by side below Mana Gem, each writing its key, clamped", function()
+        local ns, db = login()
+        local D, L = ns.D, ns.L
+        ns.ToggleSettings()
+        local intelRow, intelSlider, intelBox = rowOf(ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT"))
+        local armorRow, armorSlider, armorBox = rowOf(L.TRACK_ARMOR)
+        assert.is_not_nil(intelRow); assert.is_not_nil(intelBox); assert.is_not_nil(intelSlider)
+        assert.is_not_nil(armorRow); assert.is_not_nil(armorBox); assert.is_not_nil(armorSlider)
+        local _, ix, iy = intelRow:GetPoint() -- TOPLEFT, x, y
+        local _, ax, ay = armorRow:GetPoint()
+        assert.are.equal(iy, ay)
+        assert.is_true(ax > ix)
+        -- on the Tracking page, below the Mana Gem header and under their own
+        local page = intelRow:GetParent()
+        local function headerY(text)
+            for _, r in ipairs(page.regions) do
+                if r.text == text then return select(3, r:GetPoint()) end
+            end
+        end
+        local gemY, renewY = headerY(L.MANA_GEM), headerY(L.RENEW_LABEL)
+        assert.is_not_nil(gemY); assert.is_not_nil(renewY)
+        assert.is_true(gemY > renewY and renewY > iy)
+        assert.are.equal(page, armorRow:GetParent())
+
+        intelBox:SetText("99"); RUNSCRIPT(intelBox, "OnEnterPressed")
+        assert.are.equal(D.INTELLECT_RENEW_MAX, db.intellectRenewMinutes)
+        armorBox:SetText("1"); RUNSCRIPT(armorBox, "OnEnterPressed")
+        assert.are.equal(1, db.armorRenewMinutes)
+        RUNSCRIPT(armorSlider, "OnValueChanged", 4)
+        assert.are.equal(4, db.armorRenewMinutes)
+        assert.are.same({}, STATE.errors)
+    end)
+end)
+
 describe("the renew times", function()
     it("are in settings version 4 with their defaults, clamped and kept", function()
         local ns, db = login({ dbVersion = 3 })

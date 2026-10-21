@@ -334,9 +334,13 @@ local function CreateWindow()
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    -- Docked beside the settings window, a drag moves that window and the report goes with it
+    local function Mover() return frame.docked and ns.UI.window or frame end
+    frame:SetScript("OnDragStart", function() Mover():StartMoving() end)
+    frame:SetScript("OnDragStop", function() Mover():StopMovingOrSizing() end)
     frame:SetClampedToScreen(true)
+    -- Closing the settings closes a report docked to them
+    ns.UI.window:HookScript("OnHide", function() if frame.docked then frame:Hide() end end)
     if frame.SetBackdrop then
         frame:SetBackdrop({
             bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -503,7 +507,15 @@ end
 
 function ns.OpenBugReport()
     if not frame then CreateWindow() end
-    ns.CloseSettings() -- the report window replaces the settings window
+    -- With the settings window open it stays, and the report opens docked to its left
+    -- (Michel, 2026-10-21); else in the middle of the screen
+    frame:ClearAllPoints()
+    frame.docked = ns.UI.window:IsShown()
+    if frame.docked then
+        frame:SetPoint("TOPRIGHT", ns.UI.window, "TOPLEFT", -4, 0)
+    else
+        frame:SetPoint("CENTER")
+    end
     frame.desc:SetText("")
     frame.details:SetText("")
     frame.area = "OTHER"

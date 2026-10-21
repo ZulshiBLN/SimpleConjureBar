@@ -226,6 +226,31 @@ describe("the report form", function()
         assert.are.equal(ns.locales.zhCN.AREA_TRAVEL, menu.selectedText)
     end)
 
+    it("opens beside the open settings window, which stays open, and goes with it", function()
+        local ns = login()
+        grabber({}, 1)
+        ns.ToggleSettings()
+        local settings = SimpleConjureBarSettings
+        ns.OpenBugReport()
+        local window = SimpleConjureBarReport
+        assert.is_true(settings:IsShown())
+        assert.is_true(window:IsShown())
+        local point, relativeTo, relativePoint = window:GetPoint()
+        assert.are.equal("TOPRIGHT", point)
+        assert.are.equal(settings, relativeTo)
+        assert.are.equal("TOPLEFT", relativePoint)
+        settings:Hide()
+        assert.is_false(window:IsShown())
+
+        -- without the settings window: in the middle of the screen, as before
+        ns.OpenBugReport()
+        assert.is_true(window:IsShown())
+        assert.are.equal("CENTER", (window:GetPoint()))
+        ns.ToggleSettings() -- opening the settings later leaves the report where it is
+        settings:Hide()
+        assert.is_true(window:IsShown())
+    end)
+
     it("dates nothing: times are relative to now and to the login", function()
         local ns = login()
         grabber({ ourError(time() - 90, 1) }, 1)

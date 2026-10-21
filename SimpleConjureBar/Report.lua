@@ -133,18 +133,28 @@ end
 ---------------------------------------------------------------------------
 -- Report content
 ---------------------------------------------------------------------------
--- This addon's errors from BugGrabber (the error collector BugSack builds on), newest first
+-- This addon's errors of the current session from BugGrabber (the error collector BugSack
+-- builds on), newest first. Errors of earlier sessions come from BugGrabber's saved data and
+-- stay out; without a session number, an error from before this addon loaded counts as one.
 local function CollectErrors()
     local list = {}
     local grabber = BugGrabber
     if not (grabber and grabber.GetDB) then return list, false end
     local ok, errors = pcall(grabber.GetDB, grabber)
     if not ok or type(errors) ~= "table" then return list, true end
+    local okSession, session = pcall(function() return grabber.GetSessionId and grabber:GetSessionId() end)
+    if not okSession then session = nil end
     for i = #errors, 1, -1 do
         local e = errors[i]
         if type(e) == "table" then
+            local current
+            if type(session) == "number" and type(e.session) == "number" then
+                current = e.session == session
+            else
+                current = type(e.time) == "number" and e.time >= ns.logStartClock
+            end
             local text = tostring(e.message or "") .. "\n" .. tostring(e.stack or "")
-            if text:find(ns.ADDON_NAME, 1, true) then
+            if current and text:find(ns.ADDON_NAME, 1, true) then
                 list[#list + 1] = e
                 if #list >= MAX_ERRORS then break end
             end
@@ -162,6 +172,17 @@ local function FirstLines(text, max)
     end
     return table.concat(out, "\n")
 end
+
+-- When an error came, relative only - no date or clock in a report - and whether in combat
+local function ErrorWhen(e)
+    if type(e.time) ~= "number" then return "time unknown", "unknown" end
+    local when = ("%d min ago"):format(math.floor((time() - e.time) / 60 + 0.5))
+    local since = e.time - ns.logStartClock
+    if since >= 0 then when = when .. (", %d s after login"):format(since) end
+    return when, ns.CombatAt(e.time)
+end
+
+local function OrDash(s) return (s and s ~= "") and s or "-" end
 
 -- Plain settings (numbers, booleans, strings) sorted by name; tables are summarized
 local function SettingsText()
@@ -183,13 +204,17 @@ local function SettingsText()
     return table.concat(parts, ", ")
 end
 
-local function BuildReport(description)
+-- form: { description, area (a key of D.REPORT_AREAS), details }
+local function BuildReport(form)
+    ns.LogSettings()
     local version, build, _, interface = GetBuildInfo()
     local _, classFile = UnitClass("player")
     local lines = {
         "## SimpleConjureBar bug report",
         "",
-        "**Description:** " .. ((description and description ~= "") and description or "-"),
+        "**Description:** " .. OrDash(form.description),
+        "**Area:** " .. form.area,
+        "**Details:** " .. OrDash(form.details),
         "",
         "- Addon version: " .. ns.VERSION,
         "- Client: " .. tostring(version) .. " (build " .. tostring(build) .. ", interface " .. tostring(interface) .. ")",
@@ -197,7 +222,6 @@ local function BuildReport(description)
             .. tostring((SimpleConjureBarGlobalDB and SimpleConjureBarGlobalDB.language) or "auto"),
         "- Character: " .. tostring(classFile) .. ", level " .. tostring(UnitLevel("player"))
             .. ", " .. tostring(UnitFactionGroup("player")) .. (IsInRaid() and ", raid" or IsInGroup() and ", party" or ", solo"),
-        "- Date: " .. date("%Y-%m-%d %H:%M"),
         "- Settings: " .. SettingsText(),
         "",
     }
@@ -205,18 +229,29 @@ local function BuildReport(description)
     if not hasGrabber then
         lines[#lines + 1] = "**Lua errors:** BugGrabber/BugSack not installed"
     elseif #errors == 0 then
-        lines[#lines + 1] = "**Lua errors:** none from SimpleConjureBar"
+        lines[#lines + 1] = "**Lua errors:** none from SimpleConjureBar in this session"
     else
         lines[#lines + 1] = "**Lua errors (newest first):**"
         for i, e in ipairs(errors) do
+            local when, combat = ErrorWhen(e)
             lines[#lines + 1] = ""
-            lines[#lines + 1] = ("Error %d (x%s, %s):"):format(i, tostring(e.counter or 1), tostring(e.time or "?"))
+            lines[#lines + 1] = ("Error %d (x%s, %s, combat: %s):"):format(i, tostring(e.counter or 1), when, combat)
             lines[#lines + 1] = "```"
             lines[#lines + 1] = FirstLines(e.message, 6)
             lines[#lines + 1] = FirstLines(e.stack, MAX_STACK_LINES)
             lines[#lines + 1] = "```"
         end
     end
+    local function Block(title, list)
+        lines[#lines + 1] = ""
+        lines[#lines + 1] = title
+        lines[#lines + 1] = "```"
+        for _, l in ipairs(list) do lines[#lines + 1] = l end
+        lines[#lines + 1] = "```"
+    end
+    Block("**Last actions (seconds since login):**", ns.LogLines())
+    Block("**State:**", ns.StateSnapshot())
+    Block("**Loaded addons:**", ns.AddonList())
     return table.concat(lines, "\n")
 end
 
@@ -224,20 +259,38 @@ end
 -- Window
 ---------------------------------------------------------------------------
 local frame
+local MAX_TEXT = 500 -- letters of the description and of the details
 
 local function SelectReport()
     frame.report:SetFocus()
     frame.report:HighlightText()
 end
 
+local function FormValues()
+    return { description = frame.desc:GetText(), area = frame.area, details = frame.details:GetText() }
+end
+
 local function Refresh()
-    frame.reportText = BuildReport(frame.desc:GetText())
+    frame.reportText = BuildReport(FormValues())
     frame.report:SetText(frame.reportText)
     frame.report:SetCursorPosition(0)
 end
 
+-- A one-line text field: typing rebuilds the report, Enter selects it for copying
+local function AddInput(anchor, width)
+    local box = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+    box:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 6, -4)
+    box:SetSize(width, 22)
+    box:SetAutoFocus(false)
+    box:SetMaxLetters(MAX_TEXT)
+    box:SetScript("OnTextChanged", function(_, userInput) if userInput then Refresh() end end)
+    box:SetScript("OnEnterPressed", SelectReport)
+    box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    return box
+end
+
 local function CreateWindow()
-    local W, H, PAD = 520, 420, 22
+    local W, H, PAD = 520, 500, 22
     frame = CreateFrame("Frame", "SimpleConjureBarReport", UIParent, API.BACKDROP_TPL)
     frame:SetSize(W, H)
     frame:SetPoint("CENTER")
@@ -264,23 +317,39 @@ local function CreateWindow()
     local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", -6, -6)
 
-    -- Step 1: optional description
+    -- Step 1: what happened, where (a list, so the developer knows where to look), details
     local step1 = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     step1:SetPoint("TOPLEFT", PAD, -50)
     SetL(step1, "REPORT_STEP1")
-    local desc = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
-    desc:SetPoint("TOPLEFT", step1, "BOTTOMLEFT", 6, -4)
-    desc:SetSize(W - 2 * PAD - 6, 22)
-    desc:SetAutoFocus(false)
-    desc:SetMaxLetters(300)
-    desc:SetScript("OnTextChanged", function(_, userInput) if userInput then Refresh() end end)
-    desc:SetScript("OnEnterPressed", SelectReport)
-    desc:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    frame.desc = desc
+    frame.desc = AddInput(step1, W - 2 * PAD - 6)
+
+    local where = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    where:SetPoint("TOPLEFT", frame.desc, "BOTTOMLEFT", -6, -14)
+    SetL(where, "REPORT_WHERE")
+    frame.area = "OTHER"
+    local menu = CreateFrame("DropdownButton", nil, frame, "WowStyle1DropdownTemplate")
+    menu:SetPoint("LEFT", where, "RIGHT", 12, 0)
+    menu:SetWidth(240)
+    menu:SetupMenu(function(_, root)
+        for _, key in ipairs(D.REPORT_AREAS) do
+            root:CreateRadio(L["AREA_" .. key], function() return frame.area == key end,
+                function() frame.SetArea(key) end)
+        end
+    end)
+    frame.areaMenu = menu
+    function frame.SetArea(key)
+        frame.area = key
+        Refresh()
+    end
+
+    local detailsLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    detailsLabel:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 0, -16)
+    SetL(detailsLabel, "REPORT_DETAILS")
+    frame.details = AddInput(detailsLabel, W - 2 * PAD - 6)
 
     -- Step 2: the report, selected for Ctrl+C (read-only)
     local step2 = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    step2:SetPoint("TOPLEFT", desc, "BOTTOMLEFT", -6, -12)
+    step2:SetPoint("TOPLEFT", frame.details, "BOTTOMLEFT", -6, -12)
     SetL(step2, "REPORT_STEP2")
 
     local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
@@ -336,10 +405,31 @@ local function CreateWindow()
     SetL(done, "CLOSE")
     done:SetScript("OnClick", function() frame:Hide() end)
 
+    -- Built out of combat only: names and auras are readable then (phase 1 research - aura
+    -- reads raise an error in combat). The window closes when combat starts and comes back
+    -- after it, as the settings window does.
     frame:SetScript("OnShow", function()
+        if InCombatLockdown() then
+            frame:Hide()
+            ns.Print(L.REPORT_COMBAT)
+            return
+        end
         Refresh()
         SelectReport()
     end)
+    local reopen = false
+    local events = CreateFrame("Frame")
+    events:RegisterEvent("PLAYER_REGEN_DISABLED")
+    events:RegisterEvent("PLAYER_REGEN_ENABLED")
+    events:SetScript("OnEvent", function(_, event)
+        if event == "PLAYER_REGEN_DISABLED" then
+            if frame:IsShown() then reopen = true; frame:Hide() end
+        elseif reopen then
+            reopen = false
+            frame:Show()
+        end
+    end)
+    function frame.BuildText() return BuildReport(FormValues()) end
     frame:Hide()
 end
 
@@ -347,5 +437,7 @@ function ns.OpenBugReport()
     if not frame then CreateWindow() end
     ns.CloseSettings() -- the report window replaces the settings window
     frame.desc:SetText("")
+    frame.details:SetText("")
+    frame.area = "OTHER"
     if frame:IsShown() then Refresh() SelectReport() else frame:Show() end
 end

@@ -134,7 +134,11 @@ D.GLOW_DURATIONS = { 2, 1.5, 1, 0.75, 0.5 }
 
 -- Where bug reports go (shown in the report window). Empty = no link, the window asks the user
 -- to send the report to the addon author instead.
-D.BUG_REPORT_URL = "https://github.com/ZulshiBLN/SimpleConjureBar/issues"
+-- Where a bug happened, as the report form offers it; the report carries the key, the form
+-- the text AREA_<key> (ruleset plan 2026-10-17-bug-report-details)
+D.REPORT_AREAS = { "INTELLECT", "ARMOR", "CONJURE", "TRADE", "TRAVEL", "FLYOUTS", "KEYS", "SETTINGS",
+    "MACROS", "COMBAT", "OTHER" }
+D.BUG_REPORT_URL ="https://github.com/ZulshiBLN/SimpleConjureBar/issues"
 
 D.ADDON_ICON = "Interface\\Icons\\INV_Drink_06" -- same icon as in the AddOn list (TOC IconTexture)
 

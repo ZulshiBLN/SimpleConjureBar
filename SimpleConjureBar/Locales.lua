@@ -12,6 +12,7 @@ local locales = {}
 locales.enUS = {
     MACRO_STOPCAST_HEADER = "Stopcasting macros", BTN_CREATE_MACRO = "Create macro", OPT_STOPCAST_SPELL = "Spell", MACRO_ICEBLOCK_HELP = "First press: %s. A press during it ends it early.", MACRO_STOPCAST_HELP = "Stops your current cast and casts the chosen spell at once.\n%s aims at your focus first.", SPELL_FIRE_BLAST = "Fire Blast", SPELL_FROST_NOVA = "Frost Nova", SPELL_BLINK = "Blink", SPELL_COUNTERSPELL = "Counterspell", SPELL_ICE_BLOCK = "Ice Block", SPELL_POLYMORPH = "Polymorph",
     BTN_REPORT_BUG = "Report bug", REPORT_TITLE = "Report a bug", REPORT_STEP1 = "1. What happened? (optional)", REPORT_STEP2 = "2. Copy the report with Ctrl+C (already selected)", REPORT_STEP3 = "3. Paste it as a new issue on GitHub:", REPORT_NO_URL = "3. Send the report to the addon author.", CLOSE = "Close", CMD_BUG = "Open the bug report window",
+    REPORT_WHERE = "2. Where did it happen?", REPORT_DETAILS = "Details (optional)", REPORT_COMBAT = "The bug report can't be opened in combat.", AREA_INTELLECT = "Arcane Intellect, Buff & Run", AREA_ARMOR = "Armor", AREA_CONJURE = "Water, food, mana gem", AREA_TRADE = "Trading", AREA_TRAVEL = "Teleport, portal", AREA_FLYOUTS = "Flyouts", AREA_KEYS = "Key bindings", AREA_SETTINGS = "Settings", AREA_MACROS = "Macros", AREA_COMBAT = "In combat", AREA_OTHER = "Other",
     BTN_SHOW_MACRO = "Show macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Raid marker",
     MACRO_HELP = "First click: your hostile target becomes the focus and gets the raid marker.\nFurther clicks: Polymorph on the focus.\nA dead focus is cleared automatically.",
@@ -100,6 +101,7 @@ locales.enUS = {
 locales.deDE = {
     MACRO_STOPCAST_HEADER = "Stopcasting-Makros", BTN_CREATE_MACRO = "Makro anlegen", OPT_STOPCAST_SPELL = "Zauber", MACRO_ICEBLOCK_HELP = "Erster Druck: %s. Ein Druck während der Wirkung beendet ihn vorzeitig.", MACRO_STOPCAST_HELP = "Bricht den laufenden Zauber ab und wirkt den gewählten sofort.\n%s zielt zuerst auf deinen Fokus.", SPELL_FIRE_BLAST = "Feuerschlag", SPELL_FROST_NOVA = "Frostnova", SPELL_BLINK = "Blinzeln", SPELL_COUNTERSPELL = "Gegenzauber", SPELL_ICE_BLOCK = "Eisblock", SPELL_POLYMORPH = "Verwandlung",
     BTN_REPORT_BUG = "Fehler melden", REPORT_TITLE = "Fehler melden", REPORT_STEP1 = "1. Was ist passiert? (optional)", REPORT_STEP2 = "2. Bericht mit Strg+C kopieren (bereits markiert)", REPORT_STEP3 = "3. Als neues Issue auf GitHub einfügen:", REPORT_NO_URL = "3. Bericht an den Autor des Addons schicken.", CLOSE = "Schließen", CMD_BUG = "Fenster für Fehlerberichte öffnen",
+    REPORT_WHERE = "2. Wobei ist es passiert?", REPORT_DETAILS = "Details (optional)", REPORT_COMBAT = "Der Fehlerbericht kann im Kampf nicht geöffnet werden.", AREA_INTELLECT = "Arkane Intelligenz, Buff & Run", AREA_ARMOR = "Rüstung", AREA_CONJURE = "Wasser, Essen, Manaedelstein", AREA_TRADE = "Handel", AREA_TRAVEL = "Teleport, Portal", AREA_FLYOUTS = "Flyouts", AREA_KEYS = "Tastenbelegung", AREA_SETTINGS = "Einstellungen", AREA_MACROS = "Makros", AREA_COMBAT = "Im Kampf", AREA_OTHER = "Sonstiges",
     BTN_SHOW_MACRO = "Makro anzeigen",
     TAB_MACROS = "Makros", OPT_MARKER = "Zielmarkierung",
     MACRO_HELP = "Erster Klick: Dein feindliches Ziel wird Fokus und erhält die Markierung.\nWeitere Klicks: Verwandlung auf den Fokus.\nEin toter Fokus wird automatisch gelöscht.",
@@ -189,6 +191,7 @@ locales.deDE = {
 locales.frFR = {
     MACRO_STOPCAST_HEADER = "Macros d'annulation de sort", BTN_CREATE_MACRO = "Créer la macro", OPT_STOPCAST_SPELL = "Sort", MACRO_ICEBLOCK_HELP = "Premier appui : %s. Un appui pendant l'effet y met fin.", MACRO_STOPCAST_HELP = "Annule le sort en cours et lance aussitôt le sort choisi.\n%s cible d'abord votre focalisation.", SPELL_FIRE_BLAST = "Trait de feu", SPELL_FROST_NOVA = "Nova de givre", SPELL_BLINK = "Transfert", SPELL_COUNTERSPELL = "Contresort", SPELL_ICE_BLOCK = "Bloc de glace", SPELL_POLYMORPH = "Métamorphose",
     BTN_REPORT_BUG = "Signaler un bug", REPORT_TITLE = "Signaler un bug", REPORT_STEP1 = "1. Que s'est-il passé ? (facultatif)", REPORT_STEP2 = "2. Copiez le rapport avec Ctrl+C (déjà sélectionné)", REPORT_STEP3 = "3. Collez-le dans un nouveau ticket sur GitHub :", REPORT_NO_URL = "3. Envoyez le rapport à l'auteur de l'addon.", CLOSE = "Fermer", CMD_BUG = "Ouvrir la fenêtre de rapport de bug",
+    REPORT_WHERE = "2. Où est-ce arrivé ?", REPORT_DETAILS = "Détails (facultatif)", REPORT_COMBAT = "Le rapport de bug ne peut pas être ouvert en combat.", AREA_INTELLECT = "Intelligence des arcanes, Buff & Run", AREA_ARMOR = "Armure", AREA_CONJURE = "Eau, nourriture, gemme de mana", AREA_TRADE = "Échange", AREA_TRAVEL = "Téléportation, portail", AREA_FLYOUTS = "Menus déroulants", AREA_KEYS = "Raccourcis", AREA_SETTINGS = "Paramètres", AREA_MACROS = "Macros", AREA_COMBAT = "En combat", AREA_OTHER = "Autre",
     BTN_SHOW_MACRO = "Afficher la macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Marqueur de cible",
     MACRO_HELP = "Premier clic : votre cible hostile devient le focus et reçoit le marqueur.\nClics suivants : Métamorphose sur le focus.\nUn focus mort est effacé automatiquement.",
@@ -277,6 +280,7 @@ locales.frFR = {
 locales.esES = {
     MACRO_STOPCAST_HEADER = "Macros de cancelar lanzamiento", BTN_CREATE_MACRO = "Crear macro", OPT_STOPCAST_SPELL = "Hechizo", MACRO_ICEBLOCK_HELP = "Primera pulsación: %s. Una pulsación durante el efecto lo termina.", MACRO_STOPCAST_HELP = "Cancela el hechizo en curso y lanza al instante el elegido.\n%s apunta primero a tu foco.", SPELL_FIRE_BLAST = "Explosión de Fuego", SPELL_FROST_NOVA = "Nova de Escarcha", SPELL_BLINK = "Traslación", SPELL_COUNTERSPELL = "Contrahechizo", SPELL_ICE_BLOCK = "Bloqueo de hielo", SPELL_POLYMORPH = "Polimorfia",
     BTN_REPORT_BUG = "Informar de error", REPORT_TITLE = "Informar de un error", REPORT_STEP1 = "1. ¿Qué ha pasado? (opcional)", REPORT_STEP2 = "2. Copia el informe con Ctrl+C (ya seleccionado)", REPORT_STEP3 = "3. Pégalo como nuevo issue en GitHub:", REPORT_NO_URL = "3. Envía el informe al autor del addon.", CLOSE = "Cerrar", CMD_BUG = "Abrir la ventana de informe de errores",
+    REPORT_WHERE = "2. ¿Dónde ocurrió?", REPORT_DETAILS = "Detalles (opcional)", REPORT_COMBAT = "El informe de errores no se puede abrir en combate.", AREA_INTELLECT = "Intelecto Arcano, Buff & Run", AREA_ARMOR = "Armadura", AREA_CONJURE = "Agua, comida, gema de maná", AREA_TRADE = "Comercio", AREA_TRAVEL = "Teletransporte, portal", AREA_FLYOUTS = "Menús desplegables", AREA_KEYS = "Atajos de teclado", AREA_SETTINGS = "Configuración", AREA_MACROS = "Macros", AREA_COMBAT = "En combate", AREA_OTHER = "Otro",
     BTN_SHOW_MACRO = "Mostrar macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Marcador de objetivo",
     MACRO_HELP = "Primer clic: tu objetivo hostil pasa a ser el foco y recibe el marcador.\nSiguientes clics: Polimorfia sobre el foco.\nUn foco muerto se borra automáticamente.",
@@ -370,6 +374,7 @@ locales.esMX = setmetatable({
 locales.itIT = {
     MACRO_STOPCAST_HEADER = "Macro di interruzione lancio", BTN_CREATE_MACRO = "Crea macro", OPT_STOPCAST_SPELL = "Incantesimo", MACRO_ICEBLOCK_HELP = "Prima pressione: %s. Una pressione durante l'effetto lo termina.", MACRO_STOPCAST_HELP = "Interrompe l'incantesimo in corso e lancia subito quello scelto.\n%s mira prima al tuo focus.", SPELL_FIRE_BLAST = "Detonazione di Fuoco", SPELL_FROST_NOVA = "Esplosione Gelida", SPELL_BLINK = "Traslazione", SPELL_COUNTERSPELL = "Controincantesimo", SPELL_ICE_BLOCK = "Blocco di Ghiaccio", SPELL_POLYMORPH = "Metamorfosi",
     BTN_REPORT_BUG = "Segnala bug", REPORT_TITLE = "Segnala un bug", REPORT_STEP1 = "1. Cosa è successo? (facoltativo)", REPORT_STEP2 = "2. Copia il rapporto con Ctrl+C (già selezionato)", REPORT_STEP3 = "3. Incollalo come nuova issue su GitHub:", REPORT_NO_URL = "3. Invia il rapporto all'autore dell'addon.", CLOSE = "Chiudi", CMD_BUG = "Apri la finestra di segnalazione bug",
+    REPORT_WHERE = "2. Dove è successo?", REPORT_DETAILS = "Dettagli (facoltativo)", REPORT_COMBAT = "La segnalazione non può essere aperta in combattimento.", AREA_INTELLECT = "Intelletto Arcano, Buff & Run", AREA_ARMOR = "Armatura", AREA_CONJURE = "Acqua, cibo, gemma di mana", AREA_TRADE = "Scambio", AREA_TRAVEL = "Teletrasporto, portale", AREA_FLYOUTS = "Menu a comparsa", AREA_KEYS = "Tasti", AREA_SETTINGS = "Impostazioni", AREA_MACROS = "Macro", AREA_COMBAT = "In combattimento", AREA_OTHER = "Altro",
     BTN_SHOW_MACRO = "Mostra macro",
     TAB_MACROS = "Macro", OPT_MARKER = "Segnalino bersaglio",
     MACRO_HELP = "Primo clic: il bersaglio ostile diventa il focus e riceve il segnalino.\nClic successivi: Metamorfosi sul focus.\nUn focus morto viene rimosso automaticamente.",
@@ -458,6 +463,7 @@ locales.itIT = {
 locales.ptBR = {
     MACRO_STOPCAST_HEADER = "Macros de interromper conjuração", BTN_CREATE_MACRO = "Criar macro", OPT_STOPCAST_SPELL = "Feitiço", MACRO_ICEBLOCK_HELP = "Primeiro toque: %s. Um toque durante o efeito o encerra.", MACRO_STOPCAST_HELP = "Interrompe a conjuração atual e lança o feitiço escolhido na hora.\n%s mira primeiro no seu foco.", SPELL_FIRE_BLAST = "Impacto de Fogo", SPELL_FROST_NOVA = "Nova Congelante", SPELL_BLINK = "Lampejo", SPELL_COUNTERSPELL = "Contrafeitiço", SPELL_ICE_BLOCK = "Bloco de Gelo", SPELL_POLYMORPH = "Polimorfia",
     BTN_REPORT_BUG = "Relatar bug", REPORT_TITLE = "Relatar um bug", REPORT_STEP1 = "1. O que aconteceu? (opcional)", REPORT_STEP2 = "2. Copie o relatório com Ctrl+C (já selecionado)", REPORT_STEP3 = "3. Cole como nova issue no GitHub:", REPORT_NO_URL = "3. Envie o relatório ao autor do addon.", CLOSE = "Fechar", CMD_BUG = "Abrir a janela de relatório de bugs",
+    REPORT_WHERE = "2. Onde aconteceu?", REPORT_DETAILS = "Detalhes (opcional)", REPORT_COMBAT = "O relatório de bugs não pode ser aberto em combate.", AREA_INTELLECT = "Inteligência Arcana, Buff & Run", AREA_ARMOR = "Armadura", AREA_CONJURE = "Água, comida, gema de mana", AREA_TRADE = "Troca", AREA_TRAVEL = "Teleporte, portal", AREA_FLYOUTS = "Menus suspensos", AREA_KEYS = "Atalhos", AREA_SETTINGS = "Configurações", AREA_MACROS = "Macros", AREA_COMBAT = "Em combate", AREA_OTHER = "Outro",
     BTN_SHOW_MACRO = "Mostrar macro",
     TAB_MACROS = "Macros", OPT_MARKER = "Marcador de alvo",
     MACRO_HELP = "Primeiro clique: seu alvo hostil vira o foco e recebe o marcador.\nCliques seguintes: Metamorfose no foco.\nUm foco morto é limpo automaticamente.",
@@ -546,6 +552,7 @@ locales.ptBR = {
 locales.ruRU = {
     MACRO_STOPCAST_HEADER = "Макросы прерывания", BTN_CREATE_MACRO = "Создать макрос", OPT_STOPCAST_SPELL = "Заклинание", MACRO_ICEBLOCK_HELP = "Первое нажатие: %s. Нажатие во время действия прерывает его.", MACRO_STOPCAST_HELP = "Прерывает текущее заклинание и сразу применяет выбранное.\n%s сначала нацеливается на фокус.", SPELL_FIRE_BLAST = "Огненный взрыв", SPELL_FROST_NOVA = "Кольцо льда", SPELL_BLINK = "Скачок", SPELL_COUNTERSPELL = "Антимагия", SPELL_ICE_BLOCK = "Ледяная глыба", SPELL_POLYMORPH = "Превращение",
     BTN_REPORT_BUG = "Сообщить об ошибке", REPORT_TITLE = "Сообщить об ошибке", REPORT_STEP1 = "1. Что произошло? (необязательно)", REPORT_STEP2 = "2. Скопируйте отчёт с помощью Ctrl+C (уже выделен)", REPORT_STEP3 = "3. Вставьте его как новый issue на GitHub:", REPORT_NO_URL = "3. Отправьте отчёт автору аддона.", CLOSE = "Закрыть", CMD_BUG = "Открыть окно отчёта об ошибке",
+    REPORT_WHERE = "2. Где это произошло?", REPORT_DETAILS = "Подробности (необязательно)", REPORT_COMBAT = "Окно отчёта об ошибке нельзя открыть в бою.", AREA_INTELLECT = "Чародейский интеллект, Buff & Run", AREA_ARMOR = "Броня", AREA_CONJURE = "Вода, еда, камень маны", AREA_TRADE = "Обмен", AREA_TRAVEL = "Телепорт, портал", AREA_FLYOUTS = "Выпадающие меню", AREA_KEYS = "Назначение клавиш", AREA_SETTINGS = "Настройки", AREA_MACROS = "Макросы", AREA_COMBAT = "В бою", AREA_OTHER = "Другое",
     BTN_SHOW_MACRO = "Показать макрос",
     TAB_MACROS = "Макросы", OPT_MARKER = "Метка цели",
     MACRO_HELP = "Первый щелчок: враждебная цель становится фокусом и получает метку.\nСледующие щелчки: Превращение на фокус.\nМёртвый фокус сбрасывается автоматически.",
@@ -636,6 +643,7 @@ locales.ruRU = {
 locales.koKR = {
     MACRO_STOPCAST_HEADER = "시전 중단 매크로", BTN_CREATE_MACRO = "매크로 생성", OPT_STOPCAST_SPELL = "주문", MACRO_ICEBLOCK_HELP = "첫 번째 누름: %s. 효과 중에 다시 누르면 해제됩니다.", MACRO_STOPCAST_HELP = "현재 시전을 중단하고 선택한 주문을 즉시 시전합니다.\n%s 주문은 주시 대상을 먼저 노립니다.", SPELL_FIRE_BLAST = "화염 작열", SPELL_FROST_NOVA = "얼음 회오리", SPELL_BLINK = "점멸", SPELL_COUNTERSPELL = "마법 차단", SPELL_ICE_BLOCK = "얼음 방패", SPELL_POLYMORPH = "변이",
     BTN_REPORT_BUG = "버그 신고", REPORT_TITLE = "버그 신고", REPORT_STEP1 = "1. 무슨 일이 있었나요? (선택)", REPORT_STEP2 = "2. Ctrl+C로 보고서를 복사하세요 (이미 선택됨)", REPORT_STEP3 = "3. GitHub에 새 이슈로 붙여넣으세요:", REPORT_NO_URL = "3. 보고서를 애드온 제작자에게 보내세요.", CLOSE = "닫기", CMD_BUG = "버그 신고 창 열기",
+    REPORT_WHERE = "2. 어디에서 발생했나요?", REPORT_DETAILS = "세부 사항 (선택)", REPORT_COMBAT = "전투 중에는 버그 신고 창을 열 수 없습니다.", AREA_INTELLECT = "신비한 지능, Buff & Run", AREA_ARMOR = "갑옷", AREA_CONJURE = "물, 음식, 마나 보석", AREA_TRADE = "거래", AREA_TRAVEL = "순간이동, 차원문", AREA_FLYOUTS = "펼침 메뉴", AREA_KEYS = "단축키", AREA_SETTINGS = "설정", AREA_MACROS = "매크로", AREA_COMBAT = "전투 중", AREA_OTHER = "기타",
     BTN_SHOW_MACRO = "매크로 보기",
     TAB_MACROS = "매크로", OPT_MARKER = "대상 징표",
     MACRO_HELP = "첫 클릭: 적대적 대상을 주시 대상으로 지정하고 징표를 붙입니다.\n다음 클릭: 주시 대상에게 변이를 시전합니다.\n죽은 주시 대상은 자동으로 해제됩니다.",
@@ -724,6 +732,7 @@ locales.koKR = {
 locales.zhCN = {
     MACRO_STOPCAST_HEADER = "停止施法宏", BTN_CREATE_MACRO = "创建宏", OPT_STOPCAST_SPELL = "法术", MACRO_ICEBLOCK_HELP = "第一次按下：%s。效果期间再按一次可提前取消。", MACRO_STOPCAST_HELP = "中断当前施法并立即施放所选法术。\n%s会优先以焦点为目标。", SPELL_FIRE_BLAST = "火焰冲击", SPELL_FROST_NOVA = "冰霜新星", SPELL_BLINK = "闪现术", SPELL_COUNTERSPELL = "法术反制", SPELL_ICE_BLOCK = "寒冰屏障", SPELL_POLYMORPH = "变形术",
     BTN_REPORT_BUG = "报告错误", REPORT_TITLE = "报告错误", REPORT_STEP1 = "1. 发生了什么？（可选）", REPORT_STEP2 = "2. 按 Ctrl+C 复制报告（已选中）", REPORT_STEP3 = "3. 在 GitHub 上粘贴为新的 issue：", REPORT_NO_URL = "3. 将报告发送给插件作者。", CLOSE = "关闭", CMD_BUG = "打开错误报告窗口",
+    REPORT_WHERE = "2. 在哪里发生的？", REPORT_DETAILS = "详细信息（可选）", REPORT_COMBAT = "战斗中无法打开错误报告。", AREA_INTELLECT = "奥术智慧, Buff & Run", AREA_ARMOR = "护甲", AREA_CONJURE = "水、食物、法力宝石", AREA_TRADE = "交易", AREA_TRAVEL = "传送、传送门", AREA_FLYOUTS = "弹出菜单", AREA_KEYS = "按键绑定", AREA_SETTINGS = "设置", AREA_MACROS = "宏", AREA_COMBAT = "战斗中", AREA_OTHER = "其他",
     BTN_SHOW_MACRO = "显示宏",
     TAB_MACROS = "宏", OPT_MARKER = "目标标记",
     MACRO_HELP = "第一次点击：将敌对目标设为焦点并添加标记。\n之后点击：对焦点施放变形术。\n焦点死亡后会自动清除。",
@@ -812,6 +821,7 @@ locales.zhCN = {
 locales.zhTW = {
     MACRO_STOPCAST_HEADER = "停止施法巨集", BTN_CREATE_MACRO = "建立巨集", OPT_STOPCAST_SPELL = "法術", MACRO_ICEBLOCK_HELP = "第一次按下：%s。效果期間再按一次可提前取消。", MACRO_STOPCAST_HELP = "中斷目前施法並立即施放所選法術。\n%s會優先以專注目標為目標。", SPELL_FIRE_BLAST = "火焰衝擊", SPELL_FROST_NOVA = "冰霜新星", SPELL_BLINK = "閃現術", SPELL_COUNTERSPELL = "法術反制", SPELL_ICE_BLOCK = "寒冰屏障", SPELL_POLYMORPH = "變形術",
     BTN_REPORT_BUG = "回報錯誤", REPORT_TITLE = "回報錯誤", REPORT_STEP1 = "1. 發生了什麼事？（選填）", REPORT_STEP2 = "2. 按 Ctrl+C 複製報告（已選取）", REPORT_STEP3 = "3. 在 GitHub 上貼成新的 issue：", REPORT_NO_URL = "3. 將報告寄給插件作者。", CLOSE = "關閉", CMD_BUG = "開啟錯誤回報視窗",
+    REPORT_WHERE = "2. 在哪裡發生的？", REPORT_DETAILS = "詳細資訊（選填）", REPORT_COMBAT = "戰鬥中無法開啟錯誤回報。", AREA_INTELLECT = "秘法智慧, Buff & Run", AREA_ARMOR = "護甲", AREA_CONJURE = "水、食物、法力寶石", AREA_TRADE = "交易", AREA_TRAVEL = "傳送、傳送門", AREA_FLYOUTS = "彈出選單", AREA_KEYS = "按鍵設定", AREA_SETTINGS = "設定", AREA_MACROS = "巨集", AREA_COMBAT = "戰鬥中", AREA_OTHER = "其他",
     BTN_SHOW_MACRO = "顯示巨集",
     TAB_MACROS = "巨集", OPT_MARKER = "目標標記",
     MACRO_HELP = "第一次點擊：將敵對目標設為專注目標並加上標記。\n之後點擊：對專注目標施放變形術。\n專注目標死亡後會自動清除。",

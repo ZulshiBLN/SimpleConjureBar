@@ -171,6 +171,102 @@ describe("the action log", function()
     end)
 end)
 
+-- A BugGrabber as research found it on Forever (ruleset plan 2026-10-17-bug-report-details-
+-- RESEARCH): GetDB and GetSessionId, no callback; entries with a Unix time and a session
+local function grabber(errors, session)
+    _G.BugGrabber = {
+        GetDB = function() return errors end,
+        GetSessionId = function() return session end,
+    }
+end
+
+local function ourError(at, session, extra)
+    local e = { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:10: attempt to index nil",
+        stack = "[Interface/AddOns/SimpleConjureBar/Bar.lua]:10: in function 'x'", counter = 2,
+        time = at, session = session, locals = "self=<table>" }
+    for k, v in pairs(extra or {}) do e[k] = v end
+    return e
+end
+
+-- The report text, the window opened with a description, an area and details
+local function report(ns, area, description, details)
+    ns.OpenBugReport()
+    local f = SimpleConjureBarReport
+    if description then f.desc:SetText(description) end
+    if details then f.details:SetText(details) end
+    if area then f.SetArea(area) end
+    return f.BuildText()
+end
+
+describe("the report form", function()
+    it("carries the area key and both texts, and offers every area", function()
+        local ns = login()
+        grabber({}, 1)
+        local text = report(ns, "TRAVEL", "Portal does nothing", "after the flyout closed")
+        assert.is_truthy(text:find("**Area:** TRAVEL", 1, true), text)
+        assert.is_truthy(text:find("Portal does nothing", 1, true))
+        assert.is_truthy(text:find("after the flyout closed", 1, true))
+        local offered = {}
+        SimpleConjureBarReport.areaMenu.menuFn(nil, { CreateRadio = function(_, label) offered[#offered + 1] = label end })
+        assert.are.equal(#ns.D.REPORT_AREAS, #offered)
+        for i, key in ipairs(ns.D.REPORT_AREAS) do assert.are.equal(ns.L["AREA_" .. key], offered[i]) end
+    end)
+
+    it("dates nothing: times are relative to now and to the login", function()
+        local ns = login()
+        grabber({ ourError(time() - 90, 1) }, 1)
+        local text = report(ns, "OTHER")
+        assert.is_nil(text:find("%d%d%d%d%-%d%d%-%d%d"), text)
+        assert.is_nil(text:find("%d%d:%d%d:%d%d"), text) -- no clock
+        assert.is_nil(text:find("Date:", 1, true), text)
+        assert.is_truthy(text:find("2 min ago", 1, true), text)
+    end)
+
+    it("says whether an error came in combat, and keeps earlier sessions out", function()
+        local ns = login()
+        STATE.now = STATE.now + 100
+        FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
+        local inCombat = time()
+        STATE.now = STATE.now + 10
+        STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED")
+        STATE.now = STATE.now + 100
+        grabber({
+            ourError(inCombat, 3, { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:1: in combat" }),
+            ourError(time() - 5, 3, { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:2: out of combat" }),
+            ourError(time() - 99999, 3, { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:3: before the log" }),
+            ourError(time() - 50, 2, { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:4: earlier session" }),
+        }, 3)
+        local text = report(ns, "OTHER")
+        local function flagOf(what)
+            for block in text:gmatch("Error %d+ %b()") do
+                local _, finish = text:find(block, 1, true)
+                if text:sub(finish, finish + 200):find(what, 1, true) then return block:match("combat: (%a+)") end
+            end
+        end
+        assert.are.equal("yes", flagOf("in combat"))
+        assert.are.equal("no", flagOf("out of combat"))
+        assert.are.equal("unknown", flagOf("before the log"))
+        assert.is_nil(text:find("earlier session", 1, true))
+    end)
+
+    it("does not open in combat, closes when combat starts and comes back after it", function()
+        local ns = login()
+        grabber({}, 1)
+        _G.CHAT = {}
+        STATE.combat = true
+        ns.OpenBugReport()
+        assert.is_false(SimpleConjureBarReport:IsShown())
+        assert.is_truthy(CHAT[#CHAT]:find(ns.L.REPORT_COMBAT, 1, true))
+        STATE.combat = false
+        ns.OpenBugReport()
+        assert.is_true(SimpleConjureBarReport:IsShown())
+        FIRE("PLAYER_REGEN_DISABLED")
+        assert.is_false(SimpleConjureBarReport:IsShown())
+        FIRE("PLAYER_REGEN_ENABLED")
+        assert.is_true(SimpleConjureBarReport:IsShown())
+    end)
+end)
+
 describe("the loaded addons", function()
     it("are listed by folder name and version, at most 60", function()
         local ns = login()

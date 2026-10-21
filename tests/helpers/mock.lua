@@ -444,6 +444,13 @@ GetBuildInfo = function() return "1.15.0", "99999", "Oct 1 2026", 16001 end
 date = os.date
 -- The clock BugGrabber stamps errors with; moves with STATE.now
 time = function() return 1792600000 + math.floor(STATE.now) end
-BugGrabber = { GetDB = function() return {
-  { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:10: attempt to index nil", stack = "[SimpleConjureBar/Bar.lua]:10\n[C]: ?", counter = 3, time = "2026/10/17 02:00" },
-  { message = "OtherAddon error", stack = "[Other/x.lua]:1", counter = 1 } } end }
+-- As research found BugGrabber on Forever: GetDB and GetSessionId, no callback; entries with a
+-- Unix time and their session (ruleset plan 2026-10-17-bug-report-details-RESEARCH)
+BugGrabber = {
+  GetSessionId = function() return 1 end,
+  GetDB = function() return {
+    { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:10: attempt to index nil",
+      stack = "[Interface/AddOns/SimpleConjureBar/Bar.lua]:10: in function 'x'\n[C]: ?", counter = 3,
+      time = time(), session = 1, locals = "self=<table>" },
+    { message = "OtherAddon error", stack = "[Interface/AddOns/Other/x.lua]:1", counter = 1, time = time(), session = 1 } } end,
+}

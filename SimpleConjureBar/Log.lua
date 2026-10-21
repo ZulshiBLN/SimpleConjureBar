@@ -9,6 +9,7 @@ if not ns.enabled then return end
 local MAX_ENTRIES = 50
 local entries, first = {}, 1 -- a ring: entries[first] is the oldest
 local loginAt, loginClock = GetTime(), time()
+ns.logStartClock = loginClock -- the report's fallback to tell this session's errors apart
 local combats = {} -- { start = clock, stop = clock or nil }, kept apart from the ring
 
 -- How an entry reads in the report: seconds since login, then the text. A field of ns, so a

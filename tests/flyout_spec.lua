@@ -3,9 +3,9 @@
 
 local addon = require("addon")
 
-local function login(saved)
+local function login(saved, adjust)
     _G.SimpleConjureBarDB = saved
-    local ns = addon.load("enUS")
+    local ns = addon.load("enUS", adjust)
     FIRE("PLAYER_LOGIN"); RUNTIMERS()
     return ns, SimpleConjureBarDB
 end
@@ -94,6 +94,23 @@ describe("the flyout direction", function()
         assert.are.same({}, STATE.errors)
     end)
 
+    -- In game 2026-10-21: the bar dragged from the lower to the upper half kept opening its
+    -- flyouts upwards - the direction was computed on a rebuild only, not after a drag
+    it("follows a drag into the other half of the screen", function()
+        local ns, db = login(nil)
+        local armor = ns.buttons.Armor
+        db.locked = false
+        UIParent:SetSize(1000, 1000)
+        ns.bar.GetCenter = function() return 500, 200 end
+        ns.Rebuild()
+        assert.are.equal(0, armor.arrow.rotation) -- lower half: up
+        RUNSCRIPT(ns.handle, "OnMouseDown", "LeftButton")
+        ns.bar.GetCenter = function() return 500, 800 end
+        RUNSCRIPT(ns.handle, "OnMouseUp", "LeftButton")
+        assert.are.equal(math.pi, armor.arrow.rotation) -- upper half: down
+        assert.are.same({}, STATE.errors)
+    end)
+
     it("is chosen on the General page, its entries named by the orientation", function()
         local ns, db = login(nil)
         local L = ns.L
@@ -142,6 +159,33 @@ describe("the flyout auto-close", function()
         STATE.combat = false
         assert.is_false(armor.fly:IsShown())
         assert.is_nil(armor.fly.autoHide)
+        assert.are.same({}, STATE.errors)
+    end)
+
+    -- In game 2026-10-21 (1.1.0 test, BugSack 10x "Invalid frame handle"): no flyout opened in
+    -- combat. A mage of level 25 knows no portal, so the Portal flyout held no secure button,
+    -- was not protected, and the open snippet's handle to it was refused in combat.
+    it("opens in combat while another flyout has no spell in it", function()
+        -- The portal spells, from Data.lua, unknown from the start
+        local data = {}
+        assert(loadfile("SimpleConjureBar/Data.lua"))("SimpleConjureBar", data)
+        local portals = {}
+        for _, list in pairs(data.D.TRAVEL) do
+            for _, d in ipairs(list) do portals[d.portal] = true end
+        end
+        local ns = login(nil, function()
+            local known = C_SpellBook.IsSpellKnown
+            C_SpellBook.IsSpellKnown = function(id) return not portals[id] and known(id) end
+        end)
+        local armor = ns.buttons.Armor
+        assert.are.equal(0, #ns.buttons.Portal.fly.buttons)
+        STATE.combat = true
+        RUNCLICK(armor, "RightButton", false)
+        assert.is_true(armor.fly:IsShown())
+        assert.are.equal(3, armor.fly.autoHide)
+        RUNCLICK(armor, "RightButton", false)
+        assert.is_false(armor.fly:IsShown())
+        STATE.combat = false
         assert.are.same({}, STATE.errors)
     end)
 

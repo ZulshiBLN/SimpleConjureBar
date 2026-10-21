@@ -170,7 +170,8 @@ local function StopDrag()
     handle.moving = false
     if InCombatLockdown() then return end
     bar:StopMovingOrSizing()
-    ns.ReAnchor()
+    -- The automatic flyout direction depends on the screen half the bar now sits in
+    ns.Rebuild()
     if not handle:IsMouseOver() then handle:SetAlpha(0) end
 end
 handle:SetScript("OnMouseUp", StopDrag)
@@ -395,7 +396,13 @@ local function CreateFlyoutButton(key, listFn, hintKey, normalize)
     arrow:SetPoint("BOTTOM", main, "TOP", 0, -6)
     main.arrow = arrow
 
-    local fly = CreateFrame("Frame", "SimpleConjureBar_" .. key .. "Flyout", main, API.BACKDROP_TPL)
+    -- Protected from the start: the right-click snippet reaches every flyout, and in combat
+    -- the client refuses a handle to an unprotected frame ("Invalid frame handle"). A flyout
+    -- without a known spell holds no secure button and would not be protected otherwise -
+    -- the Portal menu before level 40 stopped every flyout opening in combat (in game,
+    -- 2026-10-21).
+    local tpl = API.BACKDROP_TPL and ("SecureFrameTemplate, " .. API.BACKDROP_TPL) or "SecureFrameTemplate"
+    local fly = CreateFrame("Frame", "SimpleConjureBar_" .. key .. "Flyout", main, tpl)
     fly:SetPoint("BOTTOM", main, "TOP", 0, 6)
     fly:SetSize(SIZE + 2 * PAD, SIZE + 2 * PAD)
     if fly.SetBackdrop then

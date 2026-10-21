@@ -150,7 +150,8 @@ function ns.InitDB()
     if db.dbVersion < 3 then
         db.showGreeting = nil -- removed setting: the login message is always shown
     end
-    -- Version 4 adds flyoutDir and flyoutAutoClose; the defaults above fill them in
+    -- Version 4 adds flyoutDir, flyoutAutoClose, buffRun and pvpBuff; the defaults above fill
+    -- them in
     db.dbVersion = D.DB_VERSION
 
     -- Button order: keep the saved order, drop unknown keys, append new buttons at the end

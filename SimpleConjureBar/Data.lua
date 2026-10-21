@@ -168,6 +168,8 @@ D.VALUE_DEFAULTS = {
     growRev       = false, -- false = grow to the right (horizontal) or down (vertical)
     flyoutDir     = "AUTO",
     flyoutAutoClose = 3,   -- seconds
+    buffRun       = true,  -- Buff & Run on the Intellect button's middle click
+    pvpBuff       = false, -- Buff & Run also buffs players flagged for PvP
     scale         = 1,
     antsSpeed     = 3,
     armorAntsSpeed = 3,

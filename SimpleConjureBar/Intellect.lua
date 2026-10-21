@@ -261,6 +261,69 @@ local function UpdateArmorHighlight()
 end
 
 ---------------------------------------------------------------------------
+-- Buff & Run (ruleset plan 2026-10-21-buff-and-run): the middle click casts Arcane Intellect
+-- on the current target, then targets the next friendly player - one macro, as the client lets
+-- an addon pick neither spell nor target during a click. The cast goes through a hidden button
+-- holding the rank's ID, chosen in the PreClick; "LeftButton 1" clicks it on key down, which
+-- works with ActionButtonUseKeyDown on and off (SmartBlessingBar). In combat the Intellect
+-- button's snippet drops every click (Bar.lua), this one too.
+---------------------------------------------------------------------------
+local buffRun = CreateFrame("Button", "SimpleConjureBarBuffRun", UIParent, "SecureActionButtonTemplate")
+buffRun:RegisterForClicks("AnyUp", "AnyDown")
+local BUFF_RUN_MACRO = "/click SimpleConjureBarBuffRun LeftButton 1\n/targetfriendplayer"
+
+-- The Arcane Intellect rank for the unit - never Brilliance: nil unless it is a friendly
+-- player of a mana class, alive, online, in range, still in need, and not flagged for PvP
+-- unless allowed (buffing him would flag the mage too). Nothing while auras are secret: a
+-- buff could not be seen, and every target would look in need.
+function ns.BuffRunSpell(unit)
+    if C_Secrets and C_Secrets.ShouldAurasBeSecret and C_Secrets.ShouldAurasBeSecret() then return end
+    if not (UnitExists(unit) and UnitIsPlayer(unit) and UnitCanAssist("player", unit)) then return end
+    if not UnitIsConnected(unit) or UnitIsDeadOrGhost(unit) then return end
+    if not MANA_CLASSES[select(2, UnitClass(unit))] then return end
+    if not db.pvpBuff and UnitIsPVP(unit) then return end
+    local level = UnitLevel(unit)
+    if level and level <= 0 then level = nil end -- "??": unknown, not rank 1
+    local spell = IntellectSpell(level)
+    if not spell then return end
+    if not NeedsIntellect(unit, ns.SpellName(D.SPELL_ARCANE_INTELLECT), ns.SpellName(D.SPELL_ARCANE_BRILLIANCE)) then return end
+    if not InSpellRange(spell, unit) then return end
+    return spell
+end
+
+-- The middle click's attributes as every out-of-combat update leaves them, whether the button
+-- is shown or not - its key works with the button hidden (Michel). Never at load: after a
+-- /reload in combat the files load in the lockdown.
+local function ArmBuffRun()
+    local on = db.buffRun
+    SetAttr(intel, "type3", on and "macro" or nil)
+    SetAttr(intel, "macrotext3", on and BUFF_RUN_MACRO or nil)
+    SetAttr(buffRun, "type", "spell")
+    SetAttr(buffRun, "unit", "target")
+    SetAttr(buffRun, "spell", nil)
+end
+ns.ArmBuffRun = ArmBuffRun
+
+-- Just before a middle click, out of combat: the rank for the current target. While the chosen
+-- spell is on cooldown the click does nothing at all, so no player is passed by. Demo mode
+-- casts nothing, targets on, and says on the press what it would cast.
+intel:SetScript("PreClick", function(_, button, down)
+    if button ~= "MiddleButton" or InCombatLockdown() or not db or not db.buffRun then return end
+    SetAttr(buffRun, "spell", nil)
+    local spell = ns.BuffRunSpell("target")
+    if spell and C_Spell.GetSpellCooldown(spell).startTime > 0 then
+        SetAttr(intel, "type3", nil)
+        return
+    end
+    SetAttr(intel, "type3", "macro")
+    if IsDemo() then
+        if spell and down then ns.DemoPrint(L.DEMO_CAST, ns.SpellName(spell) or "?") end
+        return
+    end
+    SetAttr(buffRun, "spell", spell)
+end)
+
+---------------------------------------------------------------------------
 -- Update cycle
 ---------------------------------------------------------------------------
 local groupDirty = false -- auras changed during combat; re-check afterwards
@@ -303,6 +366,7 @@ function ns.UpdateBuffState()
         end
     end
     UpdateTicker()
+    ArmBuffRun()
     -- A new Intellect target changes no glow, but the buff key casts on it (Buttons.lua)
     ns.UpdateBuffKey()
 end

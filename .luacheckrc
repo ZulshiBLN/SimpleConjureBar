@@ -57,6 +57,7 @@ read_globals = {
     "STANDARD_TEXT_FONT", "Settings", "ShowMacroFrame", "ShowUIPanel",
     "UIDropDownMenu_AddButton", "UIDropDownMenu_CreateInfo", "UIDropDownMenu_Initialize",
     "UIDropDownMenu_SetText", "UIDropDownMenu_SetWidth", "UIParent", "UISpecialFrames",
+    "C_Secrets", "UnitCanAssist", "UnitIsPVP",
     "UnitBuff", "UnitClass", "UnitExists", "UnitFactionGroup", "UnitGUID", "UnitInRange",
     "UnitIsConnected", "UnitIsDeadOrGhost", "UnitIsFriend", "UnitIsPlayer", "UnitIsUnit",
     "UnitIsVisible", "UnitLevel", "UnitName", "UnregisterStateDriver",

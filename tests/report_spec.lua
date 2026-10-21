@@ -251,6 +251,27 @@ describe("the report form", function()
         assert.is_true(window:IsShown())
     end)
 
+    it("comes back with the settings after combat when docked to them", function()
+        local ns = login()
+        grabber({}, 1)
+        ns.ToggleSettings()
+        ns.OpenBugReport()
+        local settings, window = SimpleConjureBarSettings, SimpleConjureBarReport
+        -- PLAYER_REGEN_DISABLED: the player is in combat, the lockdown not yet
+        STATE.affecting = true
+        FIRE("PLAYER_REGEN_DISABLED")
+        assert.is_false(settings:IsShown())
+        assert.is_false(window:IsShown())
+        STATE.affecting = false
+        FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.is_true(settings:IsShown())
+        assert.is_true(window:IsShown())
+        -- closed by hand, the settings take the report along, and it stays closed
+        settings:Hide()
+        FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.is_false(window:IsShown())
+    end)
+
     it("dates nothing: times are relative to now and to the login", function()
         local ns = login()
         grabber({ ourError(time() - 90, 1) }, 1)
@@ -301,7 +322,7 @@ describe("the report form", function()
         assert.is_true(SimpleConjureBarReport:IsShown())
         FIRE("PLAYER_REGEN_DISABLED")
         assert.is_false(SimpleConjureBarReport:IsShown())
-        FIRE("PLAYER_REGEN_ENABLED")
+        FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
         assert.is_true(SimpleConjureBarReport:IsShown())
     end)
 end)

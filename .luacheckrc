@@ -61,7 +61,7 @@ read_globals = {
     "UnitBuff", "UnitClass", "UnitExists", "UnitFactionGroup", "UnitGUID", "UnitInRange",
     "UnitIsConnected", "UnitIsDeadOrGhost", "UnitIsFriend", "UnitIsPlayer", "UnitIsUnit",
     "UnitIsVisible", "UnitLevel", "UnitName", "UnregisterStateDriver",
-    "issecretvalue", "GetRealmName", "GetNormalizedRealmName", "GetGuildInfo",
+    "issecretvalue", "GetRealmName", "GetNormalizedRealmName", "GetGuildInfo", "UnitAffectingCombat",
     "date", "time", "strtrim", "tinsert", "wipe",
     SlashCmdList = { fields = { SIMPLECONJUREBAR = { read_only = false } } },
     -- The pre-10.2.5 color picker is configured through these fields; the

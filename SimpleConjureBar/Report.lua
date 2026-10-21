@@ -348,7 +348,15 @@ local function CreateWindow()
     frame:SetScript("OnDragStop", function() Mover():StopMovingOrSizing() end)
     frame:SetClampedToScreen(true)
     -- Closing the settings closes a report docked to them
-    ns.UI.window:HookScript("OnHide", function() if frame.docked then frame:Hide() end end)
+    -- Combat closes both windows, each from its own event, in no set order: whichever closes
+    -- the report first marks it to come back once the settings are back
+    local reopen = false
+    ns.UI.window:HookScript("OnHide", function()
+        if frame.docked and frame:IsShown() then
+            if UnitAffectingCombat("player") then reopen = true end
+            frame:Hide()
+        end
+    end)
     if frame.SetBackdrop then
         frame:SetBackdrop({
             bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -497,7 +505,6 @@ local function CreateWindow()
         Refresh()
         SelectReport()
     end)
-    local reopen = false
     local events = CreateFrame("Frame")
     events:RegisterEvent("PLAYER_REGEN_DISABLED")
     events:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -506,7 +513,10 @@ local function CreateWindow()
             if frame:IsShown() then reopen = true; frame:Hide() end
         elseif reopen then
             reopen = false
-            frame:Show()
+            -- after the settings window's own handler, which may run after this one
+            C_Timer.After(0, function()
+                if not frame.docked or ns.UI.window:IsShown() then frame:Show() end
+            end)
         end
     end)
     function frame.BuildText() return BuildReport(FormValues()) end

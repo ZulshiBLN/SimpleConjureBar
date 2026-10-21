@@ -338,6 +338,7 @@ PixelUtil = { SetSize = function(t, w, h) t:SetSize(w, h) end }
 Settings = { RegisterCanvasLayoutCategory = function(p, n) return { GetID = function() return 1 end } end, RegisterAddOnCategory = noop }
 RegisterStateDriver = noop; UnregisterStateDriver = noop
 InCombatLockdown = function() return STATE.combat end
+UnitAffectingCombat = function() return STATE.affecting == true or STATE.combat == true end
 IsInGroup = function() return STATE.group end
 IsInRaid = function() return STATE.raid end
 GetNumGroupMembers = function() return STATE.members end

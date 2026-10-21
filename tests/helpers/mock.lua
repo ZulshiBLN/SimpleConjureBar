@@ -413,7 +413,14 @@ C_UnitAuras = { GetAuraDataBySpellName = function(u, name)
   end
 end }
 AURAS = {}
-C_AddOns = { GetAddOnMetadata = function() return "1.0.0" end }
+-- The installed addons: { name = folder, title, loaded }, by index
+ADDONS = {}
+C_AddOns = {
+  GetAddOnMetadata = function() return "1.0.0" end,
+  GetNumAddOns = function() return #ADDONS end,
+  GetAddOnInfo = function(i) local a = ADDONS[i] return a.name, a.title, "", true, nil end,
+  IsAddOnLoaded = function(i) return ADDONS[i].loaded == true end,
+}
 C_CurrencyInfo = { GetCoinTextureString = function(m) return m .. "c" end }
 UIDropDownMenu_SetWidth = noop
 UnitGUID = function(u) if u == "NPC" then return STATE.tradeGuid end return "Player-1-" .. u end

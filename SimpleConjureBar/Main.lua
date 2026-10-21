@@ -87,34 +87,9 @@ local function PrintHelp()
     end
 end
 
--- Technical output, deliberately not localized
+-- Technical output, deliberately not localized: the bug report's state snapshot (Report.lua)
 local function PrintDebug()
-    Print("KeyDown CVar: " .. tostring(GetCVar("ActionButtonUseKeyDown")))
-    local b = ns.buttons
-    for _, btn in ipairs({ b.Water, b.Food, b.Teleport, b.Portal, b.Intellect }) do
-        Print(string.format("%s shown=%s type1=%s item1=%s spell1=%s unit1=%s type2=%s spell2=%s unit2=%s",
-            btn:GetName(), tostring(btn:IsShown()),
-            tostring(btn:GetAttribute("type1")), tostring(btn:GetAttribute("item1")),
-            tostring(btn:GetAttribute("spell1")), tostring(btn:GetAttribute("unit1")),
-            tostring(btn:GetAttribute("type2")), tostring(btn:GetAttribute("spell2")),
-            tostring(btn:GetAttribute("unit2"))))
-    end
-    -- Own buffs with spell IDs (helps to identify buffs the addon does not know yet)
-    local GetAura = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
-    for i = 1, 40 do
-        local name, spellId
-        if GetAura then
-            local ok, aura = pcall(GetAura, "player", i, "HELPFUL")
-            if not ok or not aura then break end
-            name, spellId = aura.name, aura.spellId
-        else
-            local id
-            name, _, _, _, _, _, _, _, _, id = UnitBuff("player", i)
-            if not name then break end
-            spellId = id
-        end
-        Print(string.format("Buff %d: %s (%s)", i, tostring(name), tostring(spellId)))
-    end
+    for _, line in ipairs(ns.StateSnapshot()) do Print(line) end
 end
 
 SlashCmdList.SIMPLECONJUREBAR = function(msg)

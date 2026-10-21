@@ -15,6 +15,120 @@ ns.OnDBReady(function(d) db = d end)
 
 local MAX_ERRORS = 5       -- newest errors of this addon included in the report
 local MAX_STACK_LINES = 12 -- stack lines per error
+local MAX_ADDONS = 60      -- loaded addons named in the report
+
+---------------------------------------------------------------------------
+-- State snapshot (ruleset plan 2026-10-17-bug-report-details): what decides a misbehaviour
+-- without a Lua error - each button's click, the items the addon counts, the group by class,
+-- own buffs - as IDs, tokens and counts. /scb debug prints the same lines.
+---------------------------------------------------------------------------
+local ATTRS = { "type", "spell", "item", "unit", "macrotext" }
+
+local function ButtonLine(label, b)
+    local parts = { "button " .. label, "shown=" .. tostring(b:IsShown()) }
+    for _, suffix in ipairs({ "", "1", "2", "3" }) do
+        for _, a in ipairs(ATTRS) do
+            local v = b:GetAttribute(a .. suffix)
+            if v ~= nil then parts[#parts + 1] = a .. suffix .. "=" .. tostring(v):gsub("\n", " / ") end
+        end
+    end
+    local source = b:GetAttribute("scbsource")
+    if source then parts[#parts + 1] = "scbsource=" .. tostring(source) end
+    return table.concat(parts, " ")
+end
+
+-- The items the addon conjures, uses or buys, by ID
+local function TrackedItems()
+    local ids = {}
+    for _, list in ipairs({ D.WATER_ITEMS, D.FOOD_ITEMS }) do
+        for _, id in ipairs(list) do ids[#ids + 1] = id end
+    end
+    for _, g in ipairs(D.MANA_GEMS) do ids[#ids + 1] = g.item end
+    for _, r in ipairs(D.REAGENTS) do ids[#ids + 1] = r.id end
+    return ids
+end
+
+local function OwnBuffs()
+    local parts = {}
+    local GetAura = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
+    for i = 1, 40 do
+        local ok, aura = pcall(GetAura, "player", i, "HELPFUL")
+        if not ok or not aura then break end
+        local okLeft, left = pcall(function()
+            local e = aura.expirationTime
+            if type(e) == "number" and e > 0 then return math.floor((e - GetTime()) / 60 + 0.5) .. "m" end
+            return "-"
+        end)
+        local okId, id = pcall(tostring, aura.spellId)
+        parts[#parts + 1] = (okId and id or "?") .. ":" .. (okLeft and left or "?")
+    end
+    return table.concat(parts, " ")
+end
+
+local function GroupLine()
+    local kind = IsInRaid() and "raid" or IsInGroup() and "party" or "solo"
+    local units, size = { "player" }, 1
+    if IsInRaid() then
+        size = GetNumGroupMembers()
+        units = {}
+        for i = 1, size do units[i] = "raid" .. i end
+    elseif IsInGroup() then
+        size = GetNumSubgroupMembers() + 1
+        for i = 1, size - 1 do units[#units + 1] = "party" .. i end
+    end
+    local byClass, classes = {}, {}
+    for _, u in ipairs(units) do
+        local _, class = UnitClass(u)
+        if class then
+            if not byClass[class] then classes[#classes + 1] = class end
+            byClass[class] = (byClass[class] or 0) + 1
+        end
+    end
+    table.sort(classes)
+    local parts = {}
+    for _, c in ipairs(classes) do parts[#parts + 1] = c .. "=" .. byClass[c] end
+    return ("group %s size=%d %s"):format(kind, size, table.concat(parts, " "))
+end
+
+function ns.StateSnapshot()
+    local lines = {}
+    for _, key in ipairs(D.DEFAULT_ORDER) do
+        local b = ns.buttons[key]
+        lines[#lines + 1] = ButtonLine(key, b)
+        for _, c in ipairs(b.fly and b.fly.buttons or {}) do lines[#lines + 1] = ButtonLine(c:GetName(), c) end
+    end
+    for _, b in ipairs({ ns.buffKey, _G.SimpleConjureBarBuffRun }) do
+        lines[#lines + 1] = ButtonLine(b:GetName(), b)
+    end
+    local bags = {}
+    for _, id in ipairs(TrackedItems()) do
+        local n = API.ItemCount(id) or 0
+        if n > 0 then bags[#bags + 1] = id .. "=" .. n end
+    end
+    lines[#lines + 1] = "bags " .. table.concat(bags, " ")
+    lines[#lines + 1] = GroupLine()
+    lines[#lines + 1] = "buffs " .. OwnBuffs()
+    lines[#lines + 1] = "keydown " .. tostring(GetCVar("ActionButtonUseKeyDown"))
+    lines[#lines + 1] = "combat " .. (InCombatLockdown() and "yes" or "no")
+    return lines
+end
+
+-- Loaded addons by folder name - the title may carry colour codes - and declared version
+function ns.AddonList()
+    local lines, extra = {}, 0
+    for i = 1, C_AddOns.GetNumAddOns() do
+        if C_AddOns.IsAddOnLoaded(i) then
+            if #lines < MAX_ADDONS then
+                local name = C_AddOns.GetAddOnInfo(i)
+                lines[#lines + 1] = name .. " " .. tostring(C_AddOns.GetAddOnMetadata(name, "Version") or "?")
+            else
+                extra = extra + 1
+            end
+        end
+    end
+    if extra > 0 then lines[#lines + 1] = ("... %d more"):format(extra) end
+    return lines
+end
 
 ---------------------------------------------------------------------------
 -- Report content

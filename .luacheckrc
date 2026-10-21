@@ -61,7 +61,7 @@ read_globals = {
     "UnitBuff", "UnitClass", "UnitExists", "UnitFactionGroup", "UnitGUID", "UnitInRange",
     "UnitIsConnected", "UnitIsDeadOrGhost", "UnitIsFriend", "UnitIsPlayer", "UnitIsUnit",
     "UnitIsVisible", "UnitLevel", "UnitName", "UnregisterStateDriver",
-    "date", "strtrim", "tinsert", "wipe",
+    "date", "time", "strtrim", "tinsert", "wipe",
     SlashCmdList = { fields = { SIMPLECONJUREBAR = { read_only = false } } },
     -- The pre-10.2.5 color picker is configured through these fields; the
     -- current one through SetupColorPickerAndShow. Same baseline as above.

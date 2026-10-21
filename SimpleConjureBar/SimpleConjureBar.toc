@@ -38,6 +38,7 @@
 Locales.lua
 Data.lua
 Core.lua
+Log.lua
 Bar.lua
 Buttons.lua
 Intellect.lua

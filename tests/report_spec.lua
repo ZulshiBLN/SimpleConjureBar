@@ -57,6 +57,120 @@ describe("the state snapshot", function()
     end)
 end)
 
+-- A press as the client delivers it: down, then up
+local function press(button, mouse)
+    RUNCLICK(button, mouse or "LeftButton", true)
+    RUNCLICK(button, mouse or "LeftButton", false)
+end
+
+local function clicks(ns)
+    local found = {}
+    for _, l in ipairs(ns.LogLines()) do
+        local what = l:match("^%S+ (click .*)$")
+        if what then found[#found + 1] = what end
+    end
+    return found
+end
+
+describe("the action log", function()
+    it("keeps one entry per press, with the key-down setting on and off", function()
+        for _, keyDown in ipairs({ false, true }) do
+            local ns = login()
+            STATE.keyDown = keyDown
+            press(ns.buttons.Water)
+            press(ns.buttons.Intellect, "RightButton")
+            local found = clicks(ns)
+            assert.are.equal(2, #found, table.concat(found, " | "))
+            assert.is_truthy(found[1]:find("^click Water LeftButton"))
+            assert.is_truthy(found[2]:find("^click Intellect RightButton"))
+            STATE.keyDown = nil
+        end
+    end)
+
+    it("logs a left click on Intellect in a party with its spell and unit token", function()
+        local ns = login()
+        STATE.group, STATE.members = true, 3
+        STATE.units.party2 = { class = "PRIEST" }
+        STATE.units.player = { auras = { { id = ns.D.INTELLECT_RANKS[1].id, as = ns.D.SPELL_ARCANE_INTELLECT,
+            expires = GetTime() + 3000 } } }
+        STATE.units.party1 = STATE.units.player
+        ITEMS[ns.D.ITEM_ARCANE_POWDER] = 0
+        FIRE("GROUP_ROSTER_UPDATE"); RUNTIMERS(); ns.UpdateBuffState()
+        press(ns.buttons.Intellect)
+        local found = clicks(ns)
+        local b = ns.buttons.Intellect
+        assert.are.equal(("click Intellect LeftButton type=spell spell=%s unit=party2"):format(b:GetAttribute("spell1")),
+            found[#found])
+        ITEMS[ns.D.ITEM_ARCANE_POWDER] = 5
+    end)
+
+    it("logs a Buff & Run click as one Intellect and one hidden-button entry", function()
+        local ns = login()
+        STATE.units.target = { class = "PRIEST" }
+        STATE.friends = { { class = "MAGE" } }
+        press(ns.buttons.Intellect, "MiddleButton")
+        local found = clicks(ns)
+        assert.are.equal(2, #found, table.concat(found, " | "))
+        -- the macro's nested click acts inside the Intellect click, so it is logged first
+        assert.is_truthy(found[1]:find("^click SimpleConjureBarBuffRun LeftButton type=spell spell=%d+ unit=target"), found[1])
+        assert.is_truthy(found[2]:find("^click Intellect MiddleButton"), found[2])
+    end)
+
+    it("holds the last 50 in order", function()
+        local ns = login()
+        for _ = 1, 60 do press(ns.buttons.Water) end
+        local lines = ns.LogLines()
+        assert.are.equal(50, #lines)
+        local found = clicks(ns)
+        assert.are.equal(50, #found)
+    end)
+
+    it("never stops a click when a log write fails", function()
+        local ns = login()
+        local clock = _G.time
+        _G.time = function() error("broken clock") end -- every write reads it
+        local before = #STATE.casts
+        press(ns.buttons.Armor)
+        assert.are.equal(before + 1, #STATE.casts)
+        assert.are.same({}, STATE.errors)
+        _G.time = clock
+        -- and a line that cannot be formatted does not break the report
+        ns.LogFormat = function() error("broken format") end
+        assert.are.equal("?", ns.LogLines()[1])
+    end)
+
+    it("logs rebuilds, the buff key's source, Buff & Run's reason and changed settings", function()
+        local ns, db = login()
+        ns.Rebuild(); RUNTIMERS()
+        assert.is_truthy(contains(ns.LogLines(), " rebuild$"))
+        assert.is_truthy(contains(ns.LogLines(), " buffkey Armor$"))
+
+        STATE.units.target = { class = "WARRIOR" }
+        STATE.friends = { { class = "MAGE" } }
+        press(ns.buttons.Intellect, "MiddleButton")
+        assert.is_truthy(contains(ns.LogLines(), " buffrun none: no mana user$"))
+
+        ns.ToggleSettings()
+        db.armorRenewMinutes = 1
+        ns.ToggleSettings()
+        assert.is_truthy(contains(ns.LogLines(), " setting armorRenewMinutes=1$"))
+        SlashCmdList.SIMPLECONJUREBAR("lock")
+        assert.is_truthy(contains(ns.LogLines(), " setting locked=true$"))
+    end)
+
+    it("knows whether a moment was in combat", function()
+        local ns = login()
+        local t0 = time()
+        assert.are.equal("no", ns.CombatAt(t0))
+        assert.are.equal("unknown", ns.CombatAt(t0 - 3600))
+        FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
+        assert.are.equal("yes", ns.CombatAt(time()))
+        STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED")
+        assert.is_truthy(contains(ns.LogLines(), "combat start"))
+        assert.is_truthy(contains(ns.LogLines(), "combat end"))
+    end)
+end)
+
 describe("the loaded addons", function()
     it("are listed by folder name and version, at most 60", function()
         local ns = login()

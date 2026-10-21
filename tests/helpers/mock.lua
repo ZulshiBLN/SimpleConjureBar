@@ -358,7 +358,10 @@ BUYS = {}
 BuyMerchantItem = function(i, n) BUYS[#BUYS+1] = {i, n} end
 GetCursorPosition = function() return 0, 0 end
 IsMouseButtonDown = function() return false end
-GetCVar = function() return "1" end
+GetCVar = function(name)
+  if name == "ActionButtonUseKeyDown" then return STATE.keyDown and "1" or "0" end
+  return "1"
+end
 GetTime = function() return STATE.now end
 ReloadUI = noop
 CheckInteractDistance = function() return true end
@@ -439,6 +442,8 @@ CreateMacro = function(n, icon, body, perChar) MACROS[#MACROS+1] = { name = n, b
 EditMacro = function(i, n, icon, body) MACROS[i > 120 and i - 120 or i].body = body end
 GetBuildInfo = function() return "1.15.0", "99999", "Oct 1 2026", 16001 end
 date = os.date
+-- The clock BugGrabber stamps errors with; moves with STATE.now
+time = function() return 1792600000 + math.floor(STATE.now) end
 BugGrabber = { GetDB = function() return {
   { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:10: attempt to index nil", stack = "[SimpleConjureBar/Bar.lua]:10\n[C]: ?", counter = 3, time = "2026/10/17 02:00" },
   { message = "OtherAddon error", stack = "[Other/x.lua]:1", counter = 1 } } end }

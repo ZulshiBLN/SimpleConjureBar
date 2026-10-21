@@ -273,6 +273,7 @@ function ns.UpdateBuffKey()
         end
     end
     local key, b = ns.buffKey, source and buttons[source]
+    if key:GetAttribute("scbsource") ~= source then ns.Log("buffkey " .. tostring(source)) end
     SetAttr(key, "scbsource", source)
     SetAttr(key, "type1", b and b:GetAttribute("type" .. n) or nil)
     SetAttr(key, "spell1", b and b:GetAttribute("spell" .. n) or nil)
@@ -319,6 +320,7 @@ function ns.Rebuild()
         return
     end
     pending = false
+    ns.Log("rebuild")
 
     ns.ReAnchor()
     flyDir = ComputeFlyDir()

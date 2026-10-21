@@ -306,6 +306,7 @@ local function CreateMainButton(key)
     b:SetScript("OnEnter", ShowTooltip)
     b:SetScript("OnLeave", GameTooltip_Hide)
     b:HookScript("OnClick", OnMainClick)
+    ns.LogClicks(b, key)
     return b
 end
 
@@ -360,6 +361,7 @@ end
 ---------------------------------------------------------------------------
 local intel = CreateMainButton("Intellect")
 intel.isBuff = true
+intel.locksInCombat = function() return true end -- for the action log
 -- Intellect is locked in combat (saves mana, and targets cannot change under the lockdown):
 -- the secure snippet drops every click while the player is in combat.
 -- The armor buttons (always on yourself) stay usable in combat.
@@ -474,6 +476,7 @@ local tele   = CreateFlyoutButton("Teleport", function() return ns.KnownTravel("
 local portal = CreateFlyoutButton("Portal", function() return ns.KnownTravel("portal") end)
 tele.rune, portal.rune = D.ITEM_RUNE_TELE, D.ITEM_RUNE_PORTAL
 for _, b in ipairs({ tele, portal }) do
+    b.locksInCombat = function(mouse) return mouse == "LeftButton" end -- for the action log
     ns.SetLatinFont(b.count, NumberFontNormal, 14, "OUTLINE") -- digits only
     b.count:SetDrawLayer("OVERLAY", 7)
     -- The game refuses teleports and portals in combat (in game, 2026-10-21): the left click
@@ -506,6 +509,8 @@ buffKey:HookScript("OnClick", function(self, _, down)
         DemoPrint(L.DEMO_CAST, ns.SpellName(self.demoSpell) or "?")
     end
 end)
+buffKey.locksInCombat = function() return buffKey:GetAttribute("scbsource") == "Intellect" end
+ns.LogClicks(buffKey, buffKey:GetName())
 
 -- Flyout child buttons are created on demand
 function ns.GetFlyoutChild(main, i)
@@ -518,6 +523,7 @@ function ns.GetFlyoutChild(main, i)
     c = CreateSecureButton(fly:GetName() .. i, fly)
     c:SetScript("OnEnter", ShowTooltip)
     c:SetScript("OnLeave", GameTooltip_Hide)
+    ns.LogClicks(c, c:GetName())
 
     -- A left click chooses: copy the spell to the main button and close the menu (secure, works
     -- in combat). An armor chosen also reaches the buff key while it holds Armor's click; the

@@ -337,24 +337,30 @@ end
 ---------------------------------------------------------------------------
 local buffRun = CreateFrame("Button", "SimpleConjureBarBuffRun", UIParent, "SecureActionButtonTemplate")
 buffRun:RegisterForClicks("AnyUp", "AnyDown")
+ns.LogClicks(buffRun, buffRun:GetName(), true) -- clicked only by the macro's "/click ... 1"
 local BUFF_RUN_MACRO = "/click SimpleConjureBarBuffRun LeftButton 1\n/targetfriendplayer"
 
 -- The Arcane Intellect rank for the unit - never Brilliance: nil unless it is a friendly
 -- player of a mana class, alive, online, in range, still in need, and not flagged for PvP
 -- unless allowed (buffing him would flag the mage too). Nothing while auras are secret: a
--- buff could not be seen, and every target would look in need.
+-- buff could not be seen, and every target would look in need. Without a spell the second
+-- value says why, for the bug report's action log.
 function ns.BuffRunSpell(unit)
-    if C_Secrets and C_Secrets.ShouldAurasBeSecret and C_Secrets.ShouldAurasBeSecret() then return end
-    if not (UnitExists(unit) and UnitIsPlayer(unit) and UnitCanAssist("player", unit)) then return end
-    if not UnitIsConnected(unit) or UnitIsDeadOrGhost(unit) then return end
-    if not MANA_CLASSES[select(2, UnitClass(unit))] then return end
-    if not db.pvpBuff and UnitIsPVP(unit) then return end
+    if C_Secrets and C_Secrets.ShouldAurasBeSecret and C_Secrets.ShouldAurasBeSecret() then return nil, "auras secret" end
+    if not (UnitExists(unit) and UnitIsPlayer(unit) and UnitCanAssist("player", unit)) then
+        return nil, "no friendly player"
+    end
+    if not UnitIsConnected(unit) or UnitIsDeadOrGhost(unit) then return nil, "offline or dead" end
+    if not MANA_CLASSES[select(2, UnitClass(unit))] then return nil, "no mana user" end
+    if not db.pvpBuff and UnitIsPVP(unit) then return nil, "flagged for PvP" end
     local level = UnitLevel(unit)
     if level and level <= 0 then level = nil end -- "??": unknown, not rank 1
     local spell = IntellectSpell(level)
-    if not spell then return end
-    if not NeedsIntellect(unit, ns.SpellName(D.SPELL_ARCANE_INTELLECT), ns.SpellName(D.SPELL_ARCANE_BRILLIANCE)) then return end
-    if not InSpellRange(spell, unit) then return end
+    if not spell then return nil, "no rank known" end
+    if not NeedsIntellect(unit, ns.SpellName(D.SPELL_ARCANE_INTELLECT), ns.SpellName(D.SPELL_ARCANE_BRILLIANCE)) then
+        return nil, "has it"
+    end
+    if not InSpellRange(spell, unit) then return nil, "out of range" end
     return spell
 end
 
@@ -378,8 +384,12 @@ ns.ArmBuffRun = ArmBuffRun
 intel:SetScript("PreClick", function(_, button, down)
     if button ~= "MiddleButton" or InCombatLockdown() or not db or not db.buffRun then return end
     SetAttr(buffRun, "spell", nil)
-    local spell = ns.BuffRunSpell("target")
-    if spell and C_Spell.GetSpellCooldown(spell).startTime > 0 then
+    local spell, why = ns.BuffRunSpell("target")
+    local cooling = spell and C_Spell.GetSpellCooldown(spell).startTime > 0
+    if down then -- the PreClick sees down and up; one entry per press
+        ns.Log("buffrun " .. (cooling and "wait: cooldown" or spell and tostring(spell) or ("none: " .. why)))
+    end
+    if cooling then
         SetAttr(intel, "type3", nil)
         return
     end

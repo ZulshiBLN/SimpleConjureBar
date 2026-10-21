@@ -126,4 +126,5 @@ SlashCmdList.SIMPLECONJUREBAR = function(msg)
     else
         Print(L.CMD_UNKNOWN:format("|cffffd100/scb help|r"))
     end
+    ns.LogSettings() -- lock, minimap and demo change settings outside the window
 end

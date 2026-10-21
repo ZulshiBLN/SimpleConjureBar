@@ -771,7 +771,10 @@ function ns.OpenSettings(aboveBlizzard)
     if aboveBlizzard then settings:SetFrameStrata("FULLSCREEN_DIALOG") end
     if settings:IsShown() then settings:Raise() else settings:Show() end
 end
-settings:HookScript("OnHide", function() settings:SetFrameStrata("DIALOG") end)
+settings:HookScript("OnHide", function()
+    settings:SetFrameStrata("DIALOG")
+    ns.LogSettings() -- what changed, for the bug report's action log
+end)
 
 -- Combat start: close the window and reopen it afterwards if it was closed because of combat
 do

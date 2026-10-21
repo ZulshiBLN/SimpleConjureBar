@@ -385,7 +385,9 @@ intel:SetScript("PreClick", function(_, button, down)
     if button ~= "MiddleButton" or InCombatLockdown() or not db or not db.buffRun then return end
     SetAttr(buffRun, "spell", nil)
     local spell, why = ns.BuffRunSpell("target")
-    local cooling = spell and C_Spell.GetSpellCooldown(spell).startTime > 0
+    -- nil for a spell the client does not know - demo mode treats every rank as known
+    local cd = spell and C_Spell.GetSpellCooldown(spell)
+    local cooling = cd and cd.startTime > 0
     if down then -- the PreClick sees down and up; one entry per press
         ns.Log("buffrun " .. (cooling and "wait: cooldown" or spell and tostring(spell) or ("none: " .. why)))
     end

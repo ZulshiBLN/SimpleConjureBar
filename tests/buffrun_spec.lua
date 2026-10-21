@@ -93,6 +93,20 @@ local function toggle(cb)
     RUNSCRIPT(cb, "OnClick")
 end
 
+describe("the Buff & Run cooldown check", function()
+    it("takes a spell the client answers no cooldown for, as an unlearned rank in demo mode", function()
+        local ns = login()
+        local get = C_Spell.GetSpellCooldown
+        C_Spell.GetSpellCooldown = function() return nil end
+        STATE.units.target = { class = "PRIEST" }
+        STATE.friends = { { class = "MAGE" } }
+        middle(ns)
+        C_Spell.GetSpellCooldown = get
+        assert.are.same({}, STATE.errors)
+        assert.are.equal(1, #STATE.casts)
+    end)
+end)
+
 describe("the Buff & Run switches", function()
     it("turn the middle click off and on through the check box, the PvP box dimmed while off", function()
         local ns, db = login()

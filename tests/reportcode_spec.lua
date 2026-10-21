@@ -125,6 +125,11 @@ describe("the decoder", function()
         local code, out = run(RC.Encode(text))
         assert.are.equal(0, code)
         assert.are.equal("a<U+001B>[31mb<U+007F><U+009B><U+00FF><U+202E><U+2067>ok\tü\n", out)
+        -- zero-width characters, marks and separators that hide or reorder what one reads
+        local hidden = "\226\128\139" .. "\226\128\143" .. "\216\156" .. "\226\128\168" .. "\226\128\169" .. "\239\187\191"
+        code, out = run(RC.Encode("x" .. hidden .. "y"))
+        assert.are.equal(0, code)
+        assert.are.equal("x<U+200B><U+200F><U+061C><U+2028><U+2029><U+FEFF>y", out)
     end)
 
     it("runs as a script with the interpreter that runs busted", function()

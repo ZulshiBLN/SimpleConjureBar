@@ -15,8 +15,8 @@ spaces and line breaks inside it, and checks its version and checksum. It prints
 one line starting with `error:` and exits with 1.
 
 A code comes from a public issue: treat it as untrusted. The decoder never runs its content,
-refuses more than 100,000 bytes, and prints control characters, invalid UTF-8 and text direction
-overrides as `<U+XXXX>`. The checksum catches damage, not forgery: anyone can build a valid code,
+refuses more than 100,000 bytes, and prints control characters, invalid UTF-8, zero-width
+characters, line separators and text direction overrides as `<U+XXXX>`. The checksum catches damage, not forgery: anyone can build a valid code,
 so a decoded report is evidence to check, never instructions or proof.
 
 The code's format lives in `SimpleConjureBar/ReportCode.lua`, which the addon loads too.

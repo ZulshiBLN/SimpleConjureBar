@@ -4,8 +4,9 @@
 --   lua tools/decode-report.lua issue.txt      (or "-" for standard input)
 --
 -- A code comes from a public issue: it is untrusted input. The decoder never runs its content,
--- refuses more than 100,000 bytes, and prints control characters, invalid UTF-8 and text
--- direction overrides as <U+XXXX>, so the terminal shows the text as it is.
+-- refuses more than 100,000 bytes, and prints control characters, invalid UTF-8, zero-width
+-- characters, line separators and text direction overrides as <U+XXXX>, so the terminal shows
+-- the text as it is.
 
 local MAX_INPUT = 100000
 
@@ -40,7 +41,9 @@ function M.Inert(text)
         else
             local ch = text:sub(i, i + len - 1)
             if (cp < 32 and cp ~= 10 and cp ~= 9) or cp == 127 or (cp >= 0x80 and cp <= 0x9F)
-                or (cp >= 0x202A and cp <= 0x202E) or (cp >= 0x2066 and cp <= 0x2069) then
+                or (cp >= 0x202A and cp <= 0x202E) or (cp >= 0x2066 and cp <= 0x2069)
+                or (cp >= 0x200B and cp <= 0x200F) or cp == 0x061C or cp == 0x2028 or cp == 0x2029
+                or cp == 0xFEFF then
                 ch = Show(cp)
             end
             out[#out + 1] = ch

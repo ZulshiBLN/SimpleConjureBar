@@ -36,6 +36,10 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   does not. "Open Settings" opens or closes the settings window.
 
 ### Changed
+- `/scb debug` prints the state part of a bug report: every button, flyout entry and key with its
+  click, the items the addon counts, your group by class and your buffs with minutes left.
+- The bug report no longer prints the date and clock, your faction or your exact level (a range
+  instead), and no settings the addon does not know.
 - Teleport and Portal are greyed out in combat and a left click on them does nothing then, as
   the game refuses them in combat; their flyout still lets you choose.
 - A click in the armor, teleport or portal flyout only chooses, and the flyout closes; the button

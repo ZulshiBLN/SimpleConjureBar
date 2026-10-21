@@ -46,6 +46,7 @@ Merchant.lua
 Trade.lua
 Macros.lua
 Privacy.lua
+ReportCode.lua
 Report.lua
 Settings.lua
 SettingsPages.lua

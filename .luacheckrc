@@ -88,7 +88,7 @@ files["SimpleConjureBar/Report.lua"] = { ignore = { "211/L" } }
 files["tests/"] = {
     std = "lua51+busted",
     read_globals = {
-        "io", "require", "loadfile",
+        "io", "require", "loadfile", "dofile", "os",
         -- What tests/helpers/mock.lua provides to drive the mocked client,
         -- and the named frames the addon creates there
         "NEWOBJ", "FIRE", "RUNTIMERS", "RUNSCRIPT", "TICK", "STATE",
@@ -108,4 +108,11 @@ files["tests/scenario_spec.lua"] = {
     std = "lua51+busted",
     allow_defined_top = true,
     ignore = { "111", "112", "113", "121", "122", "143" },
+}
+
+-- The decoder runs in plain Lua 5.1 on a developer's machine, not in the client: it reads a
+-- file and exits with a status (ruleset plan 2026-10-21-bug-report-code).
+files["tools/"] = {
+    std = "lua51",
+    read_globals = { "io", "os", "arg", "debug", "dofile" },
 }

@@ -3,7 +3,8 @@ local noop = function() end
 local objects = {}
 local eventFrames = {}
 local timers = {}
-STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {} }
+STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {},
+          units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false }
 
 local Methods = {}
 local function New(kind, name, parent)
@@ -178,10 +179,14 @@ function Methods:WrapScript(frame, script, pre, post)
   })
 end
 
--- A click as the client delivers it to a secure button: the wrappers' pre bodies (false
--- cancels the action and every post body), the secure action (on key down while
--- STATE.keyDown, else on key up), the post bodies of the wrappers that returned a message,
--- then the insecure scripts. A spell cast is appended to STATE.casts as { spell, unit }.
+-- A click as the client delivers it to a secure button: PreClick, the wrappers' pre bodies
+-- (false cancels the action and every post body), the secure action (on key down while
+-- STATE.keyDown, else on key up; a macro's "/click ... 1" acts in both, as the client's did -
+-- ruleset plan 2026-10-21-buff-and-run), the post bodies of the wrappers that returned a
+-- message, then the insecure scripts. A spell cast is appended to STATE.casts as
+-- { spell, unit }; a macro runs its "/click Name [button] [1]" and "/targetfriendplayer"
+-- lines, the latter making the next of STATE.friends the target and counting in
+-- STATE.targetedNext.
 local function Attr(frame, name, button)
   local suffix = button == "LeftButton" and "1" or button == "RightButton" and "2"
     or button == "MiddleButton" and "3" or ""
@@ -189,7 +194,9 @@ local function Attr(frame, name, button)
   if v == nil then v = frame.attrs[name] end
   return v
 end
-function RUNCLICK(frame, button, down)
+local RunMacro
+function RUNCLICK(frame, button, down, fromMacro)
+  Run(frame, "PreClick", button, down)
   local cancelled, messages = false, {}
   local wraps = frame.wraps and frame.wraps.OnClick or {}
   for i, w in ipairs(wraps) do
@@ -202,9 +209,12 @@ function RUNCLICK(frame, button, down)
   end
   if not cancelled then
     if frame.template and frame.template:find("SecureActionButtonTemplate")
-       and (down == true) == (STATE.keyDown == true) then
-      if Attr(frame, "type", button) == "spell" and Attr(frame, "spell", button) ~= nil then
+       and (fromMacro or (down == true) == (STATE.keyDown == true)) then
+      local kind = Attr(frame, "type", button)
+      if kind == "spell" and Attr(frame, "spell", button) ~= nil then
         STATE.casts[#STATE.casts + 1] = { spell = Attr(frame, "spell", button), unit = Attr(frame, "unit", button) }
+      elseif kind == "macro" then
+        RunMacro(Attr(frame, "macrotext", button))
       end
     end
     for i, w in ipairs(wraps) do
@@ -215,6 +225,18 @@ function RUNCLICK(frame, button, down)
     end
   end
   Run(frame, "OnClick", button, down)
+end
+RunMacro = function(text)
+  for line in (text or ""):gmatch("[^\n]+") do
+    local name, mouse, keyDown = line:match("^/click%s+(%S+)%s*(%S*)%s*(%S*)")
+    if name then
+      local target = _G[name]
+      if target then RUNCLICK(target, mouse ~= "" and mouse or "LeftButton", keyDown == "1", true) end
+    elseif line:match("^/targetfriendplayer") then
+      STATE.units.target = table.remove(STATE.friends, 1)
+      STATE.targetedNext = STATE.targetedNext + 1
+    end
+  end
 end
 
 function CreateFrame(kind, name, parent, template)
@@ -282,18 +304,25 @@ IsInRaid = function() return STATE.raid end
 GetNumGroupMembers = function() return STATE.members end
 GetNumSubgroupMembers = function() return STATE.raid and 4 or (STATE.group and STATE.members - 1 or 0) end
 GetRaidRosterInfo = function(i) return "n"..i, 0, math.floor((i - 1) / 5) + 1 end
-UnitClass = function(u) return "Mage", "MAGE" end
+-- A unit a spec describes in STATE.units[token] (class, level, player, assist, pvp, dead,
+-- connected, range, name, auras = { spell IDs }); every other unit answers the defaults,
+-- a level 60 mage in reach
+local function U(u) return STATE.units[u] end
+UnitClass = function(u) local r = U(u) if r and r.class then return r.class, r.class end return "Mage", "MAGE" end
 UnitFactionGroup = function() return "Horde" end
-UnitExists = function(u) return u ~= "target" or STATE.target end
-UnitIsPlayer = function() return true end
+UnitExists = function(u) if U(u) then return true end return u ~= "target" or STATE.target end
+UnitIsPlayer = function(u) local r = U(u) return not r or r.player ~= false end
+UnitCanAssist = function(_, u) local r = U(u) return not r or r.assist ~= false end
+UnitIsPVP = function(u) local r = U(u) return r and r.pvp == true or false end
 UnitIsUnit = function(a, b) return a == b end
 UnitIsFriend = function() return true end
-UnitLevel = function() return 60 end
-UnitName = function(u) if u == "NPC" then return STATE.tradePartner end return "Name_" .. u end
-UnitIsConnected = function() return true end
-UnitIsDeadOrGhost = function() return false end
+UnitLevel = function(u) local r = U(u) return r and r.level or 60 end
+UnitName = function(u) if u == "NPC" then return STATE.tradePartner end local r = U(u) return r and r.name or "Name_" .. u end
+UnitIsConnected = function(u) local r = U(u) return not r or r.connected ~= false end
+UnitIsDeadOrGhost = function(u) local r = U(u) return r and r.dead == true or false end
 UnitIsVisible = function() return true end
 UnitInRange = function() return true end
+C_Secrets = { ShouldAurasBeSecret = function() return STATE.secret end }
 GetLocale = function() return STATE.locale end
 GetMoney = function() return 1000000 end
 GetMerchantNumItems = function() return STATE.merchantItems or 0 end
@@ -321,7 +350,8 @@ NUM_BAG_SLOTS = 4
 C_Spell = {
   GetSpellName = function(id) return "Spell" .. id end,
   GetSpellTexture = function(id) return id end,
-  IsSpellInRange = function() return true end,
+  IsSpellInRange = function(_, u) local r = U(u) return not r or r.range ~= false end,
+  GetSpellCooldown = function(id) return { startTime = STATE.cooldowns[id] or 0, duration = 1.5 } end,
 }
 C_SpellBook = { IsSpellKnown = function(id) return id ~= 429307 end }
 IsPlayerSpell = function() return false end
@@ -340,14 +370,23 @@ C_Container = {
   PickupContainerItem = function(bag, slot) local s = BAGS[bag] and BAGS[bag][slot]; CURSOR = s and s.itemID end,
   GetContainerItemInfo = function(bag, slot) return BAGS[bag] and BAGS[bag][slot] end,
 }
-C_UnitAuras = { GetAuraDataBySpellName = function(u, name) if AURAS[u .. name] then return {} end end }
+-- Buffs by name: AURAS[unit .. name], or a spell in a described unit's auras
+C_UnitAuras = { GetAuraDataBySpellName = function(u, name)
+  if AURAS[u .. name] then return {} end
+  local r = U(u)
+  for _, id in ipairs(r and r.auras or {}) do if "Spell" .. id == name then return {} end end
+end }
 AURAS = {}
 C_AddOns = { GetAddOnMetadata = function() return "1.0.0" end }
 C_CurrencyInfo = { GetCoinTextureString = function(m) return m .. "c" end }
 UIDropDownMenu_SetWidth = noop
 UnitGUID = function(u) if u == "NPC" then return STATE.tradeGuid end return "Player-1-" .. u end
 AURALIST = {}
-C_UnitAuras.GetAuraDataByIndex = function(u, i) local l = AURALIST[u]; if l and l[i] then return { spellId = l[i], name = "A" .. l[i] } end end
+C_UnitAuras.GetAuraDataByIndex = function(u, i)
+  local r = U(u)
+  local l = AURALIST[u] or (r and r.auras)
+  if l and l[i] then return { spellId = l[i], name = "A" .. l[i] } end
+end
 MACROS = {}
 GetMacroIndexByName = function(n) for i, m in ipairs(MACROS) do if m.name == n then return m.perChar and 120 + i or i end end return 0 end
 GetNumMacros = function() local a,c=0,0 for _,m in ipairs(MACROS) do if m.perChar then c=c+1 else a=a+1 end end return a,c end

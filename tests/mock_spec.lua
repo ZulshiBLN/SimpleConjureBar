@@ -42,6 +42,52 @@ describe("the mock", function()
         assert.are.same({}, STATE.errors)
     end)
 
+    it("runs PreClick first, and a macro's nested click and targeting", function()
+        local order = {}
+        local inner = CreateFrame("Button", "MockInner", UIParent, "SecureActionButtonTemplate")
+        inner:SetAttribute("type", "spell"); inner:SetAttribute("unit", "target")
+        local outer = CreateFrame("Button", "MockOuter", UIParent, "SecureActionButtonTemplate")
+        outer:SetAttribute("type3", "macro")
+        outer:SetAttribute("macrotext3", "/click MockInner LeftButton 1\n/targetfriendplayer")
+        outer:SetScript("PreClick", function() order[#order + 1] = "pre"; inner:SetAttribute("spell", 9) end)
+        outer:SetScript("OnClick", function() order[#order + 1] = "click" end)
+        STATE.friends = { { class = "PRIEST" }, { class = "WARRIOR" } }
+        -- The nested "/click ... 1" casts whether actions fire on key down or up
+        for _, keyDown in ipairs({ false, true }) do
+            STATE.keyDown, STATE.casts = keyDown, {}
+            RUNCLICK(outer, "MiddleButton", keyDown)
+            assert.are.same({ { spell = 9, unit = "target" } }, STATE.casts)
+        end
+        assert.are.same({ "pre", "click", "pre", "click" }, order)
+        assert.are.equal(2, STATE.targetedNext)
+        assert.are.equal("WARRIOR", STATE.units.target.class) -- the second friend
+        RUNCLICK(outer, "MiddleButton", true)
+        assert.is_nil(STATE.units.target) -- no friendly player left
+        assert.are.same({}, STATE.errors)
+    end)
+
+    it("describes units on request and answers the defaults otherwise", function()
+        STATE.units.party1 = { class = "WARRIOR", level = -1, player = false, assist = false,
+                               pvp = true, dead = true, connected = false, range = false,
+                               name = "Bob", auras = { 1459 } }
+        assert.are.same({ "WARRIOR", -1, false, false, true, true, false, false, "Bob" }, {
+            select(2, UnitClass("party1")), UnitLevel("party1"), UnitIsPlayer("party1"),
+            UnitCanAssist("player", "party1"), UnitIsPVP("party1"), UnitIsDeadOrGhost("party1"),
+            UnitIsConnected("party1"), C_Spell.IsSpellInRange(1459, "party1"), UnitName("party1") })
+        assert.is_not_nil(C_UnitAuras.GetAuraDataBySpellName("party1", "Spell1459"))
+        assert.are.equal(1459, C_UnitAuras.GetAuraDataByIndex("party1", 1).spellId)
+        assert.are.same({ "MAGE", 60, true, true, false, false, true, true }, {
+            select(2, UnitClass("party2")), UnitLevel("party2"), UnitIsPlayer("party2"),
+            UnitCanAssist("player", "party2"), UnitIsPVP("party2"), UnitIsDeadOrGhost("party2"),
+            UnitIsConnected("party2"), C_Spell.IsSpellInRange(1459, "party2") })
+        STATE.cooldowns[1459] = 100
+        assert.are.equal(100, C_Spell.GetSpellCooldown(1459).startTime)
+        assert.are.equal(0, C_Spell.GetSpellCooldown(1460).startTime)
+        assert.is_false(C_Secrets.ShouldAurasBeSecret())
+        STATE.secret = true
+        assert.is_true(C_Secrets.ShouldAurasBeSecret())
+    end)
+
     it("records a texture's atlas, colour and anchors", function()
         local tex = CreateFrame("Frame"):CreateTexture()
         tex:SetAtlas("x"); tex:SetVertexColor(1, 0.5, 0, 1)

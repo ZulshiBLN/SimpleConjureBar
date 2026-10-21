@@ -146,6 +146,14 @@ describe("the mock", function()
         assert.are.same({ "first", "second", "third" }, order)
     end)
 
+    it("knows who owns the tooltip until it is hidden", function()
+        local f = CreateFrame("Frame")
+        GameTooltip:SetOwner(f, "ANCHOR_LEFT")
+        assert.is_true(GameTooltip:IsOwned(f))
+        GameTooltip_Hide()
+        assert.is_false(GameTooltip:IsOwned(f))
+    end)
+
     it("records an edit box's selection and focus", function()
         local box = CreateFrame("EditBox")
         local gained = 0

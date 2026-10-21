@@ -92,7 +92,7 @@ files["tests/"] = {
         -- What tests/helpers/mock.lua provides to drive the mocked client,
         -- and the named frames the addon creates there
         "NEWOBJ", "FIRE", "RUNTIMERS", "RUNSCRIPT", "TICK", "STATE",
-        "SimpleConjureBarSettings", "SimpleConjureBarReport",
+        "SimpleConjureBarSettings", "SimpleConjureBarReport", "SimpleConjureBarMinimapButton",
     },
 }
 

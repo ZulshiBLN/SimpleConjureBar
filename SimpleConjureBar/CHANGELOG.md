@@ -38,6 +38,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   button hidden. "Open Settings" opens or closes the settings window.
 
 ### Changed
+- The tooltip of the minimap button and of the AddOn menu entry says "Lock bar" and "Unlock bar"
+  for the right click, and changes as soon as you click, without moving the mouse away.
 - `/scb debug` prints the state part of a bug report: every button, flyout entry and key with its
   click, the items the addon counts, your group by class and your buffs with minutes left.
 - The bug report no longer prints the date and clock, your faction or your exact level (a range

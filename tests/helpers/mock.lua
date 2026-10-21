@@ -332,7 +332,10 @@ end
 UISpecialFrames = {}
 BackdropTemplateMixin = {}
 STANDARD_TEXT_FONT = "Fonts\\FRIZQT__.TTF"
-GameTooltip_Hide = noop
+-- The tooltip remembers its owner, as the client's does
+function GameTooltip:SetOwner(owner) self.owner = owner end
+function GameTooltip:IsOwned(frame) return self.owner == frame end
+GameTooltip_Hide = function() GameTooltip.owner = nil end
 print = function(...) local t = {} for i = 1, select("#", ...) do t[#t+1] = tostring((select(i, ...))) end CHAT[#CHAT+1] = table.concat(t, " ") end
 CHAT = {}
 strtrim = function(s) return (s:gsub("^%s+", ""):gsub("%s+$", "")) end

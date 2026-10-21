@@ -11,21 +11,24 @@ local SetL = ns.SetL
 local db
 ns.OnDBReady(function(d) db = d end)
 
-local function ToggleLockWithMessage()
-    ns.ToggleLock()
-    ns.Print(db.locked and L.LOCKED or L.UNLOCKED)
-end
-
+-- The right click names what it locks: here, away from the bar, "Lock" alone said nothing
 local function ShowEntryTooltip(owner, anchor)
     GameTooltip:SetOwner(owner, anchor)
     GameTooltip:SetText("SimpleConjureBar |cffffffffv" .. ns.VERSION .. "|r")
     GameTooltip:AddLine(" ")
     GameTooltip:AddDoubleLine(L.LEFTCLICK, L.SETTINGS, 0, 1, 0, 1, 1, 1)
-    GameTooltip:AddDoubleLine(L.RIGHTCLICK, db.locked and L.UNLOCK or L.LOCK, 0, 1, 0, 1, 1, 1)
+    GameTooltip:AddDoubleLine(L.RIGHTCLICK, db.locked and L.UNLOCK_BAR or L.LOCK_BAR, 0, 1, 0, 1, 1, 1)
     if anchor == "ANCHOR_LEFT" then
         GameTooltip:AddDoubleLine(L.DRAG, L.MOVE, 0, 1, 0, 1, 1, 1)
     end
     GameTooltip:Show()
+end
+
+-- owner, anchor: a tooltip the click came from, shown again so it says the new state at once
+local function ToggleLockWithMessage(owner, anchor)
+    ns.ToggleLock()
+    ns.Print(db.locked and L.LOCKED or L.UNLOCKED)
+    if owner and GameTooltip:IsOwned(owner) then ShowEntryTooltip(owner, anchor) end
 end
 
 ---------------------------------------------------------------------------
@@ -81,8 +84,8 @@ end
 minimapBtn:SetScript("OnDragStart", function(self) self:SetScript("OnUpdate", OnMinimapDrag) end)
 minimapBtn:SetScript("OnDragStop", function(self) self:SetScript("OnUpdate", nil) end)
 
-minimapBtn:SetScript("OnClick", function(_, btn)
-    if btn == "RightButton" then ToggleLockWithMessage() else ns.ToggleSettings() end
+minimapBtn:SetScript("OnClick", function(self, btn)
+    if btn == "RightButton" then ToggleLockWithMessage(self, "ANCHOR_LEFT") else ns.ToggleSettings() end
 end)
 minimapBtn:SetScript("OnEnter", function(self) ShowEntryTooltip(self, "ANCHOR_LEFT") end)
 minimapBtn:SetScript("OnLeave", GameTooltip_Hide)
@@ -98,8 +101,8 @@ settingsKey:SetScript("OnClick", function() ns.ToggleSettings() end)
 -- AddOn compartment (Retail addon menu next to the minimap). The globals the TOC names
 -- live in Core.lua, ahead of the mage check, and call these.
 ---------------------------------------------------------------------------
-function ns.CompartmentClick(_, button)
-    if button == "RightButton" then ToggleLockWithMessage() else ns.ToggleSettings() end
+function ns.CompartmentClick(_, button, menuButton)
+    if button == "RightButton" then ToggleLockWithMessage(menuButton, "ANCHOR_RIGHT") else ns.ToggleSettings() end
 end
 
 function ns.CompartmentEnter(_, menuButton)

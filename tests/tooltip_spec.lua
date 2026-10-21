@@ -74,6 +74,26 @@ describe("the Intellect tooltip", function()
     end)
 end)
 
+describe("the minimap button's tooltip", function()
+    it("says the right click locks or unlocks the bar, and follows the click at once", function()
+        local ns = login()
+        local L = ns.L
+        local button = SimpleConjureBarMinimapButton
+        local right
+        GameTooltip.AddDoubleLine = function(_, left, text) if left == L.RIGHTCLICK then right = text end end
+        SimpleConjureBarDB.locked = false
+        RUNSCRIPT(button, "OnEnter")
+        assert.are.equal(L.LOCK_BAR, right)
+        RUNSCRIPT(button, "OnClick", "RightButton")
+        assert.is_true(SimpleConjureBarDB.locked)
+        assert.are.equal(L.UNLOCK_BAR, right) -- without leaving the button
+        RUNSCRIPT(button, "OnLeave")
+        right = nil
+        RUNSCRIPT(button, "OnClick", "RightButton")
+        assert.is_nil(right) -- no tooltip opened by a click when the mouse is gone
+    end)
+end)
+
 describe("the handle", function()
     it("says why a left click in combat does nothing, and stays quiet out of it", function()
         local ns = login()

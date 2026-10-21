@@ -95,8 +95,22 @@ characters) and are created or updated the same way, as character macros:
 
 A macro for a spell you have not learned yet shows a question mark until you learn it.
 
-"Report bug" opens a window with a ready-made report (addon version, client, language, settings
-and this addon's Lua errors from BugGrabber/BugSack) to copy with Ctrl+C and paste as an issue.
+## Reporting a bug
+
+"Report bug" (General tab) or `/scb bug` opens a short form: what happened, where - a list of
+the addon's parts - and optional details. Everything else the report takes from the game, so a
+bug can be found and fixed without asking you back. The window shows the report as one code,
+already selected:
+
+1. Copy the code with Ctrl+C.
+2. Open the link below the code: it opens the bug report form on GitHub (a GitHub account is
+   needed).
+3. Paste the code into its one field, tick the consent box and send it.
+
+"Show content" shows everything the code holds before you pass it on. The window does not open
+in combat; one that is open closes when combat starts and comes back after it. Errors come from
+BugGrabber/BugSack when installed. To read a code yourself: `lua tools/decode-report.lua`
+(see [tools/README.md](tools/README.md)).
 
 ## Chat commands
 
@@ -109,7 +123,7 @@ and this addon's Lua errors from BugGrabber/BugSack) to copy with Ctrl+C and pas
 | `/scb demo` | Turn demo mode on or off (simulates every button) |
 | `/scb reset` | Reset the bar position |
 | `/scb bug` | Open the bug report window |
-| `/scb debug` | Technical debug output |
+| `/scb debug` | Technical debug output: the state part of a bug report |
 
 `/cbar` still works as an alias from the old addon name "ConjureBar".
 
@@ -135,6 +149,7 @@ and can be overridden in the General tab (saved account-wide, applied without re
 | `Locales.lua` | All texts per language, locale switching, the key bindings' names |
 | `Data.lua` | Spell/item IDs, layout constants, defaults |
 | `Core.lua` | AddOn compartment entry points, API shims, saved variables, helpers, font helpers, language registry |
+| `Log.lua` | The bug report's action log: the last 50 presses and events, in memory |
 | `Bar.lua` | Bar frame, handle, secure buttons, glow, flyouts, the "Cast next buff" key, colors |
 | `Buttons.lua` | Button setup, layout (`Rebuild`), flyout direction and auto-close, counts, the buff key's action, bar events |
 | `Bindings.xml` | The three keys the game's Key Bindings offer |
@@ -142,7 +157,9 @@ and can be overridden in the General tab (saved account-wide, applied without re
 | `Merchant.lua` | Reagent auto-buy |
 | `Trade.lua` | Trading water and food |
 | `Macros.lua` | Character macro "SCB Polymorph", macro window |
-| `Report.lua` | Bug report window (report text, BugGrabber errors) |
+| `Privacy.lua` | What a bug report may carry: allowlist, name and path filter, locals, size |
+| `ReportCode.lua` | The bug report as one code (`SCB1:`), shared with `tools/decode-report.lua` |
+| `Report.lua` | Bug report window, report text, state snapshot, loaded addons |
 | `Settings.lua` | Settings window framework and widgets |
 | `SettingsPages.lua` | The five settings tabs |
 | `Minimap.lua` | Minimap button, AddOn compartment, options panel, the settings key |
@@ -157,8 +174,30 @@ every file far below Lua's limit of 200 local variables per chunk.
 - No dynamic code: secure snippets and macros are built from constants only.
 - Saved settings are validated at login (types and ranges), so damaged files cannot break the addon.
 - No personal data is stored; the trade partner's GUID is only kept in memory for 10 seconds.
-- Bug reports contain no character name, realm or other personal data and are only shared when
-  the user copies and pastes them.
+
+### Bug reports
+
+A bug report leaves the game only when you copy its code and send it. **A GitHub issue is
+public**: everyone can read it. Write no names or personal data into the form's fields.
+
+- **What it holds, and why** - to find and fix the bug you report: your description, where it
+  happened and your details; the addon's version and its settings (known keys only); your
+  client's version, build and language; your class, level range (e.g. 20-29) and whether you are
+  solo, in a party or a raid; this addon's Lua errors of the current session with how long ago
+  they came and whether in combat; its last 50 actions (clicks with spell and item IDs and unit
+  tokens such as `party1`, combat, group size, settings changes); the state of its buttons, the
+  items it counts, your group by class and your buffs by spell ID; the names and versions of your
+  loaded addons, as conflicts need them.
+- **What it never holds** - character, realm, guild or other player names; GUIDs; BattleTags or
+  account names; chat, mail or whispers; positions or zones; date or clock time; anything from
+  the WTF folder; file paths outside `Interface/AddOns`. Strings the addon does not know are shown
+  by their length only; free text and error messages pass a filter for the names the game knows,
+  GUIDs, BattleTags and paths. A name you type that the game does not know can still remain -
+  check with "Show content".
+- **Where it is kept** - the action log in memory only, gone at logout; nothing is written to
+  your saved variables for the report.
+- **Deletion** - ask in an issue or to the author; the repository owner deletes an issue on
+  request.
 
 ## License
 

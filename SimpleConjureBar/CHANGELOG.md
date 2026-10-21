@@ -16,6 +16,13 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   many minutes before (Intellect 0-15, default 5; armor 0-5, default 3). From then on the button
   glows, counts the buff as needed, and its click - and "Cast next buff" - casts it again; members
   who have no Intellect at all come first. Buff & Run follows the same rule.
+- A new bug report: a short form - what happened, where (a list of the addon's parts), details -
+  and everything else taken from the game, so a bug can be fixed without asking you back. It
+  holds this session's errors with how long ago they came and whether in combat, the addon's
+  last 50 actions, the state of its buttons and your loaded addons. It holds nothing personal:
+  no names, realm, guild, chat, date or file paths; the window lists what it holds and says that
+  an issue is public. The report is one code, already selected; its link opens a GitHub form
+  with one field for it, and "Show content" shows what the code holds.
 - "Show anchor" on the General tab keeps the bar's handle - move, lock, settings - visible.
   It is off by default; then the handle shows only while the mouse is over it, as before.
 - The flyouts of Armor, Teleport and Portal open in a direction you choose on the General tab -

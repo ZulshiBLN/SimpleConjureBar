@@ -5,6 +5,12 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 
 ## [1.1.0] - Unreleased
 
+### Added
+- The flyouts of Armor, Teleport and Portal open in a direction you choose on the General tab -
+  automatic by screen half as before, up or down for a horizontal bar, right or left for a
+  vertical one - and close by themselves 1 to 5 seconds (3 by default) after the mouse has left
+  them, also in combat.
+
 ### Changed
 - Armor, Arcane Intellect and the mana gem are highlighted with the modern client's glow, as a
   spell ready to use is, instead of the marching ants. Its color and speed are set as before; a

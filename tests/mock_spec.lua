@@ -18,6 +18,30 @@ describe("the mock", function()
         group:Stop(); assert.is_false(group:IsPlaying())
     end)
 
+    it("runs a wrapped snippet's bodies and the secure auto-hide", function()
+        local header = CreateFrame("Frame", nil, UIParent, "SecureHandlerBaseTemplate")
+        local holder = CreateFrame("Frame", nil, UIParent)
+        local b = CreateFrame("Button", nil, holder, "SecureActionButtonTemplate")
+        assert.is_true(holder.protected) -- it holds a secure button
+        header:SetFrameRef("fly", holder)
+        b:SetAttribute("type1", "spell"); b:SetAttribute("spell1", 7)
+        header:WrapScript(b, "OnClick", [[
+            local fly = owner:GetFrameRef("fly")
+            fly:RegisterAutoHide(3); fly:AddToAutoHide(self)
+            return nil, "go"
+        ]], [[ self:SetAttribute("seen", message) ]])
+        RUNCLICK(b, "LeftButton", false)
+        assert.are.same({ 3, b }, { holder.autoHide, holder.autoHideWith[1] })
+        assert.are.equal("go", b:GetAttribute("seen"))
+        assert.are.same({ { spell = 7 } }, STATE.casts)
+
+        header:WrapScript(b, "OnClick", [[ if PlayerInCombat() then return false end ]])
+        STATE.combat = true
+        RUNCLICK(b, "LeftButton", false)
+        assert.are.equal(1, #STATE.casts)
+        assert.are.same({}, STATE.errors)
+    end)
+
     it("records a texture's atlas, colour and anchors", function()
         local tex = CreateFrame("Frame"):CreateTexture()
         tex:SetAtlas("x"); tex:SetVertexColor(1, 0.5, 0, 1)

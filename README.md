@@ -52,7 +52,8 @@ Open with `/scb`, the minimap button, the AddOn compartment, a middle click on t
 window closes when combat starts and reopens afterwards.
 
 - **General**: language, hide in combat, hide the minimap button, scale, border, background
-  color, orientation, growth direction, demo mode, Report bug, Reload UI
+  color, orientation, growth direction, flyout direction (automatic by screen half, or a fixed
+  side), how long an open flyout waits for the mouse (1-5 s), demo mode, Report bug, Reload UI
 - **Tracking**: show/hide and colors of Armor, Intellect and Mana Gem, highlight speed
 - **Supplies**: rune warning threshold and colors, auto-buy, gold reserve and target amounts
 - **Order**: drag and drop the button order

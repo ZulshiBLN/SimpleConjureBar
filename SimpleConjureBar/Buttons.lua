@@ -166,10 +166,13 @@ end
 ---------------------------------------------------------------------------
 -- Flyout buttons (Armor, Teleport, Portal)
 ---------------------------------------------------------------------------
--- Flyout direction: horizontal bars open upwards (downwards in the upper half of the screen),
--- vertical bars open to the right (to the left in the right half of the screen)
+-- Flyout direction: a fixed side from the settings, or automatic - horizontal bars open
+-- upwards (downwards in the upper half of the screen), vertical bars open to the right (to the
+-- left in the right half of the screen)
 local flyDir = "UP"
 local function ComputeFlyDir()
+    if db.flyoutDir == "FIRST" then return db.vertical and "RIGHT" or "UP" end
+    if db.flyoutDir == "SECOND" then return db.vertical and "LEFT" or "DOWN" end
     local cx, cy = bar:GetCenter()
     if not cx then return db.vertical and "RIGHT" or "UP" end
     local s = bar:GetEffectiveScale() / UIParent:GetEffectiveScale()
@@ -186,6 +189,13 @@ local FLY_LAYOUT = {
     RIGHT = { fly = { "LEFT", "RIGHT", 6, 0 },  child = "LEFT",   dx = 1,  dy = 0,  arrow = { "LEFT", "RIGHT", -6, 0 }, rot = -math.pi / 2 },
     LEFT  = { fly = { "RIGHT", "LEFT", -6, 0 }, child = "RIGHT",  dx = -1, dy = 0,  arrow = { "RIGHT", "LEFT", 6, 0 },  rot = math.pi / 2 },
 }
+
+-- The seconds a flyout stays open after the mouse left it and its button, read by the secure
+-- right-click snippet (Bar.lua). The header is protected: written out of combat only.
+function ns.ApplyAutoClose()
+    if InCombatLockdown() then return end
+    SetAttr(ns.header, "autohide", db.flyoutAutoClose)
+end
 
 local function SetupFlyout(main)
     local known = main.listFn()
@@ -270,6 +280,7 @@ function ns.Rebuild()
 
     ns.ReAnchor()
     flyDir = ComputeFlyDir()
+    ns.ApplyAutoClose()
 
     wipe(shown)
     for _, key in ipairs(db.order) do

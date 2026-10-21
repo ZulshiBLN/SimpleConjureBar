@@ -3,7 +3,7 @@ local noop = function() end
 local objects = {}
 local eventFrames = {}
 local timers = {}
-STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {} }
+STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {} }
 
 local Methods = {}
 local function New(kind, name, parent)
@@ -104,10 +104,124 @@ function Methods:Cancel() self.cancelled = true end
 function Methods:GetColorRGB() return 1, 1, 1 end
 function Methods:GetFrameLevel() return 1 end
 
+function Methods:SetRotation(r) self.rotation = r end
+
+---------------------------------------------------------------------------
+-- Secure snippets, as in SmartBlessingBar's mock. A SecureHandler header wraps a frame's
+-- OnClick with a pre and a post body, as WrapScript does. The bodies run in an emulated
+-- restricted environment and see frames only through handles. Bodies are compiled with
+-- their arguments as locals, like the client's.
+---------------------------------------------------------------------------
+local handles = setmetatable({}, { __mode = "k" })
+local framesOf = setmetatable({}, { __mode = "k" })
+local function Handle(frame)
+  if not frame then return nil end
+  if handles[frame] then return handles[frame] end
+  local h = {}
+  framesOf[h] = frame
+  -- The client's secure auto-hide: recorded as the frame's autoHide seconds and the frames
+  -- that keep it open (autoHideWith). Like the client it works only on a protected frame.
+  function h:RegisterAutoHide(seconds)
+    if not frame.protected then error("RegisterAutoHide on an unprotected frame") end
+    frame.autoHide = seconds
+    frame.autoHideWith = {}
+  end
+  function h:AddToAutoHide(other)
+    if not frame.autoHide then error("AddToAutoHide before RegisterAutoHide") end
+    table.insert(frame.autoHideWith, framesOf[other])
+  end
+  function h:UnregisterAutoHide() frame.autoHide = nil; frame.autoHideWith = nil end
+  function h:GetAttribute(k) return frame.attrs[k] end
+  function h:SetAttribute(k, v) frame.attrs[k] = v end
+  function h:Show() frame.shown = true end
+  function h:Hide() frame.shown = false end
+  function h:IsShown() return frame.shown end
+  function h:GetParent() return Handle(frame.parent) end
+  function h:GetName() return frame.name end
+  function h:GetFrameRef(name) return Handle(frame.refs and frame.refs[name]) end
+  -- In combat the client refuses a handle to a frame that is not protected
+  for name, fn in pairs(h) do
+    h[name] = function(...)
+      if STATE.combat and not frame.protected then error("Invalid frame handle") end
+      return fn(...)
+    end
+  end
+  handles[frame] = h
+  return h
+end
+
+local restricted = {
+  PlayerInCombat = function() return STATE.combat end,
+  newtable = function(...) return { ... } end,
+  pairs = pairs, ipairs = ipairs, tostring = tostring, type = type,
+}
+local function Compile(body, args)
+  local chunk = assert(loadstring("local " .. args .. " = ...\n" .. body))
+  setfenv(chunk, setmetatable({}, { __index = restricted }))
+  return chunk
+end
+
+function Methods:SetFrameRef(name, frame)
+  self.refs = self.refs or {}
+  self.refs[name] = frame
+end
+function Methods:WrapScript(frame, script, pre, post)
+  frame.wraps = frame.wraps or {}
+  frame.wraps[script] = frame.wraps[script] or {}
+  table.insert(frame.wraps[script], {
+    owner = self,
+    pre = pre and Compile(pre, "self, button, down, owner"),
+    post = post and Compile(post, "self, message, button, down, owner"),
+  })
+end
+
+-- A click as the client delivers it to a secure button: the wrappers' pre bodies (false
+-- cancels the action and every post body), the secure action (on key down while
+-- STATE.keyDown, else on key up), the post bodies of the wrappers that returned a message,
+-- then the insecure scripts. A spell cast is appended to STATE.casts as { spell, unit }.
+local function Attr(frame, name, button)
+  local suffix = button == "LeftButton" and "1" or button == "RightButton" and "2"
+    or button == "MiddleButton" and "3" or ""
+  local v = frame.attrs[name .. suffix]
+  if v == nil then v = frame.attrs[name] end
+  return v
+end
+function RUNCLICK(frame, button, down)
+  local cancelled, messages = false, {}
+  local wraps = frame.wraps and frame.wraps.OnClick or {}
+  for i, w in ipairs(wraps) do
+    if w.pre then
+      local ok, result, message = pcall(w.pre, Handle(frame), button, down, Handle(w.owner))
+      if not ok then table.insert(STATE.errors, "snippet: " .. tostring(result)) end
+      if result == false then cancelled = true break end
+      messages[i] = message
+    end
+  end
+  if not cancelled then
+    if frame.template and frame.template:find("SecureActionButtonTemplate")
+       and (down == true) == (STATE.keyDown == true) then
+      if Attr(frame, "type", button) == "spell" and Attr(frame, "spell", button) ~= nil then
+        STATE.casts[#STATE.casts + 1] = { spell = Attr(frame, "spell", button), unit = Attr(frame, "unit", button) }
+      end
+    end
+    for i, w in ipairs(wraps) do
+      if w.post and messages[i] ~= nil then
+        local ok, err = pcall(w.post, Handle(frame), messages[i], button, down, Handle(w.owner))
+        if not ok then table.insert(STATE.errors, "snippet: " .. tostring(err)) end
+      end
+    end
+  end
+  Run(frame, "OnClick", button, down)
+end
+
 function CreateFrame(kind, name, parent, template)
   local o = New(kind, name, parent)
   o.template = template
-  if template and template:find("Secure") then o.protected = true end
+  if template and template:find("Secure") then
+    o.protected = true
+    -- A frame holding a secure button is protected too, as in the client
+    if parent then parent.protected = true end
+  end
   -- The menu dropdown template carries its selection text in .Text
   if template == "WowStyle1DropdownTemplate" then o.Text = New("FontString", nil, o) end
   if name then _G[name] = o end

@@ -118,6 +118,10 @@ D.SCALE_MIN, D.SCALE_MAX = 0.3, 2.0
 D.AMOUNT_MAX       = 100  -- highest auto-buy target amount per reagent
 D.RUNE_WARN_MAX    = 20
 D.GOLD_RESERVE_MAX = 1000 -- gold
+-- Flyout direction: automatic by screen half, or one of two sides named by the orientation
+-- (FIRST = up or right, SECOND = down or left), so a switch of orientation keeps a valid choice
+D.FLYOUT_DIRS = { AUTO = true, FIRST = true, SECOND = true }
+D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX = 1, 5 -- seconds a flyout stays open after the mouse left it
 
 -- Highlight: the modern client's proc glow, Blizzard's flipbook atlas of 6 x 5 cells, 30 frames,
 -- drawn 1.4 times the button (as SmartBlessingBar, ruleset plan 2026-10-21-bar-alignment)
@@ -136,7 +140,7 @@ D.ADDON_ICON = "Interface\\Icons\\INV_Drink_06" -- same icon as in the AddOn lis
 ---------------------------------------------------------------------------
 -- Settings defaults
 ---------------------------------------------------------------------------
-D.DB_VERSION = 3
+D.DB_VERSION = 4
 
 -- Colors that can be reset with the "Default" button of the color picker
 D.COLOR_DEFAULTS = {
@@ -162,6 +166,8 @@ D.VALUE_DEFAULTS = {
     hideMinimap   = false,
     vertical      = false, -- false = horizontal
     growRev       = false, -- false = grow to the right (horizontal) or down (vertical)
+    flyoutDir     = "AUTO",
+    flyoutAutoClose = 3,   -- seconds
     scale         = 1,
     antsSpeed     = 3,
     armorAntsSpeed = 3,

@@ -407,7 +407,9 @@ local function CreateFlyoutButton(key, listFn, hintKey, normalize)
     header:SetFrameRef("main_" .. key, main)
     header:SetFrameRef("fly_" .. key, fly)
 
-    -- Right click: toggle this menu (closing the others) and cancel the action.
+    -- Right click: toggle this menu (closing the others) and cancel the action. An open menu
+    -- closes by itself once the mouse has left it and its button for the header's "autohide"
+    -- seconds - a secure hide, so also in combat; every hidden menu drops that registration.
     -- gsub returns two values; the extra parentheses pass on the string only.
     header:WrapScript(main, "OnClick", (([[
         if button == "RightButton" then
@@ -416,9 +418,19 @@ local function CreateFlyoutButton(key, listFn, hintKey, normalize)
             local fly = owner:GetFrameRef("fly_KEY")
             for _, k in pairs(newtable("Armor", "Teleport", "Portal")) do
                 local other = owner:GetFrameRef("fly_" .. k)
-                if other and other ~= fly then other:Hide() end
+                if other and other ~= fly then
+                    other:Hide()
+                    other:UnregisterAutoHide()
+                end
             end
-            if fly:IsShown() then fly:Hide() else fly:Show() end
+            if fly:IsShown() then
+                fly:Hide()
+                fly:UnregisterAutoHide()
+            else
+                fly:Show()
+                fly:RegisterAutoHide(owner:GetAttribute("autohide"))
+                fly:AddToAutoHide(self)
+            end
             return false
         end
     ]]):gsub("KEY", key)))
@@ -468,7 +480,11 @@ function ns.GetFlyoutChild(main, i)
     header:WrapScript(c, "OnClick", [[ return nil, "done" ]], (([[
         local main = owner:GetFrameRef("main_KEY")
         main:SetAttribute("spell1", self:GetAttribute("spell"))
-        if not down then self:GetParent():Hide() end
+        if not down then
+            local fly = self:GetParent()
+            fly:Hide()
+            fly:UnregisterAutoHide()
+        end
     ]]):gsub("KEY", main.key)))
 
     if main.isArmor then AddArmorLabel(c) end

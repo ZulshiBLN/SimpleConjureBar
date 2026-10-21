@@ -117,13 +117,15 @@ UI.AddSwatch("OPT_BG", "bg", 8)
 UI.AddSeparator()
 
 -- Orientation and growth direction (anchor point of the bar)
-local RefreshDirection
+local RefreshDirection, RefreshFlyDir
 UI.AddDropdown("OPT_LAYOUT", {
     { value = false, text = function() return L.HORIZONTAL end },
     { value = true,  text = function() return L.VERTICAL end },
 }, function() return db.vertical end, function(v)
     db.vertical = v
-    if RefreshDirection then RefreshDirection() end -- direction texts (right/left or down/up)
+    -- direction texts (right/left or down/up), and the flyout sides they name
+    if RefreshDirection then RefreshDirection() end
+    if RefreshFlyDir then RefreshFlyDir() end
     Rebuild()
 end)
 RefreshDirection = UI.AddDropdown("OPT_DIRECTION", {
@@ -133,6 +135,20 @@ RefreshDirection = UI.AddDropdown("OPT_DIRECTION", {
     db.growRev = v
     Rebuild()
 end)
+
+-- Flyout direction: automatic by screen half, or a side named by the orientation
+-- (ruleset plan 2026-10-21-bar-alignment), and how long an open flyout waits for the mouse
+RefreshFlyDir = UI.AddDropdown("OPT_FLYDIR", {
+    { value = "AUTO",   text = function() return L.FLYDIR_AUTO end },
+    { value = "FIRST",  text = function() return (db and db.vertical) and L.DIR_RIGHT or L.DIR_UP end },
+    { value = "SECOND", text = function() return (db and db.vertical) and L.DIR_LEFT or L.DIR_DOWN end },
+}, function() return db.flyoutDir end, function(v)
+    db.flyoutDir = v
+    Rebuild()
+end)
+UI.AddIntSlider("OPT_AUTOCLOSE", "flyoutAutoClose", D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX, function(v)
+    return v == D.VALUE_DEFAULTS.flyoutAutoClose and (v .. " (" .. L.DEFAULT .. ")") or tostring(v)
+end, nil, function() ns.ApplyAutoClose() end)
 
 UI.AddSeparator()
 

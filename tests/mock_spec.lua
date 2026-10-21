@@ -135,6 +135,17 @@ describe("the mock", function()
         assert.are.equal("eins", dd.selectedText)
     end)
 
+    it("delivers an event in the order the frames first registered", function()
+        local order = {}
+        for _, name in ipairs({ "first", "second", "third" }) do
+            local f = CreateFrame("Frame")
+            f:RegisterEvent("X_EVENT")
+            f:SetScript("OnEvent", function() order[#order + 1] = name end)
+        end
+        FIRE("X_EVENT")
+        assert.are.same({ "first", "second", "third" }, order)
+    end)
+
     it("records an edit box's selection and focus", function()
         local box = CreateFrame("EditBox")
         local gained = 0

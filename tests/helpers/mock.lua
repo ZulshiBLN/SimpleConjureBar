@@ -1,7 +1,9 @@
 -- Minimal WoW API mock for smoke tests
 local noop = function() end
 local objects = {}
-local eventFrames = {}
+-- Frames get events in the order they first registered: a fixed order, so a spec can rely on
+-- one; this one puts the settings window (made at load) before the report (made on demand)
+local eventFrames, eventOrder = {}, {}
 local timers = {}
 STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {},
           units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false, now = 100 }
@@ -105,7 +107,10 @@ function Methods:GetChecked() return self.checked end
 function Methods:SetChecked(v) self.checked = v end
 function Methods:GetValue() return self.value or 0 end
 function Methods:SetValue(v) self.value = v; Run(self, "OnValueChanged", v) end
-function Methods:RegisterEvent(e) self.events[e] = true; eventFrames[self] = true end
+function Methods:RegisterEvent(e)
+  self.events[e] = true
+  if not eventFrames[self] then eventFrames[self] = true; eventOrder[#eventOrder + 1] = self end
+end
 function Methods:UnregisterEvent(e) self.events[e] = nil end
 function Methods:GetObjectType() return self.kind end
 -- A menu dropdown shows the text of its selected radio; the client takes it when the menu is
@@ -268,7 +273,7 @@ function CreateFrame(kind, name, parent, template)
   return o
 end
 function FIRE(event, ...)
-  for f in pairs(eventFrames) do
+  for _, f in ipairs(eventOrder) do
     if f.events[event] then Run(f, "OnEvent", event, ...) end
   end
 end

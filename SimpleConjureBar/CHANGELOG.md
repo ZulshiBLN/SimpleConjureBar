@@ -23,8 +23,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   no names, realm, guild, chat, date or file paths; the window lists what it holds and says that
   an issue is public. The report is one code, already selected; its link opens a GitHub form
   with one field for it, and "Show content" shows what the code holds.
-- "Show anchor" on the General tab keeps the bar's handle - move, lock, settings - visible.
-  It is off by default; then the handle shows only while the mouse is over it, as before.
+- "Show anchor" on the General tab keeps the bar's handle - move, lock, settings - visible. It is
+  on by default, also when you update; switched off, the handle shows only while the mouse is
+  over it, as before.
 - The flyouts of Armor, Teleport and Portal open in a direction you choose on the General tab -
   automatic by screen half as before, up or down for a horizontal bar, right or left for a
   vertical one - and close by themselves 1 to 5 seconds (3 by default) after the mouse has left

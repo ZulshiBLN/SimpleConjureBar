@@ -192,8 +192,9 @@ public**: everyone can read it. Write no names or personal data into the form's 
   account names; chat, mail or whispers; positions or zones; date or clock time; anything from
   the WTF folder; file paths outside `Interface/AddOns`. Strings the addon does not know are shown
   by their length only; free text and error messages pass a filter for the names the game knows,
-  GUIDs, BattleTags and paths. A name you type that the game does not know can still remain -
-  check with "Show content".
+  GUIDs, BattleTags and paths. Names are matched as whole words the game knows right now: a name
+  you type that the game does not know, or one that is part of a longer word - an addon folder
+  you named "ZulshiTools", say - can still remain. Check with "Show content".
 - **Where it is kept** - the action log in memory only, gone at logout; nothing is written to
   your saved variables for the report.
 - **Deletion** - ask in an issue or to the author; the repository owner deletes an issue on

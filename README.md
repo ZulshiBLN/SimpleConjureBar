@@ -38,8 +38,11 @@ The addon loads for mages only.
 - **Arcane Intellect** never buffs your current target: solo it always targets you, in a group the
   addon picks the next mana user without the buff (members in range first). In a raid, Brilliance
   goes to the subgroup with the most missing buffs. The button is locked and greyed out in combat.
-  The number on the button shows how many mana users are missing the buff; its tooltip names what
+  The number on the button shows how many mana users need the buff; its tooltip names what
   each click casts and on whom - the member, "your group" for Brilliance, in a raid its group.
+  A buff with less than its renew time left (Tracking tab, 5 minutes by default) is needed again,
+  after everyone who has none. When nobody needs it, a click casts nothing and the tooltip says
+  "everyone has it"; in a raid Brilliance waits until a group in need is in range.
 - **Buff & Run** - a middle click on Arcane Intellect buffs the player you target and then targets
   the next friendly player, so you can buff passing players by clicking again and again. Only
   Arcane Intellect, never Brilliance, in the highest rank his level accepts, and only for a mana
@@ -47,8 +50,8 @@ The addon loads for mages only.
   out of range: then the click only moves on. A click during the global cooldown does nothing,
   so nobody is skipped; in combat nothing happens. A player flagged for PvP is passed - buffing
   him would flag you - unless "Allow PvP buffing" is on. Both are switched on the General tab.
-- **Highlights** - the modern client's glow - show a missing armor, missing Intellect and a missing
-  mana gem.
+- **Highlights** - the modern client's glow - show a missing or expiring armor, missing or expiring
+  Intellect and a missing mana gem. An armor glows from its renew time on (3 minutes by default).
 - **Rune counts** on Teleport/Portal change color at the warning threshold and at 0.
 - **Auto-buy** buys runes and Arcane Powder at reagent vendors up to the configured amounts and
   never spends below the configured gold reserve (default 1 gold).
@@ -69,7 +72,9 @@ window closes when combat starts and reopens afterwards.
   color, orientation, growth direction, flyout direction (automatic by screen half, or a fixed
   side), how long an open flyout waits for the mouse (1-5 s), demo mode, Buff & Run (on by default)
   with "Allow PvP buffing" (off by default), Report bug, Reload UI
-- **Tracking**: show/hide and colors of Armor, Intellect and Mana Gem, highlight speed
+- **Tracking**: show/hide and colors of Armor, Intellect and Mana Gem, highlight speed; how many
+  minutes before it runs out Arcane Intellect (0-15, default 5) and the armor (0-5, default 3)
+  count as needed again - 0 means only once they are gone
 - **Supplies**: rune warning threshold and colors, auto-buy, gold reserve and target amounts
 - **Order**: drag and drop the button order
 - **Macros**: the Polymorph macro with its raid marker, the Ice Block macro, the stopcasting

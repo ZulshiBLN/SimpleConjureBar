@@ -12,6 +12,10 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   does nothing in combat or during the global cooldown, and passes players flagged for PvP unless
   "Allow PvP buffing" is on. Both switches are on the General tab; Buff & Run is on by default.
   It has its own key binding.
+- Arcane Intellect and the armor are renewed before they run out: on the Tracking tab you set how
+  many minutes before (Intellect 0-15, default 5; armor 0-5, default 3). From then on the button
+  glows, counts the buff as needed, and its click - and "Cast next buff" - casts it again; members
+  who have no Intellect at all come first. Buff & Run follows the same rule.
 - "Show anchor" on the General tab keeps the bar's handle - move, lock, settings - visible.
   It is off by default; then the handle shows only while the mouse is over it, as before.
 - The flyouts of Armor, Teleport and Portal open in a direction you choose on the General tab -
@@ -38,6 +42,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 - A left click on the handle in combat says that the bar cannot move then.
 
 ### Fixed
+- A click on Arcane Intellect cast it on you again and again when nobody needed it. It now casts
+  nothing then, and the tooltip says "everyone has it". In a raid, Brilliance no longer goes to
+  your own group when no group in need is in range.
 - No flyout opened in combat while one of them held no spell yet - the portals before you learn
   them - and BugSack showed "Invalid frame handle".
 - With the flyout direction on automatic, a flyout kept opening towards where the bar had been

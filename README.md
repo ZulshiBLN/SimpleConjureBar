@@ -38,12 +38,15 @@ The addon loads for mages only.
 - **Arcane Intellect** never buffs your current target: solo it always targets you, in a group the
   addon picks the next mana user without the buff (members in range first). In a raid, Brilliance
   goes to the subgroup with the most missing buffs. The button is locked and greyed out in combat.
-  The number on the button shows how many mana users are missing the buff.
+  The number on the button shows how many mana users are missing the buff; its tooltip names what
+  each click casts and on whom - the member, "your group" for Brilliance, in a raid its group.
 - **Highlights** - the modern client's glow - show a missing armor, missing Intellect and a missing
   mana gem.
 - **Rune counts** on Teleport/Portal change color at the warning threshold and at 0.
 - **Auto-buy** buys runes and Arcane Powder at reagent vendors up to the configured amounts and
   never spends below the configured gold reserve (default 1 gold).
+- **Flyouts** (armor, teleports, portals) close by themselves a few seconds after the mouse has
+  left them, also in combat. The bar cannot be moved in combat; the handle says so.
 
 ## Settings
 
@@ -93,6 +96,15 @@ and this addon's Lua errors from BugGrabber/BugSack) to copy with Ctrl+C and pas
 
 `/cbar` still works as an alias from the old addon name "ConjureBar".
 
+## Key bindings
+
+In a section of their own under *Options > Key Bindings > SimpleConjureBar*:
+
+| Key | Action |
+|---|---|
+| Cast next buff | One press, one cast: what the first highlighted button of the bar (in the bar's order) would fix - your armor, Arcane Intellect on the next member, a mana gem conjured. Nothing when nothing is highlighted. In combat it never casts Arcane Intellect, as the button does not. |
+| Open Settings | Opens or closes the settings window; not in combat. |
+
 ## Languages
 
 enUS, deDE, frFR, esES, esMX, itIT, ptBR, ruRU, koKR, zhCN, zhTW. The language follows the client
@@ -102,11 +114,12 @@ and can be overridden in the General tab (saved account-wide, applied without re
 
 | File | Content |
 |---|---|
-| `Locales.lua` | All texts per language, locale switching |
+| `Locales.lua` | All texts per language, locale switching, the key bindings' names |
 | `Data.lua` | Spell/item IDs, layout constants, defaults |
-| `Core.lua` | API shims, saved variables, helpers, font helpers, language registry |
-| `Bar.lua` | Bar frame, handle, secure buttons, highlights, flyouts, colors |
-| `Buttons.lua` | Button setup, layout (`Rebuild`), counts, bar events |
+| `Core.lua` | AddOn compartment entry points, API shims, saved variables, helpers, font helpers, language registry |
+| `Bar.lua` | Bar frame, handle, secure buttons, glow, flyouts, the "Cast next buff" key, colors |
+| `Buttons.lua` | Button setup, layout (`Rebuild`), flyout direction and auto-close, counts, the buff key's action, bar events |
+| `Bindings.xml` | The two keys the game's Key Bindings offer |
 | `Intellect.lua` | Group scan, buff targets, buff count, armor highlight |
 | `Merchant.lua` | Reagent auto-buy |
 | `Trade.lua` | Trading water and food |
@@ -114,7 +127,7 @@ and can be overridden in the General tab (saved account-wide, applied without re
 | `Report.lua` | Bug report window (report text, BugGrabber errors) |
 | `Settings.lua` | Settings window framework and widgets |
 | `SettingsPages.lua` | The five settings tabs |
-| `Minimap.lua` | Minimap button, AddOn compartment, options panel |
+| `Minimap.lua` | Minimap button, AddOn compartment, options panel, the settings key |
 | `Main.lua` | Startup and chat commands |
 
 Modules share code through the addon namespace (`ns`). Each file is its own Lua chunk, which keeps

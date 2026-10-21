@@ -132,8 +132,6 @@ D.GLOW_SCALE = 1.4
 -- Seconds per loop, speed 1 (slow) to 5 (fast); 3 is the default, Blizzard's own second
 D.GLOW_DURATIONS = { 2, 1.5, 1, 0.75, 0.5 }
 
--- Where bug reports go (shown in the report window). Empty = no link, the window asks the user
--- to send the report to the addon author instead.
 -- Where a bug happened, as the report form offers it; the report carries the key, the form
 -- the text AREA_<key> (ruleset plan 2026-10-17-bug-report-details)
 D.REPORT_AREAS = { "INTELLECT", "ARMOR", "CONJURE", "TRADE", "TRAVEL", "FLYOUTS", "KEYS", "SETTINGS",
@@ -181,7 +179,9 @@ D.REPORT_SAFE = {
     "^%l%l%u%u$", "^auto$",                                 -- locale codes
     "^/use item:%d+$", "^/click SimpleConjureBarBuffRun LeftButton 1$", "^/targetfriendplayer$",
 }
--- The issue form with one field for the code (.github/ISSUE_TEMPLATE/bug_report.yml)
+-- Where bug reports go: the issue form with one field for the code
+-- (.github/ISSUE_TEMPLATE/bug_report.yml). Empty = no link; the window asks the user to send the
+-- report to the addon author instead.
 D.BUG_REPORT_URL = "https://github.com/ZulshiBLN/SimpleConjureBar/issues/new?template=bug_report.yml"
 
 D.ADDON_ICON = "Interface\\Icons\\INV_Drink_06" -- same icon as in the AddOn list (TOC IconTexture)

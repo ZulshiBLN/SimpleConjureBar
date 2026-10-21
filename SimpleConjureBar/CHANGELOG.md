@@ -29,11 +29,12 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   automatic by screen half as before, up or down for a horizontal bar, right or left for a
   vertical one - and close by themselves 1 to 5 seconds (3 by default) after the mouse has left
   them, also in combat.
-- Two keys under Options > Key Bindings > SimpleConjureBar. "Cast next buff" casts, one press at a
-  time, what the first highlighted button of the bar would fix: your armor, Arcane Intellect on
-  the next member, a mana gem conjured. In combat it keeps what it held when the fight started -
-  your armor, if nothing was highlighted then - and never casts Arcane Intellect, as the button
-  does not. "Open Settings" opens or closes the settings window.
+- Three keys under Options > Key Bindings > SimpleConjureBar. "Cast next buff" casts, one press
+  at a time, what the first highlighted button of the bar would fix: your armor, Arcane Intellect
+  on the next member, a mana gem conjured. In combat it keeps what it held when the fight
+  started - your armor, if nothing was highlighted then - and never casts Arcane Intellect, as the
+  button does not. "Buff & Run" is the Arcane Intellect button's middle click, also with the
+  button hidden. "Open Settings" opens or closes the settings window.
 
 ### Changed
 - `/scb debug` prints the state part of a bug report: every button, flyout entry and key with its

@@ -1,8 +1,7 @@
 -- SimpleConjureBar - bug report window
 -- Addons cannot send data, open a browser or write to the clipboard. The window therefore builds
--- a ready-made report (addon version, client, language, settings and this addon's Lua errors from
--- BugGrabber/BugSack) in a selected text box: the user copies it with Ctrl+C and pastes it as a new
--- issue. No character name, realm or other personal data is included.
+-- the report from a short form and the game, shows it as one code (ReportCode.lua), selected for
+-- Ctrl+C, and links the GitHub form the code is pasted into. What it may hold: Privacy.lua.
 
 local _, ns = ...
 if not ns.enabled then return end
@@ -215,7 +214,6 @@ local function SettingsText()
     return table.concat(parts, ", ")
 end
 
--- form: { description, area (a key of D.REPORT_AREAS), details }
 -- The level in a band of ten: enough for ranks, too coarse to tell a character apart
 local function LevelBand()
     local low = math.floor((tonumber(UnitLevel("player")) or 0) / 10) * 10

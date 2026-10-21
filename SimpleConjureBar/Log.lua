@@ -6,6 +6,7 @@
 local _, ns = ...
 if not ns.enabled then return end
 
+local D_VALUE_DEFAULTS = ns.D.VALUE_DEFAULTS
 local MAX_ENTRIES = 50
 local entries, first = {}, 1 -- a ring: entries[first] is the oldest
 local loginAt, loginClock = GetTime(), time()
@@ -76,7 +77,7 @@ function ns.LogClicks(b, label, downOnly)
         local parts = { "click", label, tostring(mouse) }
         for _, a in ipairs({ "type", "spell", "item", "unit" }) do
             local v = Attr(self, a, suffix)
-            if v ~= nil then parts[#parts + 1] = a .. "=" .. tostring(v) end
+            if v ~= nil then parts[#parts + 1] = a .. "=" .. ns.SafeValue(v) end
         end
         if self.locksInCombat and self.locksInCombat(mouse) and InCombatLockdown() then
             parts[#parts + 1] = "dropped"
@@ -105,7 +106,8 @@ function ns.LogSettings()
     table.sort(changed)
     for _, k in ipairs(changed) do
         seen[k] = db[k]
-        ns.Log("setting " .. k .. "=" .. tostring(db[k]))
+        -- a key the addon does not know is not named: it could be anything
+        if D_VALUE_DEFAULTS[k] ~= nil then ns.Log("setting " .. k .. "=" .. ns.SafeValue(db[k])) end
     end
 end
 

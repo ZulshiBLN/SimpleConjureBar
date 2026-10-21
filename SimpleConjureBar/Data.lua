@@ -138,7 +138,50 @@ D.GLOW_DURATIONS = { 2, 1.5, 1, 0.75, 0.5 }
 -- the text AREA_<key> (ruleset plan 2026-10-17-bug-report-details)
 D.REPORT_AREAS = { "INTELLECT", "ARMOR", "CONJURE", "TRADE", "TRAVEL", "FLYOUTS", "KEYS", "SETTINGS",
     "MACROS", "COMBAT", "OTHER" }
-D.BUG_REPORT_URL ="https://github.com/ZulshiBLN/SimpleConjureBar/issues"
+-- The fields a bug report holds, one pattern per kind of line, and nothing else: a spec checks
+-- every line of a report against this list. A new field needs an entry here and a line in
+-- README's privacy section first (ruleset plan 2026-10-17-bug-report-details, its inventory).
+D.REPORT_FIELDS = {
+    { pattern = "^$" },
+    { pattern = "^## SimpleConjureBar bug report$" },
+    { pattern = "^%*%*Description:%*%* " },                 -- player's text, filtered
+    { pattern = "^%*%*Area:%*%* %u+$" },
+    { pattern = "^%*%*Details:%*%* " },                     -- player's text, filtered
+    { pattern = "^%- Addon version: [%w%.%-]+$" },
+    { pattern = "^%- Client: [%w%.]+ %(build %w+, interface %d+%)$" },
+    { pattern = "^%- Client locale: %a+, addon language: %a+$" },
+    { pattern = "^%- Character: %u+, level %d+%-%d+, %a+$" }, -- class token, level band, group kind
+    { pattern = "^%- Settings: " },                         -- known keys, allowlisted values
+    { pattern = "^%*%*Lua errors" },
+    { pattern = "^Error %d+ %(x%d+, [%w ,]+, combat: %a+%):$" },
+    { pattern = "^```$" },
+    { pattern = "^msg " },                                  -- error message, filtered
+    { pattern = "^at " },                                   -- stack line, filtered
+    { pattern = "^local " },                                -- locals rebuilt by allowlist
+    { pattern = "^%*%*Last actions %(seconds since login%):%*%*$" },
+    { pattern = "^log " },                                  -- generated, allowlisted values
+    { pattern = "^%*%*State:%*%*$" },
+    { pattern = "^state " },                                -- generated, allowlisted values
+    { pattern = "^%*%*Loaded addons:%*%*$" },
+    { pattern = "^addon " },                                -- folder and version, filtered
+    { pattern = "^%[%.%.%. cut: the report is too long%]$" },
+}
+D.REPORT_CUT = "[... cut: the report is too long]"
+D.REPORT_MAX_BYTES = 20000 -- fits a GitHub issue (65,536) also as a code, and stays readable
+-- Strings a report may carry as they are; any other string becomes <text:N>, its length only
+D.REPORT_SAFE = {
+    "^player$", "^target$", "^focus$", "^mouseover$", "^pet$", "^party%d$", "^raid%d%d?$", "^NPC$",
+    "^%-?%d+%.?%d*$", "^item:%d+$", "^true$", "^false$", "^nil$",
+    "^spell$", "^item$", "^macro$", "^scbsource$",
+    "^type%d?$", "^spell%d?$", "^item%d?$", "^unit%d?$", "^macrotext%d?$",
+    "^Armor$", "^Intellect$", "^ManaGem$", "^Water$", "^Food$", "^Teleport$", "^Portal$",
+    "^AUTO$", "^FIRST$", "^SECOND$", "^UIParent$",
+    "^TOP$", "^BOTTOM$", "^LEFT$", "^RIGHT$", "^CENTER$", "^TOPLEFT$", "^TOPRIGHT$", "^BOTTOMLEFT$",
+    "^BOTTOMRIGHT$",
+    "^%l%l%u%u$", "^auto$",                                 -- locale codes
+    "^/use item:%d+$", "^/click SimpleConjureBarBuffRun LeftButton 1$", "^/targetfriendplayer$",
+}
+D.BUG_REPORT_URL = "https://github.com/ZulshiBLN/SimpleConjureBar/issues"
 
 D.ADDON_ICON = "Interface\\Icons\\INV_Drink_06" -- same icon as in the AddOn list (TOC IconTexture)
 

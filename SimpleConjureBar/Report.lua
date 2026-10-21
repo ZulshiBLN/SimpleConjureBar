@@ -29,11 +29,13 @@ local function ButtonLine(label, b)
     for _, suffix in ipairs({ "", "1", "2", "3" }) do
         for _, a in ipairs(ATTRS) do
             local v = b:GetAttribute(a .. suffix)
-            if v ~= nil then parts[#parts + 1] = a .. suffix .. "=" .. tostring(v):gsub("\n", " / ") end
+            if v ~= nil then
+                parts[#parts + 1] = a .. suffix .. "=" .. (a == "macrotext" and ns.SafeMacro(v) or ns.SafeValue(v))
+            end
         end
     end
     local source = b:GetAttribute("scbsource")
-    if source then parts[#parts + 1] = "scbsource=" .. tostring(source) end
+    if source then parts[#parts + 1] = "scbsource=" .. ns.SafeValue(source) end
     return table.concat(parts, " ")
 end
 
@@ -163,14 +165,15 @@ local function CollectErrors()
     return list, true
 end
 
-local function FirstLines(text, max)
+-- The first lines of a text, each with the tag of its report field and filtered
+local function FirstLines(text, max, tag, names)
     local out, n = {}, 0
     for line in tostring(text or ""):gmatch("[^\n]+") do
         n = n + 1
-        if n > max then out[#out + 1] = "..." break end
-        out[#out + 1] = line
+        if n > max then out[#out + 1] = tag .. " ..." break end
+        out[#out + 1] = tag .. " " .. ns.Scrub(line, names)
     end
-    return table.concat(out, "\n")
+    return out
 end
 
 -- When an error came, relative only - no date or clock in a report - and whether in combat
@@ -184,18 +187,26 @@ end
 
 local function OrDash(s) return (s and s ~= "") and s or "-" end
 
--- Plain settings (numbers, booleans, strings) sorted by name; tables are summarized
+-- The settings the addon knows, sorted by name, values by allowlist; a key it does not know
+-- is left out (it could hold anything). Tables are summarized.
+local SETTINGS_EXTRA = { "point", "rel", "dbVersion" }
 local function SettingsText()
     if not db then return "(not loaded)" end
     local keys = {}
-    for k, v in pairs(db) do
-        local t = type(v)
-        if t == "number" or t == "boolean" or t == "string" then keys[#keys + 1] = k end
-    end
+    for k in pairs(D.VALUE_DEFAULTS) do keys[#keys + 1] = k end
+    for _, k in ipairs(SETTINGS_EXTRA) do keys[#keys + 1] = k end
     table.sort(keys)
     local parts = {}
-    for _, k in ipairs(keys) do parts[#parts + 1] = k .. "=" .. tostring(db[k]) end
-    if type(db.order) == "table" then parts[#parts + 1] = "order=" .. table.concat(db.order, ",") end
+    for _, k in ipairs(keys) do
+        local v = db[k]
+        local t = type(v)
+        if t == "number" or t == "boolean" or t == "string" then parts[#parts + 1] = k .. "=" .. ns.SafeValue(v) end
+    end
+    if type(db.order) == "table" then
+        local order = {}
+        for i, key in ipairs(db.order) do order[i] = ns.SafeValue(key) end
+        parts[#parts + 1] = "order=" .. table.concat(order, ",")
+    end
     if type(db.amounts) == "table" then
         local a = {}
         for _, r in ipairs(D.REAGENTS) do a[#a + 1] = r.id .. ":" .. tostring(db.amounts[r.id]) end
@@ -205,23 +216,32 @@ local function SettingsText()
 end
 
 -- form: { description, area (a key of D.REPORT_AREAS), details }
+-- The level in a band of ten: enough for ranks, too coarse to tell a character apart
+local function LevelBand()
+    local low = math.floor((tonumber(UnitLevel("player")) or 0) / 10) * 10
+    return ("%d-%d"):format(low, low + 9)
+end
+
+-- Every line belongs to a field of D.REPORT_FIELDS (Privacy.lua, ruleset plan
+-- 2026-10-17-bug-report-details). form: { description, area (a key of D.REPORT_AREAS), details }
 local function BuildReport(form)
     ns.LogSettings()
+    local names = ns.KnownNames() or {}
     local version, build, _, interface = GetBuildInfo()
     local _, classFile = UnitClass("player")
     local lines = {
         "## SimpleConjureBar bug report",
         "",
-        "**Description:** " .. OrDash(form.description),
+        "**Description:** " .. OrDash(ns.Scrub(form.description, names)),
         "**Area:** " .. form.area,
-        "**Details:** " .. OrDash(form.details),
+        "**Details:** " .. OrDash(ns.Scrub(form.details, names)),
         "",
         "- Addon version: " .. ns.VERSION,
         "- Client: " .. tostring(version) .. " (build " .. tostring(build) .. ", interface " .. tostring(interface) .. ")",
         "- Client locale: " .. tostring(GetLocale()) .. ", addon language: "
             .. tostring((SimpleConjureBarGlobalDB and SimpleConjureBarGlobalDB.language) or "auto"),
-        "- Character: " .. tostring(classFile) .. ", level " .. tostring(UnitLevel("player"))
-            .. ", " .. tostring(UnitFactionGroup("player")) .. (IsInRaid() and ", raid" or IsInGroup() and ", party" or ", solo"),
+        "- Character: " .. tostring(classFile) .. ", level " .. LevelBand()
+            .. (IsInRaid() and ", raid" or IsInGroup() and ", party" or ", solo"),
         "- Settings: " .. SettingsText(),
         "",
     }
@@ -237,22 +257,23 @@ local function BuildReport(form)
             lines[#lines + 1] = ""
             lines[#lines + 1] = ("Error %d (x%s, %s, combat: %s):"):format(i, tostring(e.counter or 1), when, combat)
             lines[#lines + 1] = "```"
-            lines[#lines + 1] = FirstLines(e.message, 6)
-            lines[#lines + 1] = FirstLines(e.stack, MAX_STACK_LINES)
+            for _, l in ipairs(FirstLines(e.message, 6, "msg", names)) do lines[#lines + 1] = l end
+            for _, l in ipairs(FirstLines(e.stack, MAX_STACK_LINES, "at", names)) do lines[#lines + 1] = l end
+            for _, l in ipairs(ns.SafeLocals(e.locals, names)) do lines[#lines + 1] = "local " .. l end
             lines[#lines + 1] = "```"
         end
     end
-    local function Block(title, list)
+    local function Block(title, tag, list, scrub)
         lines[#lines + 1] = ""
         lines[#lines + 1] = title
         lines[#lines + 1] = "```"
-        for _, l in ipairs(list) do lines[#lines + 1] = l end
+        for _, l in ipairs(list) do lines[#lines + 1] = tag .. " " .. (scrub and ns.Scrub(l, names) or l) end
         lines[#lines + 1] = "```"
     end
-    Block("**Last actions (seconds since login):**", ns.LogLines())
-    Block("**State:**", ns.StateSnapshot())
-    Block("**Loaded addons:**", ns.AddonList())
-    return table.concat(lines, "\n")
+    Block("**Last actions (seconds since login):**", "log", ns.LogLines())
+    Block("**State:**", "state", ns.StateSnapshot())
+    Block("**Loaded addons:**", "addon", ns.AddonList(), true)
+    return ns.CapReport(table.concat(lines, "\n"))
 end
 
 ---------------------------------------------------------------------------
@@ -290,7 +311,7 @@ local function AddInput(anchor, width)
 end
 
 local function CreateWindow()
-    local W, H, PAD = 520, 500, 22
+    local W, H, PAD = 520, 580, 22
     frame = CreateFrame("Frame", "SimpleConjureBarReport", UIParent, API.BACKDROP_TPL)
     frame:SetSize(W, H)
     frame:SetPoint("CENTER")
@@ -317,9 +338,22 @@ local function CreateWindow()
     local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     close:SetPoint("TOPRIGHT", -6, -6)
 
+    -- What the report holds and never holds, and that an issue is public (ruleset plan
+    -- 2026-10-17-bug-report-details, item 7)
+    local privacy = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    privacy:SetPoint("TOPLEFT", PAD, -44)
+    privacy:SetWidth(W - 2 * PAD)
+    privacy:SetJustifyH("LEFT")
+    SetL(privacy, "REPORT_PRIVACY")
+    local public = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    public:SetPoint("TOPLEFT", privacy, "BOTTOMLEFT", 0, -4)
+    public:SetWidth(W - 2 * PAD)
+    public:SetJustifyH("LEFT")
+    SetL(public, "REPORT_PUBLIC")
+
     -- Step 1: what happened, where (a list, so the developer knows where to look), details
     local step1 = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    step1:SetPoint("TOPLEFT", PAD, -50)
+    step1:SetPoint("TOPLEFT", public, "BOTTOMLEFT", 0, -10)
     SetL(step1, "REPORT_STEP1")
     frame.desc = AddInput(step1, W - 2 * PAD - 6)
 
@@ -412,6 +446,12 @@ local function CreateWindow()
         if InCombatLockdown() then
             frame:Hide()
             ns.Print(L.REPORT_COMBAT)
+            return
+        end
+        -- A secret name could not be filtered: no report until it is readable again
+        if not ns.KnownNames() then
+            frame:Hide()
+            ns.Print(L.REPORT_SECRET)
             return
         end
         Refresh()

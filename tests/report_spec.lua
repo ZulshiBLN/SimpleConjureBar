@@ -267,6 +267,117 @@ describe("the report form", function()
     end)
 end)
 
+-- Every byte sequence a whole UTF-8 character
+local function validUtf8(s)
+    local i = 1
+    while i <= #s do
+        local c = s:byte(i)
+        local len = c < 0x80 and 1 or c >= 0xF0 and 4 or c >= 0xE0 and 3 or c >= 0xC0 and 2 or 0
+        if len == 0 or i + len - 1 > #s then return false end
+        for k = i + 1, i + len - 1 do
+            local b = s:byte(k)
+            if b < 0x80 or b > 0xBF then return false end
+        end
+        i = i + len
+    end
+    return true
+end
+
+-- Made-up values only (CLAUDE.md, secrets): none of them may reach a report
+local POISON = {
+    "Testplayer", "Testrealm", "Testguild", "Partyone", "partyone", "Tèstname", "Targetguy",
+    "Player-1111-0AAAAAAA", "Somebody#1234", "C:\\Users\\someone", "Lockeduser", "/Users/macsomeone",
+    "/home/linuxsomeone",
+}
+
+local function poisonedClient()
+    _G.GetRealmName = function() return "Testrealm" end
+    _G.GetNormalizedRealmName = function() return "Testrealm" end
+    _G.GetGuildInfo = function() return "Testguild" end
+end
+
+local function poison(db)
+    STATE.units.player = { name = "Testplayer" }
+    STATE.units.party1 = { name = "Partyone", class = "PRIEST" }
+    STATE.units.party2 = { name = "Tèstname", class = "DRUID" }
+    STATE.units.target = { name = "Targetguy" }
+    STATE.group, STATE.members = true, 3
+    db.someString = "Partyone"           -- an unknown string setting
+    db.flyoutDir = "Lockeduser"          -- a known key with a damaged value
+    grabber({ ourError(time(), 1, {
+        message = "Interface/AddOns/SimpleConjureBar/Bar.lua:10: Testplayer-Testrealm said partyone and Tèstname Player-1111-0AAAAAAA Somebody#1234",
+        stack = "[C:\\Users\\someone\\Interface\\AddOns\\SimpleConjureBar\\Bar.lua]:10: in function 'Targetguy'",
+        locals = table.concat({
+            'name="Partyone"', "self=<table> {", '  Partyone = 1', '  [1] = "Targetguy"',
+            '  frame = Testguild {', "  }", "}", 'count=3', 'flag=true', 'unit="party1"',
+            'Somebody#1234 = 5', "not a line we can read",
+        }, "\n"),
+    }) }, 1)
+end
+
+describe("the report's privacy", function()
+    it("lets no name, GUID, tag or path through, and every line is a listed field", function()
+        local ns, db
+        ns, db = login(nil)
+        poisonedClient()
+        poison(db)
+        local text = report(ns, "OTHER", "Partyone and Testplayer-Testrealm broke it", "with Targetguy, see C:\\Users\\someone\\x, /Users/macsomeone/wow and /home/linuxsomeone/wow")
+        for _, bad in ipairs(POISON) do
+            assert.is_nil(text:find(bad, 1, true), bad .. " leaked:\n" .. text)
+        end
+        -- what the developer needs is still there
+        assert.is_truthy(text:find("<name>", 1, true))
+        assert.is_truthy(text:find("<guid>", 1, true))
+        assert.is_truthy(text:find("<tag>", 1, true))
+        -- the stack line keeps its file, cut to the addons folder
+        assert.is_truthy(text:find("at [Interface/AddOns/SimpleConjureBar/Bar.lua]:10:", 1, true), text)
+        assert.is_truthy(text:find("local count=3", 1, true), text)
+        assert.is_truthy(text:find('local unit="party1"', 1, true), text)
+        -- every line belongs to a field of the list
+        for line in (text .. "\n"):gmatch("(.-)\n") do
+            local known = false
+            for _, f in ipairs(ns.D.REPORT_FIELDS) do
+                if line:find(f.pattern) then known = true break end
+            end
+            assert.is_true(known, "not a listed field: " .. line)
+        end
+    end)
+
+    it("keeps the window shut while a name is secret", function()
+        local ns = login()
+        grabber({}, 1)
+        STATE.units.target = { name = "Targetguy" }
+        _G.issecretvalue = function(v) return v == "Targetguy" end
+        _G.CHAT = {}
+        ns.OpenBugReport()
+        assert.is_false(SimpleConjureBarReport:IsShown())
+        assert.is_truthy(CHAT[#CHAT]:find(ns.L.REPORT_SECRET, 1, true))
+        _G.issecretvalue = nil
+    end)
+
+    it("stays under 20,000 bytes, cut at a whole character, and shows the data list", function()
+        local ns = login()
+        local errors = {}
+        for i = 1, 5 do
+            local lines = {}
+            for j = 1, 200 do lines[j] = ("v%d=%d"):format(j, j) end
+            errors[i] = ourError(time(), 1, { message = ("Interface/AddOns/SimpleConjureBar/Bar.lua:%d: %s"):format(i, ("ü"):rep(2000)),
+                locals = table.concat(lines, "\n") })
+        end
+        grabber(errors, 1)
+        local text = report(ns, "OTHER", ("ä"):rep(500), ("ö"):rep(500))
+        assert.is_true(#text <= 20000, #text)
+        assert.is_truthy(text:find(ns.D.REPORT_CUT, 1, true))
+        assert.is_true(validUtf8(text))
+        local f = SimpleConjureBarReport
+        local function shown(key)
+            for _, r in ipairs(f.regions) do if r.text == ns.L[key] then return true end end
+        end
+        assert.is_true(shown("REPORT_PRIVACY"))
+        assert.is_true(shown("REPORT_PUBLIC"))
+    end)
+end)
+
 describe("the loaded addons", function()
     it("are listed by folder name and version, at most 60", function()
         local ns = login()

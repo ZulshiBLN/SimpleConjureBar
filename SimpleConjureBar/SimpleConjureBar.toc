@@ -45,6 +45,7 @@ Intellect.lua
 Merchant.lua
 Trade.lua
 Macros.lua
+Privacy.lua
 Report.lua
 Settings.lua
 SettingsPages.lua

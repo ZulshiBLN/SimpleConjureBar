@@ -349,6 +349,9 @@ UnitIsVisible = function() return true end
 UnitInRange = function() return true end
 C_Secrets = { ShouldAurasBeSecret = function() return STATE.secret end }
 GetLocale = function() return STATE.locale end
+GetRealmName = function() return "Realm" end
+GetNormalizedRealmName = function() return "Realm" end
+GetGuildInfo = function() return nil end
 GetMoney = function() return 1000000 end
 GetMerchantNumItems = function() return STATE.merchantItems or 0 end
 GetMerchantItemID = function(i) return ({17031, 17020, 1234})[i] end

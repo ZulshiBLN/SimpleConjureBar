@@ -4,7 +4,7 @@ local objects = {}
 local eventFrames = {}
 local timers = {}
 STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {},
-          units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false }
+          units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false, now = 100 }
 
 local Methods = {}
 local function New(kind, name, parent)
@@ -267,10 +267,34 @@ function RUNTIMERS()
   end
 end
 TICKERS = {}
+-- NewTimer keeps its delay and waits for ADVANCE: RUNTIMERS would fire it at once, and with the
+-- clock standing still a timer that re-arms itself would run 50 rounds.
+local delayed = {}
 C_Timer = {
   After = function(_, f) table.insert(timers, f) end,
   NewTicker = function(_, f) local t = New("Ticker"); t.fn = f; TICKERS[#TICKERS + 1] = t; return t end,
+  NewTimer = function(delay, f)
+    local t = { delay = delay, due = GetTime() + delay, fn = f, cancelled = false }
+    function t:Cancel() self.cancelled = true end
+    function t:IsCancelled() return self.cancelled end
+    delayed[#delayed + 1] = t
+    return t
+  end,
 }
+-- Moves the clock and runs the timers now due, earliest first
+function ADVANCE(seconds)
+  STATE.now = STATE.now + seconds
+  while true do
+    local nextT, at
+    for i, t in ipairs(delayed) do
+      if not t.cancelled and t.due <= STATE.now and (not nextT or t.due < delayed[at].due) then nextT, at = t, i end
+    end
+    if not nextT then break end
+    table.remove(delayed, at)
+    local ok, err = pcall(nextT.fn)
+    if not ok then table.insert(STATE.errors, "timer: " .. err) end
+  end
+end
 function TICK() for _, t in ipairs(TICKERS) do if not t.cancelled then local ok, e = pcall(t.fn); if not ok then table.insert(STATE.errors, "ticker: "..e) end end end end
 
 UIParent = CreateFrame("Frame", "UIParent")
@@ -334,7 +358,7 @@ BuyMerchantItem = function(i, n) BUYS[#BUYS+1] = {i, n} end
 GetCursorPosition = function() return 0, 0 end
 IsMouseButtonDown = function() return false end
 GetCVar = function() return "1" end
-GetTime = function() return 100 end
+GetTime = function() return STATE.now end
 ReloadUI = noop
 CheckInteractDistance = function() return true end
 InitiateTrade = noop
@@ -370,11 +394,19 @@ C_Container = {
   PickupContainerItem = function(bag, slot) local s = BAGS[bag] and BAGS[bag][slot]; CURSOR = s and s.itemID end,
   GetContainerItemInfo = function(bag, slot) return BAGS[bag] and BAGS[bag][slot] end,
 }
--- Buffs by name: AURAS[unit .. name], or a spell in a described unit's auras
+-- Buffs by name: AURAS[unit .. name], or a spell in a described unit's auras. An aura is a
+-- spell ID (no expiry) or { id = ..., expires = GetTime() value }.
+local function Aura(a)
+  if type(a) == "table" then return { spellId = a.id, expirationTime = a.expires or 0, name = "A" .. a.id } end
+  return { spellId = a, expirationTime = 0, name = "A" .. a }
+end
 C_UnitAuras = { GetAuraDataBySpellName = function(u, name)
-  if AURAS[u .. name] then return {} end
+  if AURAS[u .. name] then return { expirationTime = 0 } end
   local r = U(u)
-  for _, id in ipairs(r and r.auras or {}) do if "Spell" .. id == name then return {} end end
+  for _, a in ipairs(r and r.auras or {}) do
+    local aura = Aura(a)
+    if "Spell" .. aura.spellId == name then return aura end
+  end
 end }
 AURAS = {}
 C_AddOns = { GetAddOnMetadata = function() return "1.0.0" end }
@@ -385,7 +417,7 @@ AURALIST = {}
 C_UnitAuras.GetAuraDataByIndex = function(u, i)
   local r = U(u)
   local l = AURALIST[u] or (r and r.auras)
-  if l and l[i] then return { spellId = l[i], name = "A" .. l[i] } end
+  if l and l[i] then return Aura(l[i]) end
 end
 MACROS = {}
 GetMacroIndexByName = function(n) for i, m in ipairs(MACROS) do if m.name == n then return m.perChar and 120 + i or i end end return 0 end

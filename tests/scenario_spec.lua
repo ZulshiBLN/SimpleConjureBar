@@ -128,7 +128,7 @@ describe("the addon in a mocked client", function()
         FIRE("MERCHANT_SHOW")
         assert.are.equal(2, #BUYS)
 
-        STATE.merchantItems = 0; _G.BUYS = {}; _G.GetTime = function() return 200 end
+        STATE.merchantItems = 0; _G.BUYS = {}; STATE.now = 200
         FIRE("MERCHANT_SHOW"); STATE.merchantItems = 3; FIRE("MERCHANT_UPDATE"); FIRE("MERCHANT_UPDATE")
         assert.are.equal(2, #BUYS)
     end)
@@ -165,7 +165,7 @@ describe("the addon in a mocked client", function()
     end)
 
     it("does not buy twice when auto-buy is switched while the list loads", function()
-        _G.BUYS = {}; _G.GetTime = function() return 300 end
+        _G.BUYS = {}; STATE.now = 300
         STATE.merchantItems = 0; FIRE("MERCHANT_SHOW")
         db.autoBuy = false; FIRE("MERCHANT_CLOSED")
         db.autoBuy = true; STATE.merchantItems = 3; FIRE("MERCHANT_SHOW"); FIRE("MERCHANT_UPDATE")
@@ -193,7 +193,7 @@ describe("the addon in a mocked client", function()
     end)
 
     it("never spends below the gold reserve, and locks after a purchase", function()
-        db.goldReserve = 1000; _G.BUYS = {}; _G.GetTime = function() return 500 end
+        db.goldReserve = 1000; _G.BUYS = {}; STATE.now = 500
         ITEMS[17031] = 0; ITEMS[17020] = 0
         STATE.merchantItems = 3; FIRE("MERCHANT_SHOW")
         assert.are.equal(0, #BUYS)

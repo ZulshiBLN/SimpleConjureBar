@@ -120,6 +120,8 @@ function ns.InitDB()
     if not stopcastKnown then db.macroStopcast = V.macroStopcast end
     if not D.FLYOUT_DIRS[db.flyoutDir] then db.flyoutDir = V.flyoutDir end
     db.flyoutAutoClose = Num(db.flyoutAutoClose, D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX, V.flyoutAutoClose, true)
+    db.intellectRenewMinutes = Num(db.intellectRenewMinutes, 0, D.INTELLECT_RENEW_MAX, V.intellectRenewMinutes, true)
+    db.armorRenewMinutes = Num(db.armorRenewMinutes, 0, D.ARMOR_RENEW_MAX, V.armorRenewMinutes, true)
     for _, key in ipairs({ "antsSpeed", "armorAntsSpeed", "gemAntsSpeed" }) do
         db[key] = Num(db[key], 1, #D.GLOW_DURATIONS, V[key], true)
     end
@@ -150,8 +152,8 @@ function ns.InitDB()
     if db.dbVersion < 3 then
         db.showGreeting = nil -- removed setting: the login message is always shown
     end
-    -- Version 4 adds flyoutDir, flyoutAutoClose, buffRun, pvpBuff and showAnchor; the defaults
-    -- above fill them in
+    -- Version 4 adds flyoutDir, flyoutAutoClose, buffRun, pvpBuff, showAnchor,
+    -- intellectRenewMinutes and armorRenewMinutes; the defaults above fill them in
     db.dbVersion = D.DB_VERSION
 
     -- Button order: keep the saved order, drop unknown keys, append new buttons at the end

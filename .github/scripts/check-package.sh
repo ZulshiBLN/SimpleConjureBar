@@ -23,7 +23,8 @@ dir="$work/$addon"
 toc="$dir/$addon.toc"
 [ -f "$toc" ] || fail "no $addon.toc in $addon/"
 
-for file in README.md LICENSE CHANGELOG.md; do
+# Bindings.xml is read by the client without a TOC line, so the TOC walk below cannot see it
+for file in README.md LICENSE CHANGELOG.md Bindings.xml; do
     [ -f "$dir/$file" ] || fail "$file is missing"
 done
 

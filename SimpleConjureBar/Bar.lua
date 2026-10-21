@@ -248,6 +248,7 @@ function ns.ShowTooltip(self)
         GameTooltip:AddLine(" ")
         if self.hintLeft then GameTooltip:AddLine(self.hintLeft, 0, 1, 0) end
         GameTooltip:AddLine(hint, 0, 1, 0)
+        if self.hintMiddleKey then GameTooltip:AddLine(L[self.hintMiddleKey], 0, 1, 0) end
         if self.hint2 then GameTooltip:AddLine(self.hint2, 0, 1, 0) end
     end
     GameTooltip:Show()

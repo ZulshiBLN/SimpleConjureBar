@@ -296,6 +296,7 @@ end
 -- /reload in combat the files load in the lockdown.
 local function ArmBuffRun()
     local on = db.buffRun
+    intel.hintMiddleKey = on and "HINT_BUFF_RUN" or nil
     SetAttr(intel, "type3", on and "macro" or nil)
     SetAttr(intel, "macrotext3", on and BUFF_RUN_MACRO or nil)
     SetAttr(buffRun, "type", "spell")

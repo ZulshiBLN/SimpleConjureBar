@@ -121,11 +121,14 @@ local function CreateCheck(parent, labelKey, key, onChange)
     return cb, text
 end
 
--- Single check box in its own row
-function UI.AddCheck(labelKey, key, onChange)
+-- Single check box in its own row; indent moves it in by that many check box widths (an option
+-- that belongs to the box above it). Returns the check box.
+function UI.AddCheck(labelKey, key, onChange, indent)
     local cb, text = CreateCheck(page, labelKey, key, onChange)
-    cb:SetPoint("TOPLEFT", INSET - 3, Place(26, 2))
-    measures[#measures + 1] = function() return 26 - 3 + 4 + text:GetStringWidth() end
+    local x = INSET - 3 + (indent or 0) * 26
+    cb:SetPoint("TOPLEFT", x, Place(26, 2))
+    measures[#measures + 1] = function() return x - INSET + 26 + 4 + text:GetStringWidth() end
+    return cb
 end
 
 -- Several check boxes next to each other. items = { { label =, key =, onChange = }, ... }

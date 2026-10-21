@@ -157,6 +157,18 @@ UI.AddCheck("OPT_DEMO", "demo", function()
     ns.ApplyLook()
 end)
 
+-- Buff & Run on the Intellect button's middle click (ruleset plan 2026-10-21-buff-and-run), and
+-- under it whether it buffs players flagged for PvP, dimmed while Buff & Run is off. A change
+-- re-applies the middle click at once.
+local pvpBuff
+local function DimPvpBuff() pvpBuff:SetAlpha(db.buffRun and 1 or 0.4) end
+UI.AddCheck("OPT_BUFF_RUN", "buffRun", function()
+    DimPvpBuff()
+    ns.UpdateBuffState()
+end)
+pvpBuff = UI.AddCheck("OPT_PVP_BUFF", "pvpBuff", nil, 1)
+refreshers[#refreshers + 1] = DimPvpBuff
+
 -- Bottom row: "Report bug" left, "Reload UI" right (own translations, so they follow the language)
 do
     local reload = UI.AddButton(general, "RELOAD_UI", function() ReloadUI() end)

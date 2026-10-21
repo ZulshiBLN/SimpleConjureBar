@@ -5,4 +5,6 @@
 <Bindings>
     <Binding name="CLICK SimpleConjureBarBuffAll:LeftButton" category="BINDING_HEADER_SIMPLECONJUREBAR"/>
     <Binding name="CLICK SimpleConjureBarSettingsKey:LeftButton" category="BINDING_HEADER_SIMPLECONJUREBAR"/>
+    <!-- Buff & Run is the Intellect button's middle click itself (plan 2026-10-21-buff-and-run) -->
+    <Binding name="CLICK SimpleConjureBar_Intellect:MiddleButton" category="BINDING_HEADER_SIMPLECONJUREBAR"/>
 </Bindings>

@@ -74,6 +74,79 @@ describe("the Buff & Run choice", function()
     end)
 end)
 
+-- A check box of the settings window by its label text
+local function checkBox(label)
+    local function find(frame)
+        for _, c in ipairs(frame.children) do
+            if c.kind == "CheckButton" then
+                for _, r in ipairs(c.regions) do if r.text == label then return c end end
+            end
+            local hit = find(c)
+            if hit then return hit end
+        end
+    end
+    return find(SimpleConjureBarSettings)
+end
+
+local function toggle(cb)
+    cb:SetChecked(not cb:GetChecked())
+    RUNSCRIPT(cb, "OnClick")
+end
+
+describe("the Buff & Run switches", function()
+    it("turn the middle click off and on through the check box, the PvP box dimmed while off", function()
+        local ns, db = login()
+        local L = ns.L
+        ns.ToggleSettings()
+        local box, pvp = checkBox(L.OPT_BUFF_RUN), checkBox(L.OPT_PVP_BUFF)
+        assert.is_not_nil(box); assert.is_not_nil(pvp)
+        assert.is_true(box:GetChecked())
+        assert.is_true(select(2, pvp:GetPoint()) > select(2, box:GetPoint())) -- indented
+        assert.are.equal(1, pvp:GetAlpha())
+
+        toggle(box)
+        assert.is_false(db.buffRun)
+        assert.is_true(pvp:GetAlpha() < 1)
+        STATE.units.target = { class = "PRIEST" }
+        STATE.friends = { { class = "MAGE" } }
+        middle(ns)
+        assert.are.same({ {}, 0 }, { STATE.casts, STATE.targetedNext })
+
+        toggle(box)
+        assert.are.equal(1, pvp:GetAlpha())
+        middle(ns)
+        assert.are.equal(1, #STATE.casts)
+        assert.are.equal(1, STATE.targetedNext)
+
+        toggle(pvp)
+        assert.is_true(db.pvpBuff)
+    end)
+
+    it("are in settings version 4, a damaged value replaced", function()
+        local _, db = login({ dbVersion = 3 })
+        assert.are.same({ true, false }, { db.buffRun, db.pvpBuff })
+        _, db = login({ dbVersion = 4, buffRun = "x", pvpBuff = 1 })
+        assert.are.same({ true, false }, { db.buffRun, db.pvpBuff })
+        _, db = login({ dbVersion = 4, buffRun = false, pvpBuff = true })
+        assert.are.same({ false, true }, { db.buffRun, db.pvpBuff })
+    end)
+
+    it("show in the Intellect tooltip while on", function()
+        local ns, db = login()
+        local lines
+        GameTooltip.AddLine = function(_, text) lines[#lines + 1] = text end
+        local function has(wanted)
+            lines = {}
+            ns.ShowTooltip(ns.buttons.Intellect)
+            for _, l in ipairs(lines) do if l == wanted then return true end end
+            return false
+        end
+        assert.is_true(has(ns.L.HINT_BUFF_RUN))
+        db.buffRun = false; ns.UpdateBuffState()
+        assert.is_false(has(ns.L.HINT_BUFF_RUN))
+    end)
+end)
+
 describe("the Buff & Run click", function()
     for _, keyDown in ipairs({ false, true }) do
         local mode = keyDown and " (actions on key down)" or " (actions on key up)"

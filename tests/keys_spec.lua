@@ -7,6 +7,8 @@ local BUFF_KEY, SETTINGS_KEY = "SimpleConjureBarBuffAll", "SimpleConjureBarSetti
 local BINDINGS = {
     ["CLICK " .. BUFF_KEY .. ":LeftButton"] = "KEY_BUFF_ALL",
     ["CLICK " .. SETTINGS_KEY .. ":LeftButton"] = "OPEN_SETTINGS",
+    -- Buff & Run: the Intellect button's middle click itself (ruleset plan 2026-10-21-buff-and-run)
+    ["CLICK SimpleConjureBar_Intellect:MiddleButton"] = "BUFF_RUN",
 }
 
 local function login(locale, adjust)
@@ -31,7 +33,7 @@ local function bags() FIRE("BAG_UPDATE_DELAYED"); RUNTIMERS() end
 local function auras(ns) FIRE("UNIT_AURA", "player"); RUNTIMERS(); ns.UpdateBuffState() end
 
 describe("Bindings.xml", function()
-    it("lists exactly the two keys, in a section of their own, on frames that exist", function()
+    it("lists exactly its keys, in a section of their own, on frames that exist", function()
         local f = assert(io.open("SimpleConjureBar/Bindings.xml", "rb"))
         local xml = f:read("*a"); f:close()
         local found = {}
@@ -51,10 +53,12 @@ describe("the key names", function()
         local ns = login("enUS")
         assert.are.equal("SimpleConjureBar", BINDING_HEADER_SIMPLECONJUREBAR)
         for name, key in pairs(BINDINGS) do
+            assert.is_string(ns.locales.enUS[key], key)
             assert.are.equal(ns.locales.enUS[key], _G["BINDING_NAME_" .. name])
         end
         ns.ApplyLanguage("deDE")
         for name, key in pairs(BINDINGS) do
+            assert.is_string(ns.locales.deDE[key], key)
             assert.are.equal(ns.locales.deDE[key], _G["BINDING_NAME_" .. name])
         end
     end)
@@ -63,6 +67,7 @@ describe("the key names", function()
         local ns = login("frFR", function() _G.UnitClass = function() return "Paladin", "PALADIN" end end)
         assert.is_false(ns.enabled)
         for name, key in pairs(BINDINGS) do
+            assert.is_string(ns.locales.frFR[key], key)
             assert.are.equal(ns.locales.frFR[key], _G["BINDING_NAME_" .. name])
         end
     end)

@@ -3,7 +3,7 @@
 This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [1.1.0] - Unreleased
+## [1.1.0] - 2026-10-22
 
 ### Added
 - Buff & Run: a middle click on Arcane Intellect buffs your target and then targets the next

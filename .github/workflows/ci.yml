@@ -36,8 +36,8 @@ jobs:
 
       - name: Install luacheck and busted
         run: |
-          luarocks install luacheck
-          luarocks install busted
+          luarocks install luacheck 1.2.0-1
+          luarocks install busted 2.3.0-1
 
       - name: luacheck
         run: luacheck .

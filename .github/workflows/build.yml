@@ -104,6 +104,12 @@ jobs:
               SimpleConjureBar/CHANGELOG.md > .release/notes.md
           [ -s .release/notes.md ] || { echo "no CHANGELOG entry for $version"; exit 1; }
 
+      - name: A release's CHANGELOG entry is dated
+        if: inputs.tag != ''
+        run: |
+          version=$(grep -m1 -E '^## Version:' SimpleConjureBar/SimpleConjureBar.toc | sed -E 's/^## Version:[[:space:]]*//' | tr -d '\r[:space:]')
+          bash .github/scripts/check-changelog-heading.sh "$version" SimpleConjureBar/CHANGELOG.md
+
       # The version rule on fixed lists, the interface mapping, and the check
       # that no upload script can print a token - each able to go red.
       - name: Upload controls

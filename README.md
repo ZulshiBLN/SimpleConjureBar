@@ -42,7 +42,8 @@ The addon loads for mages only.
   each click casts and on whom - the member, "your group" for Brilliance, in a raid its group.
   A buff with less than its renew time left (Tracking tab, 5 minutes by default) is needed again,
   after everyone who has none. When nobody needs it, a click casts nothing and the tooltip says
-  "everyone has it"; in a raid Brilliance waits until a group in need is in range.
+  "everyone has it"; in a raid Brilliance waits until a group in need is in range, and the
+  tooltip says that none is.
 - **Buff & Run** - a middle click on Arcane Intellect buffs the player you target and then targets
   the next friendly player, so you can buff passing players by clicking again and again. Only
   Arcane Intellect, never Brilliance, in the highest rank his level accepts, and only for a mana
@@ -112,7 +113,9 @@ already selected:
    needed).
 3. Paste the code into its one field, tick the consent box and send it.
 
-"Show content" shows everything the code holds before you pass it on. The window does not open
+"Show content" shows everything the code holds before you pass it on. The code is not
+encrypted - anyone can turn it back into what "Show content" shows. Screenshots you add to the
+form are public too: crop or blur names, chat, realm, guild and anything personal first. The window does not open
 in combat; one that is open closes when combat starts and comes back after it. Errors come from
 BugGrabber/BugSack when installed. To read a code yourself: `lua tools/decode-report.lua`
 (see [tools/README.md](tools/README.md)).
@@ -125,7 +128,7 @@ BugGrabber/BugSack when installed. To read a code yourself: `lua tools/decode-re
 | `/scb help` | List all commands |
 | `/scb lock` | Lock or unlock the bar |
 | `/scb minimap` | Show or hide the minimap button |
-| `/scb demo` | Turn demo mode on or off (simulates every button) |
+| `/scb demo` | Turn demo mode on or off (simulates every button); not in combat |
 | `/scb reset` | Reset the bar position |
 | `/scb bug` | Open the bug report window |
 | `/scb debug` | Technical debug output: the state part of a bug report |
@@ -161,7 +164,7 @@ and can be overridden in the General tab (saved account-wide, applied without re
 | `Intellect.lua` | Group scan, buff targets, buff count, armor highlight, Buff & Run |
 | `Merchant.lua` | Reagent auto-buy |
 | `Trade.lua` | Trading water and food |
-| `Macros.lua` | Character macro "SCB Polymorph", macro window |
+| `Macros.lua` | Character macros (Polymorph, Ice Block, stopcasting), macro window |
 | `Privacy.lua` | What a bug report may carry: allowlist, name and path filter, locals, size |
 | `ReportCode.lua` | The bug report as one code (`SCB1:`), shared with `tools/decode-report.lua` |
 | `Report.lua` | Bug report window, report text, state snapshot, loaded addons |
@@ -193,21 +196,41 @@ public**: everyone can read it. Write no names or personal data into the form's 
   tokens such as `party1`, combat, group size, settings changes); the state of its buttons, the
   items it counts, your group by class and your buffs by spell ID; the names and versions of your
   loaded addons, as conflicts need them.
-- **What it never holds** - character, realm, guild or other player names; GUIDs; BattleTags or
-  account names; chat, mail or whispers; positions or zones; date or clock time; anything from
-  the WTF folder; file paths outside `Interface/AddOns`. Strings the addon does not know are shown
-  by their length only; free text and error messages pass a filter for the names the game knows,
-  GUIDs, BattleTags and paths. Names are matched as whole words the game knows right now: a name
-  you type that the game does not know, or one that is part of a longer word - an addon folder
-  you named "ZulshiTools", say - can still remain. Check with "Show content".
+- **What it never holds** - chat, mail or whispers; positions or zones; date or clock time.
+  Strings the addon does not know are shown by their length only.
+- **What it filters out** - free text and error messages pass a filter for character, realm,
+  guild, group and pet names the game knows right now, GUIDs, BattleTags, account folders,
+  e-mail addresses, the WTF folder and file paths outside `Interface/AddOns`. Names are matched
+  as whole words: a name you type that the game does not know, or one that is part of a longer
+  word - an addon folder you named "ZulshiTools", say - can still remain. Check with "Show
+  content".
 - **Where it is kept** - the action log in memory only, gone at logout; nothing is written to
   your saved variables for the report.
-- **Deletion** - ask in an issue or to the author; the repository owner deletes an issue on
-  request.
+- **Deletion** - see "Data protection" below.
+
+### Data protection
+
+This is not legal advice; it says how bug reports are handled.
+
+- **Who is responsible** - ZulshiBLN, the author of SimpleConjureBar, Switzerland. Contact
+  through GitHub: an issue, or - for anything that should not be public - a private
+  vulnerability report on this repository (*Security > Report a vulnerability*).
+- **Why** - you choose to send a report; it is used only to fix the bug you report (legitimate
+  interest, GDPR Art. 6(1)(f); Swiss FADP). Nothing leaves the game unless you copy and post it.
+- **Who receives it** - GitHub, Inc. (USA) hosts the issue. It is public, and people who watch
+  the repository get a copy by e-mail. How GitHub protects data sent to the USA:
+  [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+- **How long** - once the bug is fixed, the author removes the code, with its edit history, from
+  the issue; on request earlier, or the whole issue. Copies outside GitHub - e-mail
+  notifications, web archives - cannot be recalled.
+- **Your rights** - access, correction, deletion and objection, through the contact above. You
+  may also complain to the Swiss FDPIC or to the data protection authority of your EU country.
+- **Under 16** - ask a parent before you post a report.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). Author: ZulshiBLN.
+MIT, see [LICENSE](LICENSE). Author: ZulshiBLN. World of Warcraft screenshots and game art are
+(c) Blizzard Entertainment and not covered by the MIT license.
 
 ## Known limits
 

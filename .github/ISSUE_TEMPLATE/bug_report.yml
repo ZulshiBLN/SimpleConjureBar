@@ -14,8 +14,11 @@ body:
         happened, choose where it happened, and copy the code with Ctrl+C. "Show content"
         in the window shows everything the code holds: the addon's version and settings,
         your client, class and level range, this addon's errors, its last actions and state,
-        and your loaded addons - never names, realm, guild, chat, account, date or file
-        paths. See [privacy](https://github.com/ZulshiBLN/SimpleConjureBar#privacy-and-security).
+        and your loaded addons. It is filtered for the names the game knows, GUIDs,
+        BattleTags, e-mail addresses and file paths - a name the game does not know can
+        remain, so check "Show content". The code is not encrypted: anyone can read it.
+        See [privacy](https://github.com/ZulshiBLN/SimpleConjureBar#privacy-and-security)
+        and [data protection](https://github.com/ZulshiBLN/SimpleConjureBar#data-protection).
 
         On an older version of the addon, without a code? Open a blank issue instead.
   - type: textarea
@@ -37,4 +40,4 @@ body:
     id: screenshots
     attributes:
       label: Screenshots
-      description: Optional - drag images in here.
+      description: Optional. Screenshots are public too - crop or blur names, chat, realm, guild and anything personal before you add one.

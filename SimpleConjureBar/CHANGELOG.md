@@ -21,9 +21,11 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 - A new bug report: a short form - what happened, where (a list of the addon's parts), details -
   and everything else taken from the game, so a bug can be fixed without asking you back. It
   holds this session's errors with how long ago they came and whether in combat, the addon's
-  last 50 actions, the state of its buttons and your loaded addons. It holds nothing personal:
-  no names, realm, guild, chat, date or file paths; the window lists what it holds and says that
-  an issue is public. The report is one code, already selected; its link opens a GitHub form
+  last 50 actions, the state of its buttons and your loaded addons. It never holds chat,
+  positions or the date, and filters out the names the game knows, GUIDs, BattleTags, e-mail
+  addresses and file paths; a name the game does not know can remain, so check "Show content"
+  before you send it. The window lists what it holds and says that an issue is public and the
+  code is not encrypted. The report is one code, already selected; its link opens a GitHub form
   with one field for it, and "Show content" shows what the code holds.
 - "Window background" beside Scale on the General tab sets the background of the settings and
   bug report windows from invisible (0 %) to solid (100 %); 60 % is the look they always had.
@@ -65,11 +67,16 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   click: the member for a single buff, "your group" for Arcane Brilliance, in a raid its group by
   number.
 - A left click on the handle in combat says that the bar cannot move then.
+- `/scb demo` is refused in combat: the buttons cannot switch to demo mode until the fight ends.
 
 ### Fixed
 - A click on Arcane Intellect cast it on you again and again when nobody needed it. It now casts
   nothing then, and the tooltip says "everyone has it". In a raid, Brilliance no longer goes to
-  your own group when no group in need is in range.
+  your own group when no group in need is in range, and the tooltip says that none is.
+- After a login in combat, the bar could jump to the middle of the screen when the fight ended.
+  It now keeps its place.
+- With an account-wide macro named like one of the addon's macros, every "Create macro" added
+  another character macro. It now updates its own and leaves yours alone.
 - No flyout opened in combat while one of them held no spell yet - the portals before you learn
   them - and BugSack showed "Invalid frame handle".
 - With the flyout direction on automatic, a flyout kept opening towards where the bar had been

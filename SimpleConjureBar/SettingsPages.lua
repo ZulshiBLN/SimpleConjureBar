@@ -39,12 +39,17 @@ UI.AddCheckRow({
 })
 UI.AddSeparator()
 
--- Scale: slider in 0.1 steps or number input (0.05 steps)
+-- Scale: slider in 0.1 steps or number input (0.05 steps). It is the left column of its row;
+-- the window background takes the right one (ruleset plan 2026-10-22-window-opacity), so the
+-- row is laid out as UI.AddNumberSlider's columns are.
 do
-    local ROW = 40
+    local ROW = 42
     local row = CreateFrame("Frame", nil, general)
     row:SetHeight(ROW)
-    row:SetPoint("TOPLEFT", INSET, Place(ROW, 6))
+    local y = Place(ROW, 6)
+    UI.CurrentPage().columnY = y
+    row:SetPoint("TOPLEFT", INSET, y)
+    UI.scaleRow = row
 
     local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", 0, -4)
@@ -58,7 +63,7 @@ do
     box:SetJustifyH("CENTER")
 
     local slider = UI.MakeSlider(row)
-    slider:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 2, -10)
+    slider:SetPoint("TOPLEFT", row, "TOPLEFT", 2, -28) -- level with the right column's slider
     slider:SetMinMaxValues(D.SCALE_MIN, D.SCALE_MAX)
     slider:SetValueStep(0.05) -- fine step, so typed 0.05 values stay where they are
 
@@ -105,11 +110,23 @@ do
         updating = false
         box:SetText(Format(db.scale or 1))
     end
-    measures[#measures + 1] = function() return label:GetStringWidth() + 16 + 44 end
+    measures[#measures + 1] = function() return 2 * (label:GetStringWidth() + 16 + 44) + UI.COLUMN_GAP end
     stretchers[#stretchers + 1] = function(w)
-        row:SetWidth(w)
-        slider:SetWidth(w - 4)
+        local rowW = (w - UI.COLUMN_GAP) / 2
+        row:SetWidth(rowW)
+        slider:SetWidth(rowW - 4)
     end
+end
+
+-- The settings and report windows' background, 0 % invisible to 100 % solid
+do
+    local rows = {}
+    UI.AddNumberSlider({
+        label = "OPT_WINDOW_OPACITY", min = 0, max = 100, column = "right", rows = rows,
+        get = function() return db.windowOpacity end,
+        set = function(v) db.windowOpacity = v; ns.ApplyWindowOpacities() end,
+    })
+    UI.opacityRow = rows[1]
 end
 
 UI.AddCheckRow({

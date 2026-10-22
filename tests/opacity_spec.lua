@@ -54,6 +54,38 @@ describe("the window background", function()
     end)
 end)
 
+describe("the window background slider", function()
+    it("shares the Scale row, both sliders level, wide enough in every language", function()
+        local ns, db = login()
+        local UI = ns.UI
+        ns.ToggleSettings()
+        local left, right = UI.scaleRow, UI.opacityRow
+        assert.is_not_nil(left); assert.is_not_nil(right)
+        local function slider(row)
+            for _, c in ipairs(row.children) do if c.kind == "Slider" then return c end end
+        end
+        for _, code in ipairs(ns.LOCALE_ORDER) do
+            ns.ApplyLanguage(code)
+            local _, lx, ly = left:GetPoint()
+            local _, rx, ry = right:GetPoint()
+            assert.are.equal(ly, ry, code .. ": one row")
+            assert.is_true(rx >= lx + left:GetWidth() + UI.COLUMN_GAP, code .. ": right of the left half")
+            assert.are.equal(select(5, slider(left):GetPoint()), select(5, slider(right):GetPoint()), code .. ": level")
+            for _, row in ipairs({ { left, 44 }, { right, 40 } }) do
+                local label
+                for _, r in ipairs(row[1].regions) do if r.kind == "FontString" and r.text then label = label or r end end
+                assert.is_true(row[1]:GetWidth() >= label:GetStringWidth() + 16 + row[2], code .. ": " .. label.text)
+            end
+        end
+        ns.ApplyLanguage("enUS")
+        local box
+        for _, c in ipairs(right.children) do if c.kind == "EditBox" then box = c end end
+        box:SetText("150"); RUNSCRIPT(box, "OnEnterPressed")
+        assert.are.equal(100, db.windowOpacity)
+        assert.near(1, SimpleConjureBarSettings.opacityLayer:GetAlpha(), 1e-9) -- applied at once
+    end)
+end)
+
 describe("the window opacity setting", function()
     it("is today's look by default, a damaged value replaced, out of range clamped", function()
         local ns, db = login({ dbVersion = 3 })

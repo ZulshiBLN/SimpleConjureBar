@@ -289,6 +289,7 @@ end
 --       gap, rows (table that collects the row frames, optional),
 --       column ("left" or "right": two sliders share a row, the right one takes the left's) }
 local COLUMN_GAP = 20
+UI.COLUMN_GAP = COLUMN_GAP -- the General tab's Scale row lays out its column with it
 function UI.AddNumberSlider(o)
     local ROW = 42
     local row = CreateFrame("Frame", nil, page)

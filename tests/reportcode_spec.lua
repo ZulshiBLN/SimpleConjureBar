@@ -132,6 +132,33 @@ describe("the decoder", function()
         assert.are.equal("x<U+200B><U+200F><U+061C><U+2028><U+2029><U+FEFF>y", out)
     end)
 
+    -- One code point as UTF-8
+    local function utf8(cp)
+        if cp < 0x80 then return string.char(cp) end
+        if cp < 0x800 then return string.char(0xC0 + math.floor(cp / 64), 0x80 + cp % 64) end
+        if cp < 0x10000 then
+            return string.char(0xE0 + math.floor(cp / 4096), 0x80 + math.floor(cp / 64) % 64, 0x80 + cp % 64)
+        end
+        return string.char(0xF0 + math.floor(cp / 262144), 0x80 + math.floor(cp / 4096) % 64,
+            0x80 + math.floor(cp / 64) % 64, 0x80 + cp % 64)
+    end
+
+    -- Invisible characters can carry text a reader does not see, e.g. ASCII smuggled into tag
+    -- characters for an assistant that reads the output (security audit 1.1.0, S-04)
+    it("shows every invisible character as a code point, tag characters too", function()
+        local RC = codec()
+        for _, cp in ipairs({ 0xAD, 0x34F, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x180B, 0x180E, 0x180F,
+            0x2060, 0x2064, 0x3164, 0xFE00, 0xFE0F, 0xFFA0, 0xFFF9, 0xFFFB, 0xE0000, 0xE0041, 0xE007F,
+            0xE0100, 0xE01EF }) do
+            local code, out = run(RC.Encode("x" .. utf8(cp) .. "y"))
+            assert.are.equal(0, code)
+            assert.are.equal(("x<U+%04X>y"):format(cp), out)
+        end
+        -- visible text outside those ranges stays as it is
+        local _, out = run(RC.Encode("ü€한" .. utf8(0x1F600)))
+        assert.are.equal("ü€한" .. utf8(0x1F600), out)
+    end)
+
     it("runs as a script with the interpreter that runs busted", function()
         local RC = codec()
         local i = -1

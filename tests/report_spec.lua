@@ -403,6 +403,53 @@ describe("the report's privacy", function()
         end
     end)
 
+    -- The gaps the security audit of 1.1.0 found in the free-text filter (S-01 to S-03)
+    it("filters spaced paths, e-mail, the WTF folder, account folders and hidden name joins", function()
+        local ns = login()
+        local names = { "Testplayer" }
+        local cases = {
+            -- input, text that must be gone, what must remain
+            { "C:\\Users\\John Doe\\Games\\x.lua:12: boom", "Doe", "<path>:12: boom" },
+            { "see /home/John Doe/wow", "Doe", "see <path>" },
+            { "see /Users/Jane Roe/wow", "Roe", "see <path>" },
+            { "\\\\server\\share\\John Doe\\x", "Doe", "<path>" },
+            { "on /Volumes/Data Disk/wow", "Disk", "on <path>" },
+            { "in /Applications/World of Warcraft/x", "World", "in <path>" },
+            { "write john.doe+wow@example.com now", "john", "write <email> now" },
+            { "WTF\\Account\\MYACCOUNT\\SavedVariables\\x.lua", "MYACCOUNT", "<wtf>" },
+            { "wtf/Account/MYACCOUNT/x", "MYACCOUNT", "<wtf>" },
+            { "folder 12345678#1 here", "12345678", "folder <tag> here" },
+            { "Testplayer\226\128\139 did it", "Testplayer", "<name> did it" },       -- U+200B
+            { "Testplayer\226\128\153s bar", "Testplayer", "<name>\226\128\153s bar" }, -- U+2019
+            { "\226\128\152Testplayer\226\128\153", "Testplayer", "<name>" },
+            { "\226\128\156Testplayer\226\128\157", "Testplayer", "<name>" },
+            { "with\194\160Testplayer\194\160too", "Testplayer", "<name>" },          -- U+00A0
+            { "Tes\226\129\160tplayer", "Tes", "<name>" },                              -- U+2060
+            { "Testplayer\243\160\128\129", "Testplayer", "<name>" },                  -- U+E0001
+        }
+        for _, c in ipairs(cases) do
+            local out = ns.Scrub(c[1], names)
+            assert.is_nil(out:find(c[2], 1, true), c[1] .. " -> " .. out)
+            assert.is_truthy(out:find(c[3], 1, true), c[1] .. " -> " .. out)
+        end
+        -- what is not a path stays readable
+        assert.are.equal("see https://github.com/x and a: b", ns.Scrub("see https://github.com/x and a: b", names))
+        assert.are.equal("Interface/AddOns/SimpleConjureBar/Bar.lua:10: x",
+            ns.Scrub("C:\\Program Files\\World of Warcraft\\_forever_\\Interface\\AddOns\\SimpleConjureBar\\Bar.lua:10: x", names))
+    end)
+
+    it("knows the names of pets and of the target's target", function()
+        local ns = login()
+        STATE.units.pet = { name = "Petname" }
+        STATE.units.targettarget = { name = "Totguy" }
+        STATE.units.partypet2 = { name = "Partypet" }
+        STATE.units.raidpet7 = { name = "Raidpet" }
+        local names = table.concat(ns.KnownNames(), " ")
+        for _, n in ipairs({ "Petname", "Totguy", "Partypet", "Raidpet" }) do
+            assert.is_truthy(names:find(n, 1, true), n)
+        end
+    end)
+
     it("keeps the window shut while a name is secret", function()
         local ns = login()
         grabber({}, 1)

@@ -5,8 +5,8 @@
 --
 -- A code comes from a public issue: it is untrusted input. The decoder never runs its content,
 -- refuses more than 100,000 bytes, and prints control characters, invalid UTF-8, zero-width
--- characters, line separators and text direction overrides as <U+XXXX>, so the terminal shows
--- the text as it is.
+-- and other invisible characters, line separators and text direction overrides as <U+XXXX>, so
+-- the terminal shows the text as it is.
 
 local MAX_INPUT = 100000
 
@@ -43,7 +43,14 @@ function M.Inert(text)
             if (cp < 32 and cp ~= 10 and cp ~= 9) or cp == 127 or (cp >= 0x80 and cp <= 0x9F)
                 or (cp >= 0x202A and cp <= 0x202E) or (cp >= 0x2066 and cp <= 0x2069)
                 or (cp >= 0x200B and cp <= 0x200F) or cp == 0x061C or cp == 0x2028 or cp == 0x2029
-                or cp == 0xFEFF then
+                or cp == 0xFEFF
+                -- fillers, joiners and selectors that show nothing; tag characters can carry
+                -- whole hidden sentences
+                or cp == 0xAD or cp == 0x34F or cp == 0x115F or cp == 0x1160 or cp == 0x3164
+                or cp == 0xFFA0 or (cp >= 0x17B4 and cp <= 0x17B5) or (cp >= 0x180B and cp <= 0x180F)
+                or (cp >= 0x2060 and cp <= 0x2064) or (cp >= 0xFE00 and cp <= 0xFE0F)
+                or (cp >= 0xFFF9 and cp <= 0xFFFB) or (cp >= 0xE0000 and cp <= 0xE007F)
+                or (cp >= 0xE0100 and cp <= 0xE01EF) then
                 ch = Show(cp)
             end
             out[#out + 1] = ch

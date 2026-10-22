@@ -74,6 +74,55 @@ describe("the Intellect tooltip", function()
     end)
 end)
 
+-- The click lines of a button's tooltip, in order, after its spacer
+local function clickLines(ns, button)
+    local lines, started = {}, false
+    GameTooltip.AddLine = function(_, text)
+        if text == " " then started = true elseif started then lines[#lines + 1] = text end
+    end
+    ns.ShowTooltip(button)
+    return lines
+end
+
+describe("every button's tooltip", function()
+    it("lists left, middle and right click in that order, extras after them", function()
+        local ns = login()
+        local L, b = ns.L, ns.buttons
+        ns.Rebuild(); RUNTIMERS()
+        assert.are.same({ L.HINT_CAST_ARMOR, L.HINT_PICK_ARMOR }, clickLines(ns, b.Armor))
+        assert.are.same({ L.HINT_TELEPORT, L.HINT_PICK }, clickLines(ns, b.Teleport))
+        assert.are.same({ L.HINT_PORTAL, L.HINT_PICK }, clickLines(ns, b.Portal))
+        local gem = clickLines(ns, b.ManaGem)
+        assert.are.equal(L.HINT_USE_ITEM:format(C_Item.GetItemNameByID(b.ManaGem.leftItem)), gem[1])
+        assert.are.equal(L.HINT_RIGHT:format(ns.SpellName(b.ManaGem.conjureSpell)), gem[2])
+        for _, key in ipairs({ "Water", "Food" }) do
+            local lines = clickLines(ns, b[key])
+            assert.are.same({ b[key].hintLeft, L.HINT_MIDDLE, b[key].hint }, lines, key)
+        end
+        STATE.units.player = {} -- Intellect missing: the count follows the clicks
+        ns.UpdateBuffState()
+        local intel = clickLines(ns, b.Intellect)
+        assert.are.same({ b.Intellect.hintLeft, L.HINT_BUFF_RUN, b.Intellect.hint }, { intel[1], intel[2], intel[3] })
+        assert.is_truthy(intel[4]) -- "Missing Arcane Intellect: 1"
+        assert.is_nil(intel[5])
+        assert.is_truthy(L.HINT_PICK_ARMOR:find("Choose Armor", 1, true))
+        assert.is_truthy(L.HINT_PICK:find("Choose Destination", 1, true))
+        assert.are.same({}, STATE.errors)
+    end)
+
+    it("orders the handle's and the minimap button's clicks left, middle, right", function()
+        local ns = login()
+        local L = ns.L
+        local lefts = {}
+        GameTooltip.AddDoubleLine = function(_, left) lefts[#lefts + 1] = left end
+        RUNSCRIPT(ns.handle, "OnEnter")
+        assert.are.same({ L.LEFTCLICK, L.MIDDLECLICK, L.RIGHTCLICK }, lefts)
+        lefts = {}
+        RUNSCRIPT(SimpleConjureBarMinimapButton, "OnEnter")
+        assert.are.same({ L.LEFTCLICK, L.RIGHTCLICK, L.DRAG }, lefts)
+    end)
+end)
+
 describe("the water and food tooltips", function()
     it("name the left click's use and the middle click's trade", function()
         local ns = login()

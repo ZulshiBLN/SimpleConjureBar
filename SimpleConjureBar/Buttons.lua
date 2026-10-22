@@ -7,7 +7,7 @@ if not ns.enabled then return end
 
 local D, L, API = ns.D, ns.L, ns.API
 local SIZE, GAP, PAD = D.SIZE, D.GAP, D.PAD
-local ItemCount, ItemIcon, GetSpellTex = API.ItemCount, API.ItemIcon, API.GetSpellTex
+local ItemCount, ItemIcon, ItemName, GetSpellTex = API.ItemCount, API.ItemIcon, API.ItemName, API.GetSpellTex
 local IsDemo, IsKnown, SetAttr = ns.IsDemo, ns.IsKnown, ns.SetAttr
 
 local bar, handle, buttons = ns.bar, ns.handle, ns.buttons
@@ -98,6 +98,9 @@ local function SetupGem(b)
 
     b.leftItem, b.conjureSpell = owned, conjure
     b.spellId = not owned and conjure or nil
+    -- Left uses the best gem; without one it conjures, and the line says so
+    b.hintLeft = owned and L.HINT_USE_ITEM:format(ItemName(owned) or "?")
+        or L.HINT_LEFT:format(ns.SpellName(conjure) or L.CONJURE)
     b.hint = L.HINT_RIGHT:format(ns.SpellName(conjure) or L.CONJURE)
 
     if IsDemo() then
@@ -151,7 +154,7 @@ local function SetupConsumable(b)
     else
         b.hintLeft = L.HINT_LEFT:format(ns.SpellName(spell) or L.CONJURE)
     end
-    b.hint2 = L.HINT_MIDDLE
+    b.hintMiddle = L.HINT_MIDDLE
     if IsDemo() then
         -- No real action, only the demo message
         SetAttr(b, "type1", nil)

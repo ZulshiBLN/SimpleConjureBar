@@ -139,8 +139,8 @@ local function ShowHandleTooltip(self)
     end
     GameTooltip:AddLine(" ")
     GameTooltip:AddDoubleLine(L.LEFTCLICK, L.MOVE, 0, 1, 0, 1, 1, 1)
-    GameTooltip:AddDoubleLine(L.RIGHTCLICK, db.locked and L.UNLOCK or L.LOCK, 0, 1, 0, 1, 1, 1)
     GameTooltip:AddDoubleLine(L.MIDDLECLICK, L.SETTINGS, 0, 1, 0, 1, 1, 1)
+    GameTooltip:AddDoubleLine(L.RIGHTCLICK, db.locked and L.UNLOCK or L.LOCK, 0, 1, 0, 1, 1, 1)
     GameTooltip:Show()
 end
 
@@ -251,12 +251,17 @@ function ns.ShowTooltip(self)
     elseif self.spellId then
         GameTooltip:SetSpellByID(self.spellId)
     end
-    local hint = self.hintKey and L[self.hintKey] or self.hint
-    if hint then
+    -- The clicks in one order on every button - left, middle, right (Michel) - then an extra
+    -- line such as the missing count. A field ending in Key holds a text's key, so the line
+    -- follows a language switch.
+    local left = self.hintLeftKey and L[self.hintLeftKey] or self.hintLeft
+    local middle = self.hintMiddleKey and L[self.hintMiddleKey] or self.hintMiddle
+    local right = self.hintKey and L[self.hintKey] or self.hint
+    if left or middle or right then
         GameTooltip:AddLine(" ")
-        if self.hintLeft then GameTooltip:AddLine(self.hintLeft, 0, 1, 0) end
-        GameTooltip:AddLine(hint, 0, 1, 0)
-        if self.hintMiddleKey then GameTooltip:AddLine(L[self.hintMiddleKey], 0, 1, 0) end
+        if left then GameTooltip:AddLine(left, 0, 1, 0) end
+        if middle then GameTooltip:AddLine(middle, 0, 1, 0) end
+        if right then GameTooltip:AddLine(right, 0, 1, 0) end
         if self.hint2 then GameTooltip:AddLine(self.hint2, 0, 1, 0) end
     end
     GameTooltip:Show()
@@ -395,10 +400,11 @@ gem.cooldown:SetAllPoints(gem.icon)
 local flyouts = {}
 ns.flyouts = flyouts
 
-local function CreateFlyoutButton(key, listFn, hintKey, normalize)
+local function CreateFlyoutButton(key, listFn, hintKey, normalize, leftKey)
     local main = CreateMainButton(key)
     main.key = key
     main.hintKey = hintKey or "HINT_PICK"
+    main.hintLeftKey = leftKey
     main.listFn, main.normalize = listFn, normalize
 
     local arrow = main:CreateTexture(nil, "OVERLAY")
@@ -458,7 +464,7 @@ local function CreateFlyoutButton(key, listFn, hintKey, normalize)
     return main
 end
 
-local armor = CreateFlyoutButton("Armor", ns.KnownArmor, "HINT_PICK_ARMOR", ns.NormalizeArmor)
+local armor = CreateFlyoutButton("Armor", ns.KnownArmor, "HINT_PICK_ARMOR", ns.NormalizeArmor, "HINT_CAST_ARMOR")
 armor.isArmor = true
 AttachAnts(armor, "armorAntsColor", "armorAntsSpeed")
 
@@ -472,8 +478,8 @@ local function AddArmorLabel(btn, parent)
 end
 AddArmorLabel(armor, armor.antsHolder) -- above the highlight
 
-local tele   = CreateFlyoutButton("Teleport", function() return ns.KnownTravel("tele") end)
-local portal = CreateFlyoutButton("Portal", function() return ns.KnownTravel("portal") end)
+local tele   = CreateFlyoutButton("Teleport", function() return ns.KnownTravel("tele") end, nil, nil, "HINT_TELEPORT")
+local portal = CreateFlyoutButton("Portal", function() return ns.KnownTravel("portal") end, nil, nil, "HINT_PORTAL")
 tele.rune, portal.rune = D.ITEM_RUNE_TELE, D.ITEM_RUNE_PORTAL
 for _, b in ipairs({ tele, portal }) do
     b.locksInCombat = function(mouse) return mouse == "LeftButton" end -- for the action log

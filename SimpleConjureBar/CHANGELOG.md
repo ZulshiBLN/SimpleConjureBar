@@ -43,8 +43,11 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   button hidden. "Open Settings" opens or closes the settings window.
 
 ### Changed
-- The water and food tooltips name the left click - "Use Water", "Use Food", or the conjure
-  spell while none is in the bags - and call the middle click "Trade Food & Water".
+- Every button's tooltip names its clicks in one order - left, middle, right - and the left
+  click is named everywhere: "Cast Armor", "Use Water", "Use Food", "Use" and the mana gem's
+  name (or the conjure spell while you carry none), "Teleport", "Create Portal". The middle
+  click of water and food reads "Trade Food & Water", the right click of the flyouts "Choose
+  Armor" and "Choose Destination".
 - The tooltip of the minimap button and of the AddOn menu entry says "Lock bar" and "Unlock bar"
   for the right click, and changes as soon as you click, without moving the mouse away.
 - `/scb debug` prints the state part of a bug report: every button, flyout entry and key with its

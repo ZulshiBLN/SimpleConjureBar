@@ -145,6 +145,12 @@ local function SetupConsumable(b)
         item, b.fakeCount = b.items[1], true -- simulated best water/food
     end
     b.leftItem, b.spellId = item, spell
+    -- The left click uses the best item; without one it conjures, and the line says so
+    if item then
+        b.hintLeft = b == water and L.HINT_USE_WATER or L.HINT_USE_FOOD
+    else
+        b.hintLeft = L.HINT_LEFT:format(ns.SpellName(spell) or L.CONJURE)
+    end
     b.hint2 = L.HINT_MIDDLE
     if IsDemo() then
         -- No real action, only the demo message

@@ -74,6 +74,22 @@ describe("the Intellect tooltip", function()
     end)
 end)
 
+describe("the water and food tooltips", function()
+    it("name the left click's use and the middle click's trade", function()
+        local ns = login()
+        local L = ns.L
+        for key, use in pairs({ Water = "HINT_USE_WATER", Food = "HINT_USE_FOOD" }) do
+            local lines = {}
+            GameTooltip.AddLine = function(_, text) lines[#lines + 1] = text end
+            ns.ShowTooltip(ns.buttons[key])
+            assert.is_true(has(lines, L[use]), key .. ": " .. table.concat(lines, " | "))
+            assert.is_true(has(lines, L.HINT_MIDDLE), key)
+            assert.are.equal(L[use], lines[2], key .. ": the left click first") -- after the spacer
+        end
+        assert.is_truthy(L.HINT_MIDDLE:find("Trade Food & Water", 1, true))
+    end)
+end)
+
 describe("the minimap button's tooltip", function()
     it("says the right click locks or unlocks the bar, and follows the click at once", function()
         local ns = login()

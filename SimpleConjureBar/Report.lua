@@ -362,6 +362,7 @@ local function CreateWindow()
             tile = true, tileSize = 32, edgeSize = 32,
             insets = { left = 11, right = 12, top = 12, bottom = 11 },
         })
+        ns.AddOpacityLayer(frame)
     end
     tinsert(UISpecialFrames, "SimpleConjureBarReport") -- closes with Escape
 
@@ -500,6 +501,8 @@ local function CreateWindow()
             ns.Print(L.REPORT_SECRET)
             return
         end
+        -- also when the background was set while the window was closed
+        ns.ApplyWindowOpacity(frame)
         Refresh()
         SelectReport()
     end)
@@ -519,6 +522,11 @@ local function CreateWindow()
     end)
     function frame.BuildText() return BuildReport(FormValues()) end
     frame:Hide()
+end
+
+-- The background opacity for an open report, when the settings' slider moves
+function ns.ApplyReportOpacity()
+    if frame then ns.ApplyWindowOpacity(frame) end
 end
 
 function ns.OpenBugReport()

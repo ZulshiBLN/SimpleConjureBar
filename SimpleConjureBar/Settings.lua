@@ -20,6 +20,36 @@ ns.OnDBReady(function(d) db = d end)
 local UI = {}
 ns.UI = UI
 
+---------------------------------------------------------------------------
+-- Window background, invisible to solid (ruleset plan 2026-10-22-window-opacity). The dialog
+-- texture lets the game show through and can never become solid on its own: it fades out
+-- below today's value, and a black layer beneath it fills in above. At today's value it is
+-- the window as it always was. Frame edge, texts and controls are not touched.
+---------------------------------------------------------------------------
+-- Called right after SetBackdrop; a client without BackdropTemplate has no backdrop to change
+function ns.AddOpacityLayer(window)
+    if not window.Center then return end
+    local layer = window:CreateTexture(nil, "BACKGROUND", nil, -8)
+    layer:SetColorTexture(0, 0, 0, 1)
+    layer:SetPoint("TOPLEFT", 11, -12)     -- the backdrop's insets
+    layer:SetPoint("BOTTOMRIGHT", -12, 11)
+    window.Center:SetDrawLayer("BACKGROUND", -7) -- the dialog texture stays above it
+    window.opacityLayer = layer
+end
+
+function ns.ApplyWindowOpacity(window)
+    if not (db and window.opacityLayer) then return end
+    local o, d = db.windowOpacity / 100, D.WINDOW_OPACITY_TODAY / 100
+    window:SetBackdropColor(1, 1, 1, math.min(1, o / d))
+    window.opacityLayer:SetAlpha(math.max(0, (o - d) / (1 - d)))
+end
+
+-- Both windows at once, for the slider; the report applies again whenever it shows
+function ns.ApplyWindowOpacities()
+    ns.ApplyWindowOpacity(UI.window)
+    ns.ApplyReportOpacity()
+end
+
 local settings = CreateFrame("Frame", "SimpleConjureBarSettings", UIParent, API.BACKDROP_TPL)
 UI.window = settings
 settings:SetSize(300, 290)
@@ -39,6 +69,7 @@ if settings.SetBackdrop then
         tile = true, tileSize = 32, edgeSize = 32,
         insets = { left = 11, right = 12, top = 12, bottom = 11 },
     })
+    ns.AddOpacityLayer(settings)
 end
 tinsert(UISpecialFrames, "SimpleConjureBarSettings") -- closes with Escape
 
@@ -754,6 +785,7 @@ settings:SetScript("OnShow", function()
         Print(L.MENU_COMBAT)
         return
     end
+    ns.ApplyWindowOpacity(settings)
     RefreshAll()
 end)
 

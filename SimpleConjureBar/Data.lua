@@ -123,6 +123,9 @@ D.GOLD_RESERVE_MAX = 1000 -- gold
 D.FLYOUT_DIRS = { AUTO = true, FIRST = true, SECOND = true }
 D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX = 1, 5 -- seconds a flyout stays open after the mouse left it
 D.INTELLECT_RENEW_MAX, D.ARMOR_RENEW_MAX = 15, 5 -- minutes; as SmartBlessingBar's renew times
+-- The windows' background opacity (%) that shows the dialog texture as it always was: a
+-- black square of 60 % matched it in game (ruleset plan 2026-10-22-window-opacity)
+D.WINDOW_OPACITY_TODAY = 60
 
 -- Highlight: the modern client's proc glow, Blizzard's flipbook atlas of 6 x 5 cells, 30 frames,
 -- drawn 1.4 times the button (as SmartBlessingBar, ruleset plan 2026-10-21-bar-alignment)
@@ -210,6 +213,7 @@ D.VALUE_DEFAULTS = {
     autoBuy       = true,
     showBorder    = true,
     showAnchor    = true,  -- the handle stays visible, not only under the mouse (GitHub issue 1)
+    windowOpacity = D.WINDOW_OPACITY_TODAY, -- settings and report background, 0-100 %
     showIntellect = true,
     showArmor     = true,
     showGem       = true,

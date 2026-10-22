@@ -44,7 +44,24 @@ function Methods:SetScript(s, f) self.scripts[s] = f end
 function Methods:GetScript(s) return self.scripts[s] end
 function Methods:HookScript(s, f) self.hooks[s] = self.hooks[s] or {}; table.insert(self.hooks[s], f) end
 function Methods:CreateFontString(n) return New("FontString", n, self) end
-function Methods:CreateTexture(n) return New("Texture", n, self) end
+function Methods:CreateTexture(n, layer, _, sublevel)
+  local t = New("Texture", n, self)
+  t.layer, t.sublevel = layer, sublevel
+  return t
+end
+function Methods:SetDrawLayer(layer, sublevel) self.layer, self.sublevel = layer, sublevel end
+-- BackdropTemplate: SetBackdrop makes the centre piece the background is drawn on, in
+-- BACKGROUND; the colours are recorded
+function Methods:SetBackdrop(b)
+  self.backdrop = b
+  if not rawget(self, "Center") then
+    self.Center = New("Texture", nil, self)
+    self.Center.layer, self.Center.sublevel = "BACKGROUND", -8
+  end
+end
+function Methods:GetBackdrop() return self.backdrop end
+function Methods:SetBackdropColor(r, g, b, a) self.backdropColor = { r, g, b, a } end
+function Methods:SetBackdropBorderColor(r, g, b, a) self.borderColor = { r, g, b, a } end
 -- Animation groups as the client's: they record their animations, looping and play state;
 -- the client plays them, a spec reads what was set
 function Methods:CreateAnimationGroup()
@@ -93,7 +110,6 @@ function Methods:GetParent() return self.parent end
 function Methods:SetParent(p) self.parent = p end
 function Methods:GetFont() return "Fonts\\FRIZQT__.TTF", 12, "" end
 function Methods:GetFontObjectForAlphabet() return self end
-function Methods:GetBackdrop() return {} end
 function Methods:IsMouseOver() return false end
 function Methods:GetTop() return 400 end
 function Methods:GetPushedTexture() return New("Texture", nil, self) end

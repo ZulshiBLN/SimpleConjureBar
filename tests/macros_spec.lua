@@ -94,6 +94,26 @@ describe("the new macros", function()
         end
     end)
 
+    -- code review 1.1.0, F-15: the account-wide macro was found first, so each click added
+    -- another character copy
+    it("leaves a player's account-wide macro of the same name alone and adds one copy", function()
+        for _, case in ipairs(cases()) do
+            local name = "SCB " .. ns.SpellName(case.spell)
+            _G.MACROS = { { name = name, body = "mine" } }
+            case.create()
+            case.create()
+            assert.are.equal(2, #MACROS, case.spell)
+            assert.are.same({ name, "mine" }, { MACROS[1].name, MACROS[1].body })
+            assert.is_true(MACROS[2].perChar)
+        end
+        -- The unpublished 1.33's account-wide "SCB Polymorph" is still replaced
+        _G.MACROS = { { name = "SCB Polymorph", body = "old" } }
+        ns.CreatePolymorphMacro()
+        ns.CreatePolymorphMacro()
+        assert.are.equal(1, #MACROS)
+        assert.is_true(MACROS[1].perChar)
+    end)
+
     it("uses the chosen stopcasting spell when none is given", function()
         SimpleConjureBarDB.macroStopcast = ns.D.STOPCAST_SPELLS[3]
         ns.CreateStopcastMacro()

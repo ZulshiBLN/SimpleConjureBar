@@ -118,25 +118,81 @@ D.SCALE_MIN, D.SCALE_MAX = 0.3, 2.0
 D.AMOUNT_MAX       = 100  -- highest auto-buy target amount per reagent
 D.RUNE_WARN_MAX    = 20
 D.GOLD_RESERVE_MAX = 1000 -- gold
+-- Flyout direction: automatic by screen half, or one of two sides named by the orientation
+-- (FIRST = up or right, SECOND = down or left), so a switch of orientation keeps a valid choice
+D.FLYOUT_DIRS = { AUTO = true, FIRST = true, SECOND = true }
+D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX = 1, 5 -- seconds a flyout stays open after the mouse left it
+D.INTELLECT_RENEW_MAX, D.ARMOR_RENEW_MAX = 15, 5 -- minutes; as SmartBlessingBar's renew times
+-- The windows' background opacity (%) that shows the dialog texture as it always was: a
+-- black square of 60 % matched it in game (ruleset plan 2026-10-22-window-opacity)
+D.WINDOW_OPACITY_TODAY = 60
 
--- "Marching ants" highlight: Blizzard flip book with 22 frames of 48 px in a 256 px texture
-D.ANTS_TEX    = "Interface\\SpellActivationOverlay\\IconAlertAnts"
-D.ANTS_FRAMES = 22
-D.ANTS_COLS   = 5
-D.ANTS_CELL   = 48 / 256
--- Seconds per frame, speed 1 (slow) to 5 (fast); 3 is the default
-D.ANTS_STEPS  = { 0.04, 0.02, 0.01, 0.0075, 0.005 }
+-- Highlight: the modern client's proc glow, Blizzard's flipbook atlas of 6 x 5 cells, 30 frames,
+-- drawn 1.4 times the button (as SmartBlessingBar, ruleset plan 2026-10-21-bar-alignment)
+D.GLOW_ATLAS = "UI-HUD-ActionBar-Proc-Loop-Flipbook"
+D.GLOW_ROWS, D.GLOW_COLUMNS, D.GLOW_FRAMES = 6, 5, 30
+D.GLOW_SCALE = 1.4
+-- Seconds per loop, speed 1 (slow) to 5 (fast); 3 is the default, Blizzard's own second
+D.GLOW_DURATIONS = { 2, 1.5, 1, 0.75, 0.5 }
 
--- Where bug reports go (shown in the report window). Empty = no link, the window asks the user
--- to send the report to the addon author instead.
-D.BUG_REPORT_URL = "https://github.com/ZulshiBLN/SimpleConjureBar/issues"
+-- Where a bug happened, as the report form offers it; the report carries the key, the form
+-- the text AREA_<key> (ruleset plan 2026-10-17-bug-report-details)
+D.REPORT_AREAS = { "INTELLECT", "ARMOR", "CONJURE", "TRADE", "TRAVEL", "FLYOUTS", "KEYS", "SETTINGS",
+    "MACROS", "COMBAT", "OTHER" }
+-- The fields a bug report holds, one pattern per kind of line, and nothing else: a spec checks
+-- every line of a report against this list. A new field needs an entry here and a line in
+-- README's privacy section first (ruleset plan 2026-10-17-bug-report-details, its inventory).
+D.REPORT_FIELDS = {
+    { pattern = "^$" },
+    { pattern = "^## SimpleConjureBar bug report$" },
+    { pattern = "^%*%*Description:%*%* " },                 -- player's text, filtered
+    { pattern = "^%*%*Area:%*%* %u+$" },
+    { pattern = "^%*%*Details:%*%* " },                     -- player's text, filtered
+    { pattern = "^%- Addon version: [%w%.%-]+$" },
+    { pattern = "^%- Client: [%w%.]+ %(build %w+, interface %d+%)$" },
+    { pattern = "^%- Client locale: %a+, addon language: %a+$" },
+    { pattern = "^%- Character: %u+, level %d+%-%d+, %a+$" }, -- class token, level band, group kind
+    { pattern = "^%- Settings: " },                         -- known keys, allowlisted values
+    { pattern = "^%*%*Lua errors" },
+    { pattern = "^Error %d+ %(x%d+, [%w ,]+, combat: %a+%):$" },
+    { pattern = "^```$" },
+    { pattern = "^msg " },                                  -- error message, filtered
+    { pattern = "^at " },                                   -- stack line, filtered
+    { pattern = "^local " },                                -- locals rebuilt by allowlist
+    { pattern = "^%*%*Last actions %(seconds since login%):%*%*$" },
+    { pattern = "^log " },                                  -- generated, allowlisted values
+    { pattern = "^%*%*State:%*%*$" },
+    { pattern = "^state " },                                -- generated, allowlisted values
+    { pattern = "^%*%*Loaded addons:%*%*$" },
+    { pattern = "^addon " },                                -- folder and version, filtered
+    { pattern = "^%[%.%.%. cut: the report is too long%]$" },
+}
+D.REPORT_CUT = "[... cut: the report is too long]"
+D.REPORT_MAX_BYTES = 20000 -- fits a GitHub issue (65,536) also as a code, and stays readable
+-- Strings a report may carry as they are; any other string becomes <text:N>, its length only
+D.REPORT_SAFE = {
+    "^player$", "^target$", "^focus$", "^mouseover$", "^pet$", "^party%d$", "^raid%d%d?$", "^NPC$",
+    "^%-?%d+%.?%d*$", "^item:%d+$", "^true$", "^false$", "^nil$",
+    "^spell$", "^item$", "^macro$", "^scbsource$",
+    "^type%d?$", "^spell%d?$", "^item%d?$", "^unit%d?$", "^macrotext%d?$",
+    "^Armor$", "^Intellect$", "^ManaGem$", "^Water$", "^Food$", "^Teleport$", "^Portal$",
+    "^AUTO$", "^FIRST$", "^SECOND$", "^UIParent$",
+    "^TOP$", "^BOTTOM$", "^LEFT$", "^RIGHT$", "^CENTER$", "^TOPLEFT$", "^TOPRIGHT$", "^BOTTOMLEFT$",
+    "^BOTTOMRIGHT$",
+    "^%l%l%u%u$", "^auto$",                                 -- locale codes
+    "^/use item:%d+$", "^/click SimpleConjureBarBuffRun LeftButton 1$", "^/targetfriendplayer$",
+}
+-- Where bug reports go: the issue form with one field for the code
+-- (.github/ISSUE_TEMPLATE/bug_report.yml). Empty = no link; the window asks the user to send the
+-- report to the addon author instead.
+D.BUG_REPORT_URL = "https://github.com/ZulshiBLN/SimpleConjureBar/issues/new?template=bug_report.yml"
 
 D.ADDON_ICON = "Interface\\Icons\\INV_Drink_06" -- same icon as in the AddOn list (TOC IconTexture)
 
 ---------------------------------------------------------------------------
 -- Settings defaults
 ---------------------------------------------------------------------------
-D.DB_VERSION = 3
+D.DB_VERSION = 4
 
 -- Colors that can be reset with the "Default" button of the color picker
 D.COLOR_DEFAULTS = {
@@ -156,12 +212,22 @@ D.VALUE_DEFAULTS = {
     hideCombat    = false,
     autoBuy       = true,
     showBorder    = true,
+    showAnchor    = true,  -- the handle stays visible, not only under the mouse (GitHub issue 1)
+    windowOpacity = D.WINDOW_OPACITY_TODAY, -- settings and report background, 0-100 %
     showIntellect = true,
     showArmor     = true,
     showGem       = true,
     hideMinimap   = false,
     vertical      = false, -- false = horizontal
     growRev       = false, -- false = grow to the right (horizontal) or down (vertical)
+    flyoutDir     = "AUTO",
+    flyoutAutoClose = 3,   -- seconds
+    -- Minutes before Intellect or the armor runs out at which it counts as needed again;
+    -- 0 = only once it is gone (ruleset plan 2026-10-21-buff-renew)
+    intellectRenewMinutes = 5,
+    armorRenewMinutes = 3,
+    buffRun       = true,  -- Buff & Run on the Intellect button's middle click
+    pvpBuff       = false, -- Buff & Run also buffs players flagged for PvP
     scale         = 1,
     antsSpeed     = 3,
     armorAntsSpeed = 3,

@@ -39,12 +39,17 @@ UI.AddCheckRow({
 })
 UI.AddSeparator()
 
--- Scale: slider in 0.1 steps or number input (0.05 steps)
+-- Scale: slider in 0.1 steps or number input (0.05 steps). It is the left column of its row;
+-- the window background takes the right one (ruleset plan 2026-10-22-window-opacity), so the
+-- row is laid out as UI.AddNumberSlider's columns are.
 do
-    local ROW = 40
+    local ROW = 42
     local row = CreateFrame("Frame", nil, general)
     row:SetHeight(ROW)
-    row:SetPoint("TOPLEFT", INSET, Place(ROW, 6))
+    local y = Place(ROW, 6)
+    UI.CurrentPage().columnY = y
+    row:SetPoint("TOPLEFT", INSET, y)
+    UI.scaleRow = row
 
     local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", 0, -4)
@@ -58,7 +63,7 @@ do
     box:SetJustifyH("CENTER")
 
     local slider = UI.MakeSlider(row)
-    slider:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 2, -10)
+    slider:SetPoint("TOPLEFT", row, "TOPLEFT", 2, -28) -- level with the right column's slider
     slider:SetMinMaxValues(D.SCALE_MIN, D.SCALE_MAX)
     slider:SetValueStep(0.05) -- fine step, so typed 0.05 values stay where they are
 
@@ -105,25 +110,42 @@ do
         updating = false
         box:SetText(Format(db.scale or 1))
     end
-    measures[#measures + 1] = function() return label:GetStringWidth() + 16 + 44 end
+    measures[#measures + 1] = function() return 2 * (label:GetStringWidth() + 16 + 44) + UI.COLUMN_GAP end
     stretchers[#stretchers + 1] = function(w)
-        row:SetWidth(w)
-        slider:SetWidth(w - 4)
+        local rowW = (w - UI.COLUMN_GAP) / 2
+        row:SetWidth(rowW)
+        slider:SetWidth(rowW - 4)
     end
 end
 
-UI.AddCheck("OPT_BORDER", "showBorder", function() ns.ApplyLook() end)
+-- The settings and report windows' background, 0 % invisible to 100 % solid
+do
+    local rows = {}
+    UI.AddNumberSlider({
+        label = "OPT_WINDOW_OPACITY", min = 0, max = 100, column = "right", rows = rows,
+        get = function() return db.windowOpacity end,
+        set = function(v) db.windowOpacity = v; ns.ApplyWindowOpacities() end,
+    })
+    UI.opacityRow = rows[1]
+end
+
+UI.AddCheckRow({
+    { label = "OPT_BORDER",      key = "showBorder", onChange = function() ns.ApplyLook() end },
+    { label = "OPT_SHOW_ANCHOR", key = "showAnchor", onChange = function() ns.ApplyHandle() end },
+})
 UI.AddSwatch("OPT_BG", "bg", 8)
 UI.AddSeparator()
 
 -- Orientation and growth direction (anchor point of the bar)
-local RefreshDirection
+local RefreshDirection, RefreshFlyDir
 UI.AddDropdown("OPT_LAYOUT", {
     { value = false, text = function() return L.HORIZONTAL end },
     { value = true,  text = function() return L.VERTICAL end },
 }, function() return db.vertical end, function(v)
     db.vertical = v
-    if RefreshDirection then RefreshDirection() end -- direction texts (right/left or down/up)
+    -- direction texts (right/left or down/up), and the flyout sides they name
+    if RefreshDirection then RefreshDirection() end
+    if RefreshFlyDir then RefreshFlyDir() end
     Rebuild()
 end)
 RefreshDirection = UI.AddDropdown("OPT_DIRECTION", {
@@ -134,12 +156,38 @@ RefreshDirection = UI.AddDropdown("OPT_DIRECTION", {
     Rebuild()
 end)
 
+-- Flyout direction: automatic by screen half, or a side named by the orientation
+-- (ruleset plan 2026-10-21-bar-alignment), and how long an open flyout waits for the mouse
+RefreshFlyDir = UI.AddDropdown("OPT_FLYDIR", {
+    { value = "AUTO",   text = function() return L.FLYDIR_AUTO end },
+    { value = "FIRST",  text = function() return (db and db.vertical) and L.DIR_RIGHT or L.DIR_UP end },
+    { value = "SECOND", text = function() return (db and db.vertical) and L.DIR_LEFT or L.DIR_DOWN end },
+}, function() return db.flyoutDir end, function(v)
+    db.flyoutDir = v
+    Rebuild()
+end)
+UI.AddIntSlider("OPT_AUTOCLOSE", "flyoutAutoClose", D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX, function(v)
+    return v == D.VALUE_DEFAULTS.flyoutAutoClose and (v .. " (" .. L.DEFAULT .. ")") or tostring(v)
+end, nil, function() ns.ApplyAutoClose() end)
+
 UI.AddSeparator()
 
 UI.AddCheck("OPT_DEMO", "demo", function()
     Rebuild()
     ns.ApplyLook()
 end)
+
+-- Buff & Run on the Intellect button's middle click (ruleset plan 2026-10-21-buff-and-run), and
+-- under it whether it buffs players flagged for PvP, dimmed while Buff & Run is off. A change
+-- re-applies the middle click at once.
+local pvpBuff
+local function DimPvpBuff() pvpBuff:SetAlpha(db.buffRun and 1 or 0.4) end
+UI.AddCheck("OPT_BUFF_RUN", "buffRun", function()
+    DimPvpBuff()
+    ns.UpdateBuffState()
+end)
+pvpBuff = UI.AddCheck("OPT_PVP_BUFF", "pvpBuff", nil, 1)
+refreshers[#refreshers + 1] = DimPvpBuff
 
 -- Bottom row: "Report bug" left, "Reload UI" right (own translations, so they follow the language)
 do
@@ -178,6 +226,22 @@ UI.AddToggleColorRow("OPT_SHOW_BUTTON", "showGem", Rebuild, {
     { label = "LBL_HIGHLIGHT", key = "gemAntsColor" },
 })
 UI.AddSpeedSlider("gemAntsSpeed")
+UI.AddSeparator()
+
+-- Minutes before a buff runs out at which it glows and is cast again (ruleset plan
+-- 2026-10-21-buff-renew); 0 = only once it is gone
+UI.AddHeader("RENEW_LABEL", 6)
+for _, s in ipairs({
+    { key = "intellectRenewMinutes", max = D.INTELLECT_RENEW_MAX, column = "left",
+      label = function() return ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT") end },
+    { key = "armorRenewMinutes", max = D.ARMOR_RENEW_MAX, column = "right", label = "ARMOR" },
+}) do
+    UI.AddNumberSlider({
+        label = s.label, min = 0, max = s.max, column = s.column,
+        get = function() return db[s.key] end,
+        set = function(v) db[s.key] = v; ns.UpdateBuffState() end,
+    })
+end
 
 ---------------------------------------------------------------------------
 -- Tab 3: Supplies (reagent tracking and auto-buy)

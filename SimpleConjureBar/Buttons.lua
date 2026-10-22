@@ -7,7 +7,7 @@ if not ns.enabled then return end
 
 local D, L, API = ns.D, ns.L, ns.API
 local SIZE, GAP, PAD = D.SIZE, D.GAP, D.PAD
-local ItemCount, ItemIcon, GetSpellTex = API.ItemCount, API.ItemIcon, API.GetSpellTex
+local ItemCount, ItemIcon, ItemName, GetSpellTex = API.ItemCount, API.ItemIcon, API.ItemName, API.GetSpellTex
 local IsDemo, IsKnown, SetAttr = ns.IsDemo, ns.IsKnown, ns.SetAttr
 
 local bar, handle, buttons = ns.bar, ns.handle, ns.buttons
@@ -98,6 +98,9 @@ local function SetupGem(b)
 
     b.leftItem, b.conjureSpell = owned, conjure
     b.spellId = not owned and conjure or nil
+    -- Left uses the best gem; without one it conjures, and the line says so
+    b.hintLeft = owned and L.HINT_USE_ITEM:format(ItemName(owned) or "?")
+        or L.HINT_LEFT:format(ns.SpellName(conjure) or L.CONJURE)
     b.hint = L.HINT_RIGHT:format(ns.SpellName(conjure) or L.CONJURE)
 
     if IsDemo() then
@@ -145,7 +148,13 @@ local function SetupConsumable(b)
         item, b.fakeCount = b.items[1], true -- simulated best water/food
     end
     b.leftItem, b.spellId = item, spell
-    b.hint2 = L.HINT_MIDDLE
+    -- The left click uses the best item; without one it conjures, and the line says so
+    if item then
+        b.hintLeft = b == water and L.HINT_USE_WATER or L.HINT_USE_FOOD
+    else
+        b.hintLeft = L.HINT_LEFT:format(ns.SpellName(spell) or L.CONJURE)
+    end
+    b.hintMiddle = L.HINT_MIDDLE
     if IsDemo() then
         -- No real action, only the demo message
         SetAttr(b, "type1", nil)
@@ -166,10 +175,13 @@ end
 ---------------------------------------------------------------------------
 -- Flyout buttons (Armor, Teleport, Portal)
 ---------------------------------------------------------------------------
--- Flyout direction: horizontal bars open upwards (downwards in the upper half of the screen),
--- vertical bars open to the right (to the left in the right half of the screen)
+-- Flyout direction: a fixed side from the settings, or automatic - horizontal bars open
+-- upwards (downwards in the upper half of the screen), vertical bars open to the right (to the
+-- left in the right half of the screen)
 local flyDir = "UP"
 local function ComputeFlyDir()
+    if db.flyoutDir == "FIRST" then return db.vertical and "RIGHT" or "UP" end
+    if db.flyoutDir == "SECOND" then return db.vertical and "LEFT" or "DOWN" end
     local cx, cy = bar:GetCenter()
     if not cx then return db.vertical and "RIGHT" or "UP" end
     local s = bar:GetEffectiveScale() / UIParent:GetEffectiveScale()
@@ -186,6 +198,13 @@ local FLY_LAYOUT = {
     RIGHT = { fly = { "LEFT", "RIGHT", 6, 0 },  child = "LEFT",   dx = 1,  dy = 0,  arrow = { "LEFT", "RIGHT", -6, 0 }, rot = -math.pi / 2 },
     LEFT  = { fly = { "RIGHT", "LEFT", -6, 0 }, child = "RIGHT",  dx = -1, dy = 0,  arrow = { "RIGHT", "LEFT", 6, 0 },  rot = math.pi / 2 },
 }
+
+-- The seconds a flyout stays open after the mouse left it and its button, read by the secure
+-- right-click snippet (Bar.lua). The header is protected: written out of combat only.
+function ns.ApplyAutoClose()
+    if InCombatLockdown() then return end
+    SetAttr(ns.header, "autohide", db.flyoutAutoClose)
+end
 
 local function SetupFlyout(main)
     local known = main.listFn()
@@ -217,7 +236,8 @@ local function SetupFlyout(main)
     for i, id in ipairs(known) do
         local c = ns.GetFlyoutChild(main, i)
         c.spellId = id
-        SetAttr(c, "type", (not IsDemo()) and "spell" or nil)
+        -- An icon only chooses (no "type", so a click casts nothing); its secure snippet hands
+        -- the spell to the main button, which casts it (Bar.lua GetFlyoutChild)
         SetAttr(c, "spell", id)
         c.icon:SetTexture(GetSpellTex(id))
         if c.label then
@@ -242,6 +262,48 @@ local function SetupFlyout(main)
 end
 
 ---------------------------------------------------------------------------
+-- "Cast next buff" key (Bar.lua): the action that clears the first glowing, shown button in the
+-- bar's order - Armor's and Intellect's left click, the Mana Gem's right click (conjure). It is
+-- set again on every glow change, after a rebuild and a buff update. The key is protected:
+-- a change in combat waits for its end, which sets the key again.
+---------------------------------------------------------------------------
+local KEY_CLICK = { Armor = "1", Intellect = "1", ManaGem = "2" }
+function ns.UpdateBuffKey()
+    if not db or InCombatLockdown() then return end
+    local source, n
+    for _, k in ipairs(db.order) do
+        local b = buttons[k]
+        -- A glowing button whose click has nothing to do - Brilliance with every needy raid group
+        -- out of range - is passed, so it hides no missing armor (demo mode writes no types)
+        if KEY_CLICK[k] and b:IsShown() and b.antsShown
+            and (ns.IsDemo() or b:GetAttribute("type" .. KEY_CLICK[k])) then
+            source, n = k, KEY_CLICK[k]
+            break
+        end
+    end
+    local key, b = ns.buffKey, source and buttons[source]
+    if key:GetAttribute("scbsource") ~= source then ns.Log("buffkey " .. tostring(source)) end
+    SetAttr(key, "scbsource", source)
+    SetAttr(key, "type1", b and b:GetAttribute("type" .. n) or nil)
+    SetAttr(key, "spell1", b and b:GetAttribute("spell" .. n) or nil)
+    SetAttr(key, "unit1", b and n == "1" and b:GetAttribute("unit1") or nil)
+    -- Demo mode writes no action; a press prints this spell instead
+    key.demoSpell = b and (b.isGem and b.conjureSpell or b.leftSpell or b.spellId) or nil
+end
+
+-- Combat freezes the key; with nothing glowing at its start it casts Armor, as the button on
+-- the bar does (Michel, 2026-10-21). PLAYER_REGEN_DISABLED comes right before the lockdown,
+-- the last moment the key can be written; combat's end sets it from the glow again.
+local function ArmorForCombat()
+    local key = ns.buffKey
+    if InCombatLockdown() or key:GetAttribute("scbsource") or not armor:IsShown() then return end
+    SetAttr(key, "scbsource", "Armor")
+    SetAttr(key, "type1", armor:GetAttribute("type1"))
+    SetAttr(key, "spell1", armor:GetAttribute("spell1"))
+    key.demoSpell = armor.spellId
+end
+
+---------------------------------------------------------------------------
 -- Rebuild (out of combat only)
 ---------------------------------------------------------------------------
 -- Each builder returns true when its button is shown
@@ -261,15 +323,20 @@ local shown = {}
 
 function ns.Rebuild()
     if not db then return end
+    -- Not before the bar is positioned (Main.lua, after a login in combat): the re-anchoring
+    -- would save the start position over the player's. The setup rebuilds.
+    if not ns.barReady then pending = true return end
     if InCombatLockdown() then
         pending = true
         UpdateCounts()
         return
     end
     pending = false
+    ns.Log("rebuild")
 
     ns.ReAnchor()
     flyDir = ComputeFlyDir()
+    ns.ApplyAutoClose()
 
     wipe(shown)
     for _, key in ipairs(db.order) do
@@ -308,6 +375,7 @@ function ns.Rebuild()
     end
     UpdateCounts()
     ns.UpdateBuffState()
+    ns.UpdateBuffKey()
 end
 local Rebuild = ns.Rebuild
 
@@ -340,9 +408,12 @@ events:RegisterEvent("GROUP_ROSTER_UPDATE")
 events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("BAG_UPDATE_COOLDOWN")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
+events:RegisterEvent("PLAYER_REGEN_DISABLED")
 events:SetScript("OnEvent", function(_, event)
     if not db then return end
-    if event == "PLAYER_TARGET_CHANGED" then
+    if event == "PLAYER_REGEN_DISABLED" then
+        ArmorForCombat()
+    elseif event == "PLAYER_TARGET_CHANGED" then
         UpdateConjureForTarget()
     elseif event == "BAG_UPDATE_COOLDOWN" then
         UpdateCounts() -- cooldown and numbers only, no full rebuild
@@ -353,6 +424,7 @@ events:SetScript("OnEvent", function(_, event)
         elseif conjurePending then
             UpdateConjureForTarget()
         end
+        ns.UpdateBuffKey() -- drops the Armor of ArmorForCombat, and applies what waited
     else
         ns.QueueRebuild()
     end

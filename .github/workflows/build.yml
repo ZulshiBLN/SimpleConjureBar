@@ -23,6 +23,15 @@ jobs:
         with:
           fetch-depth: 0 # the packager versions from history, the tag check needs main
 
+      # On a branch push the packager builds nothing when HEAD already carries
+      # a tag, leaving that to the tag's run. A release merge pushed together
+      # with its tag hit this, and the main CI went red with no zip (v1.0.1);
+      # every re-run of it would too. A run without a tag checks the branch,
+      # so it drops HEAD's tags in this checkout only.
+      - name: Build the branch, not a pending tag
+        if: inputs.tag == ''
+        run: git tag --points-at HEAD | xargs -r git tag -d
+
       - name: Build the zip without publishing
         uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0 # v2.6.1
         with:
@@ -49,18 +58,23 @@ jobs:
           TAG: ${{ inputs.tag }}
         run: bash .github/scripts/check-package.sh .release/*.zip .release/release.json $TAG
 
-      # The checks must be able to refuse: a zip without its TOC, a release.json
-      # for the wrong flavor, a tag that is not the TOC's version.
+      # The checks must be able to refuse: a zip without its TOC or without
+      # Bindings.xml (the client reads it unlisted, so no TOC line catches it),
+      # a release.json for the wrong flavor, a tag that is not the TOC's version.
       - name: Control - the checks refuse a wrong package
         run: |
           zip=$(ls .release/*.zip)
-          bad="$RUNNER_TEMP/bad"
-          mkdir -p "$bad" && unzip -q "$zip" -d "$bad"
-          rm "$bad/SimpleConjureBar/SimpleConjureBar.toc"
-          (cd "$bad" && zip -q -r "$RUNNER_TEMP/$(basename "$zip")" SimpleConjureBar)
-          if bash .github/scripts/check-package.sh "$RUNNER_TEMP/$(basename "$zip")" .release/release.json; then
-              echo "the check accepted a zip without its TOC"; exit 1
-          fi
+          for missing in SimpleConjureBar.toc Bindings.xml; do
+              bad="$RUNNER_TEMP/bad-$missing"
+              mkdir -p "$bad" && unzip -q "$zip" -d "$bad"
+              rm "$bad/SimpleConjureBar/$missing"
+              out="$RUNNER_TEMP/$missing/$(basename "$zip")"
+              mkdir -p "$(dirname "$out")"
+              (cd "$bad" && zip -q -r "$out" SimpleConjureBar)
+              if bash .github/scripts/check-package.sh "$out" .release/release.json; then
+                  echo "the check accepted a zip without $missing"; exit 1
+              fi
+          done
           jq '.releases[0].metadata[0].flavor = "mainline"' .release/release.json > "$RUNNER_TEMP/release.json"
           if bash .github/scripts/check-package.sh "$zip" "$RUNNER_TEMP/release.json"; then
               echo "the check accepted a release.json without flavor forever"; exit 1
@@ -68,7 +82,7 @@ jobs:
           if bash .github/scripts/check-package.sh "$zip" .release/release.json v0.0.0; then
               echo "the check accepted a tag that is not the TOC's version"; exit 1
           fi
-          echo "the checks refused all three wrong packages, as they must"
+          echo "the checks refused all four wrong packages, as they must"
 
       # A develop commit is never a merge in main, so the release workflow's
       # first check must refuse it; on main, and on a release tag, it must pass.
@@ -89,6 +103,12 @@ jobs:
           awk -v v="## [$version]" 'index($0, v) == 1 { on = 1; next } on && /^## / { exit } on { print }' \
               SimpleConjureBar/CHANGELOG.md > .release/notes.md
           [ -s .release/notes.md ] || { echo "no CHANGELOG entry for $version"; exit 1; }
+
+      - name: A release's CHANGELOG entry is dated
+        if: inputs.tag != ''
+        run: |
+          version=$(grep -m1 -E '^## Version:' SimpleConjureBar/SimpleConjureBar.toc | sed -E 's/^## Version:[[:space:]]*//' | tr -d '\r[:space:]')
+          bash .github/scripts/check-changelog-heading.sh "$version" SimpleConjureBar/CHANGELOG.md
 
       # The version rule on fixed lists, the interface mapping, and the check
       # that no upload script can print a token - each able to go red.

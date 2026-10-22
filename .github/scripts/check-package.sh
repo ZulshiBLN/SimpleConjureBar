@@ -23,7 +23,8 @@ dir="$work/$addon"
 toc="$dir/$addon.toc"
 [ -f "$toc" ] || fail "no $addon.toc in $addon/"
 
-for file in README.md LICENSE CHANGELOG.md; do
+# Bindings.xml is read by the client without a TOC line, so the TOC walk below cannot see it
+for file in README.md LICENSE CHANGELOG.md Bindings.xml; do
     [ -f "$dir/$file" ] || fail "$file is missing"
 done
 
@@ -35,7 +36,7 @@ while IFS= read -r line; do
 done < "$toc"
 
 # Nothing of the repository's tooling ships
-for path in tests .github .luacheckrc .busted .pkgmeta .gitignore .gitattributes .previews .media; do
+for path in tests tools .github .luacheckrc .busted .pkgmeta .gitignore .gitattributes .previews .media; do
     [ ! -e "$dir/$path" ] || fail "$path must not ship"
 done
 

@@ -27,25 +27,44 @@ for i = 1, 4 do PARTY_UNITS[i] = "party" .. i end
 -- Buff checks (by name, so every rank of Intellect and Brilliance counts)
 ---------------------------------------------------------------------------
 local GetAuraByName = C_UnitAuras and C_UnitAuras.GetAuraDataBySpellName
-local function HasBuff(unit, name)
-    if not name then return false end
+-- The unit's aura of that name: its data table, true where only presence is known, or nil
+local function FindBuff(unit, name)
+    if not name then return nil end
     if GetAuraByName then
         local ok, aura = pcall(GetAuraByName, unit, name, "HELPFUL")
-        return ok and aura ~= nil
+        return ok and aura or nil
     end
     for i = 1, 40 do
         local n = UnitBuff(unit, i)
-        if not n then return false end
+        if not n then return nil end
         if n == name then return true end
     end
-    return false
+    return nil
+end
+
+-- When the aura runs out (GetTime() scale), or nil for one that does not, or whose time cannot
+-- be read: aura values may be secret, and arithmetic on a secret errors
+local function ReadExpiry(aura)
+    local e = aura.expirationTime
+    if type(e) == "number" and e > 0 then return e + 0 end
+end
+local function ExpiresAt(aura)
+    if type(aura) ~= "table" then return nil end
+    local ok, at = pcall(ReadExpiry, aura) -- no closure per aura: this runs every second in a group
+    return ok and at or nil
+end
+
+-- The moment a buff running out at `at` is due again with `minutes` of renew time; a buff that
+-- does not run out never is (ruleset plan 2026-10-21-buff-renew)
+local function RenewAt(at, minutes)
+    return at and at - minutes * 60 or nil
 end
 
 -- Intellect value of the strongest known Intellect buff on the unit, found by spell ID.
 -- Covers buffs from other sources (higher ranks of other mages, scrolls) and names that differ
--- from the spell name of our own rank.
+-- from the spell name of our own rank. Stops at one at least as strong as `enough`.
 local GetAuraByIndex = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
-local function StrongestIntellectBuff(unit)
+local function StrongestIntellectBuff(unit, enough)
     local best = 0
     for i = 1, 40 do
         local spellId
@@ -60,16 +79,31 @@ local function StrongestIntellectBuff(unit)
         end
         -- pcall: in restricted contexts the ID may be a protected value that cannot be used as a key
         local ok, value = pcall(rawget, D.INTELLECT_BUFFS, spellId)
-        if ok and value and value > best then best = value end
+        if ok and value and value > best then
+            best = value
+            if best >= enough then break end
+        end
     end
     return best
 end
 
--- Highest Intellect rank a player of this level accepts (no level: highest known rank)
-local function IntellectSpell(level)
-    local best
+-- The Intellect ranks known, read once per update: a scan asks for every member's rank
+-- (code review 1.1.0, F-14)
+local knownRanks = {}
+local function ReadKnownRanks()
+    wipe(knownRanks)
     for _, r in ipairs(D.INTELLECT_RANKS) do
-        if IsKnown(r.id) then
+        if IsKnown(r.id) then knownRanks[#knownRanks + 1] = r end
+    end
+    return knownRanks
+end
+
+-- Highest Intellect rank a player of this level accepts (no level: highest known rank).
+-- `known`: the ranks just read by ReadKnownRanks, else each is checked here.
+local function IntellectSpell(level, known)
+    local best
+    for _, r in ipairs(known or D.INTELLECT_RANKS) do
+        if known or IsKnown(r.id) then
             best = best or r.id
             if not level or r.level - 10 <= level then return r.id end
         end
@@ -91,28 +125,49 @@ local function InSpellRange(spell, unit)
     return r and true or false
 end
 
--- True when the unit can still get a buff from us: it has neither Arcane Intellect nor Arcane
--- Brilliance (any rank, by name) nor another Intellect buff at least as strong as our rank.
-local function NeedsIntellect(unit, aiName, abName)
-    if HasBuff(unit, aiName) or HasBuff(unit, abName) then return false end
+-- Whether the unit needs a buff from us: "missing" without Arcane Intellect or Brilliance (any
+-- rank, by name) and without another Intellect buff at least as strong as our rank; "expiring"
+-- when its Intellect or Brilliance has at most the renew time left - unless it is stronger
+-- than our rank, which the client would refuse to overwrite. nil otherwise, then also the
+-- moment it falls due (nil when it never does).
+local function NeedsIntellect(unit, aiName, abName, known)
     local level = UnitLevel(unit)
-    local ours = IntellectSpell(level and level > 0 and level or nil)
+    local ours = IntellectSpell(level and level > 0 and level or nil, known)
     local oursValue = ours and D.INTELLECT_BUFFS[ours] or 0
-    return StrongestIntellectBuff(unit) < oursValue
+    local found, latest = false, nil
+    for i = 1, 2 do -- Intellect, then Brilliance; no table per unit and scan
+        local aura = FindBuff(unit, i == 1 and aiName or abName)
+        if aura then
+            local ok, value = pcall(rawget, D.INTELLECT_BUFFS, type(aura) == "table" and aura.spellId or nil)
+            local at = ExpiresAt(aura)
+            if (ok and value and value > oursValue) or not at then return nil end
+            found, latest = true, math.max(latest or at, at)
+        end
+    end
+    if found then
+        local due = RenewAt(latest, db.intellectRenewMinutes)
+        if due <= GetTime() then return "expiring" end
+        return nil, due
+    end
+    if StrongestIntellectBuff(unit, oursValue) < oursValue then return "missing" end
+    return nil
 end
 
 ---------------------------------------------------------------------------
 -- Group scan
 ---------------------------------------------------------------------------
 -- Reused between scans (no allocations per scan)
-local missingBySub, firstInRangeBySub, missingInRangeBySub = {}, {}, {}
+local missingBySub, expiringBySub, firstInRangeBySub = {}, {}, {}
+local missingInRangeBySub, expiringInRangeBySub = {}, {}
+local pick = {} -- single-target candidates: missing/expiring, in range/out of range
 
--- Returns: number of mana users without the buff (range ignored, offline/dead excluded),
--- the best single target and the best Brilliance target.
---   Single:     next mana user without the buff, members in range first
---   Brilliance: in a raid the subgroup with the most missing buffs that has a member in range,
---               in a party yourself (Brilliance covers the target's party)
-local function ScanGroup(probe)
+-- Returns: the number of mana users in need - missing or expiring (range ignored, offline/dead
+-- excluded) -, the best single target, the best Brilliance target, each nil when nobody needs
+-- it, and the earliest moment a buff falls due (nil if none will).
+--   Single:     missing in range, missing out of range, expiring in range, expiring out of range
+--   Brilliance: in a raid the subgroup in need with a member in range - most missing, then most
+--               expiring, then the lowest number; in a party yourself (it covers your party)
+local function ScanGroup(probe, known)
     local aiName = ns.SpellName(D.SPELL_ARCANE_INTELLECT)
     local abName = ns.SpellName(D.SPELL_ARCANE_BRILLIANCE)
     local inRaid = IsInRaid()
@@ -120,8 +175,9 @@ local function ScanGroup(probe)
     local count
     if inRaid then count = GetNumGroupMembers() else count = grouped and GetNumSubgroupMembers() + 1 or 1 end
 
-    wipe(missingBySub); wipe(firstInRangeBySub); wipe(missingInRangeBySub)
-    local missing, single, singleFar = 0, nil, nil
+    wipe(missingBySub); wipe(expiringBySub); wipe(firstInRangeBySub)
+    wipe(missingInRangeBySub); wipe(expiringInRangeBySub); wipe(pick)
+    local needing, nextDue = 0, nil
     for i = 1, count do
         local unit, sub
         if inRaid then
@@ -132,33 +188,44 @@ local function ScanGroup(probe)
             sub = 1
         end
         if UnitExists(unit) and UnitIsConnected(unit) and not UnitIsDeadOrGhost(unit) then
-            local inRange = grouped and probe and InSpellRange(probe, unit)
+            local inRange = not grouped or (probe and InSpellRange(probe, unit))
             local _, classFile = UnitClass(unit)
-            if MANA_CLASSES[classFile] and NeedsIntellect(unit, aiName, abName) then
-                missing = missing + 1
-                missingBySub[sub] = (missingBySub[sub] or 0) + 1
-                if inRange then
-                    single = single or unit
-                    missingInRangeBySub[sub] = missingInRangeBySub[sub] or unit
-                else
-                    singleFar = singleFar or unit
+            if MANA_CLASSES[classFile] then
+                local need, due = NeedsIntellect(unit, aiName, abName, known)
+                if need then
+                    needing = needing + 1
+                    local bySub, inRangeBySub = missingBySub, missingInRangeBySub
+                    if need == "expiring" then bySub, inRangeBySub = expiringBySub, expiringInRangeBySub end
+                    bySub[sub] = (bySub[sub] or 0) + 1
+                    local slot = need .. (inRange and "In" or "Far")
+                    pick[slot] = pick[slot] or unit
+                    if inRange then inRangeBySub[sub] = inRangeBySub[sub] or unit end
+                elseif due and (not nextDue or due < nextDue) then
+                    nextDue = due
                 end
             end
             if inRange then firstInRangeBySub[sub] = firstInRangeBySub[sub] or unit end
         end
     end
 
-    if not grouped then return missing, "player", "player" end
-    single = single or singleFar or "player"
-    local group = "player"
-    if inRaid then
-        local bestSub, bestCount = nil, 0
-        for sub, n in pairs(missingBySub) do
-            if n > bestCount and firstInRangeBySub[sub] then bestSub, bestCount = sub, n end
-        end
-        if bestSub then group = missingInRangeBySub[bestSub] or firstInRangeBySub[bestSub] end
+    local single = pick.missingIn or pick.missingFar or pick.expiringIn or pick.expiringFar
+    if not grouped or not inRaid then
+        -- Solo and in a party both buffs go on yourself or reach you: only your own need counts
+        -- solo, anyone's in a party
+        local group = (needing > 0) and "player" or nil
+        return needing, grouped and single or group, group, nextDue
     end
-    return missing, single, group
+    local bestSub, bestMissing, bestExpiring
+    for sub, unit in pairs(firstInRangeBySub) do
+        local m, e = missingBySub[sub] or 0, expiringBySub[sub] or 0
+        if unit and m + e > 0 and (not bestSub or m > bestMissing
+            or (m == bestMissing and (e > bestExpiring or (e == bestExpiring and sub < bestSub)))) then
+            bestSub, bestMissing, bestExpiring = sub, m, e
+        end
+    end
+    local group = bestSub and (missingInRangeBySub[bestSub] or expiringInRangeBySub[bestSub]
+        or firstInRangeBySub[bestSub]) or nil
+    return needing, single, group, nextDue
 end
 
 ---------------------------------------------------------------------------
@@ -168,12 +235,45 @@ local function UnitShortName(unit)
     return (UnitName(unit)) or unit
 end
 
+-- Whom a click's spell reaches, for its tooltip line: Brilliance covers the target's group -
+-- in a raid its subgroup, by number - a single buff the member. Solo there is nobody to name.
+local function TargetText(spell, unit)
+    if not IsInGroup() then return ns.SpellName(spell) or "?" end
+    local whom
+    if spell == D.SPELL_ARCANE_BRILLIANCE then
+        whom = L.TARGET_GROUP
+        if IsInRaid() then
+            local index = tonumber(unit:match("^raid(%d+)$"))
+            if not index then
+                for i = 1, GetNumGroupMembers() do
+                    if UnitIsUnit(RAID_UNITS[i], unit) then index = i break end
+                end
+            end
+            local sub = index and select(3, GetRaidRosterInfo(index))
+            if sub then whom = L.TARGET_SUBGROUP:format(sub) end
+        end
+    else
+        whom = UnitShortName(unit)
+    end
+    return (ns.SpellName(spell) or "?") .. " > " .. whom
+end
+
 -- Sets spells, fixed target units and the tooltip hint (out of combat only)
-local function ApplyTargets(b, singleUnit, groupUnit)
-    -- Rank fitting the chosen player's level
-    local level = (singleUnit ~= "player") and UnitLevel(singleUnit) or nil
+-- A click whose unit is nil has nothing to do: it gets no action type, so it casts nothing, and
+-- its line says everyone has the buff (ruleset plan 2026-10-21-buff-renew) - or, while members
+-- need it, that none of them is in reach (code review 1.1.0, F-04).
+local function ClickText(spell, unit, needing)
+    if not unit then
+        return (ns.SpellName(spell) or "?") .. " > " .. (needing > 0 and L.NONE_IN_RANGE or L.EVERYONE_BUFFED)
+    end
+    return TargetText(spell, unit)
+end
+
+local function ApplyTargets(b, singleUnit, groupUnit, needing, known)
+    -- Rank fitting the chosen player's level; without a target the highest, for the icon
+    local level = singleUnit and singleUnit ~= "player" and UnitLevel(singleUnit) or nil
     if level and level <= 0 then level = nil end
-    local single = IntellectSpell(level)
+    local single = IntellectSpell(level, known)
 
     -- Group buff only when learned and Arcane Powder is in the bags
     local group
@@ -189,25 +289,26 @@ local function ApplyTargets(b, singleUnit, groupUnit)
     else
         left, right = single, group or single
     end
-    local leftUnit = (left == group) and groupUnit or singleUnit
-    local rightUnit = (right == group and right ~= single) and groupUnit or singleUnit
+    -- Not "a and b or c": a nil groupUnit (nobody in need in reach) must stay nil
+    local leftUnit, rightUnit = singleUnit, singleUnit
+    if left == group then leftUnit = groupUnit end
+    if right == group and right ~= single then rightUnit = groupUnit end
 
     if b.leftSpell ~= left then b.icon:SetTexture(GetSpellTex(left)) end
     b.leftSpell, b.rightSpell, b.spellId = left, right, left
     b.leftItem = nil
-    local rightText = ns.SpellName(right) or "?"
-    if grouped then rightText = rightText .. " > " .. UnitShortName(rightUnit) end
-    b.hint = L.HINT_RIGHT:format(rightText)
+    b.hintLeft = L.HINT_LEFT:format(ClickText(left, leftUnit, needing))
+    b.hint = L.HINT_RIGHT:format(ClickText(right, rightUnit, needing))
 
     if IsDemo() then
         SetAttr(b, "type1", nil)
         SetAttr(b, "type2", nil)
     else
         -- Always cast on a fixed unit, so the current target is never buffed
-        SetAttr(b, "type1", "spell")
+        SetAttr(b, "type1", leftUnit and "spell" or nil)
         SetAttr(b, "spell1", left)
         SetAttr(b, "unit1", leftUnit)
-        SetAttr(b, "type2", "spell")
+        SetAttr(b, "type2", rightUnit and "spell" or nil)
         SetAttr(b, "spell2", right)
         SetAttr(b, "unit2", rightUnit)
     end
@@ -226,17 +327,111 @@ local function ShowBuffCount(count)
     intel.hint2 = count > 0 and L.BUFF_MISSING:format(ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT"), count) or nil
 end
 
--- Armor: highlight while none of the mage armors is active
+-- Armor: highlight while none of the mage armors is active, or the active one has at most its
+-- renew time left. Returns the moment it falls due, if it will.
 local function UpdateArmorHighlight()
     if not armor:IsShown() then return end
-    local missing = true
+    local needed, due = true, nil
     if not IsDemo() then
         for _, id in ipairs(D.ARMOR_BUFF_IDS) do
-            if HasBuff("player", ns.SpellName(id)) then missing = false break end
+            local aura = FindBuff("player", ns.SpellName(id))
+            if aura then
+                due = RenewAt(ExpiresAt(aura), db.armorRenewMinutes)
+                needed = due ~= nil and due <= GetTime()
+                break
+            end
         end
     end
-    ns.SetAnts(armor, missing)
+    ns.SetAnts(armor, needed)
+    if not needed then return due end
 end
+
+---------------------------------------------------------------------------
+-- Buff & Run (ruleset plan 2026-10-21-buff-and-run): the middle click casts Arcane Intellect
+-- on the current target, then targets the next friendly player - one macro, as the client lets
+-- an addon pick neither spell nor target during a click. The cast goes through a hidden button
+-- holding the rank's ID, chosen in the PreClick; "LeftButton 1" clicks it on key down, which
+-- works with ActionButtonUseKeyDown on and off (SmartBlessingBar). In combat the Intellect
+-- button's snippet drops every click (Bar.lua), this one too.
+---------------------------------------------------------------------------
+local buffRun = CreateFrame("Button", "SimpleConjureBarBuffRun", UIParent, "SecureActionButtonTemplate")
+buffRun:RegisterForClicks("AnyUp", "AnyDown")
+ns.LogClicks(buffRun, buffRun:GetName(), true) -- clicked only by the macro's "/click ... 1"
+local BUFF_RUN_MACRO = "/click SimpleConjureBarBuffRun LeftButton 1\n/targetfriendplayer"
+
+-- The mage is flagged for good - by /pvp, the portrait menu, a battleground, an arena or a
+-- PvP zone - when the flag has no timer; one that runs out came by accident, from buffing a
+-- flagged player, say (ruleset plan 2026-10-22-pvp-self-flag)
+local function FlaggedForGood()
+    return UnitIsPVP("player") and not IsPVPTimerRunning()
+end
+
+-- The Arcane Intellect rank for the unit - never Brilliance: nil unless it is a friendly
+-- player of a mana class, alive, online, in range and still in need. A player flagged for PvP
+-- is passed - buffing him would flag the mage - unless allowed, or the mage is flagged for
+-- good and loses nothing. Nothing while auras are secret: a buff could not be seen, and every
+-- target would look in need. Without a spell the second value says why, for the bug report's
+-- action log.
+function ns.BuffRunSpell(unit)
+    if C_Secrets and C_Secrets.ShouldAurasBeSecret and C_Secrets.ShouldAurasBeSecret() then return nil, "auras secret" end
+    if not (UnitExists(unit) and UnitIsPlayer(unit) and UnitCanAssist("player", unit)) then
+        return nil, "no friendly player"
+    end
+    if not UnitIsConnected(unit) or UnitIsDeadOrGhost(unit) then return nil, "offline or dead" end
+    if not MANA_CLASSES[select(2, UnitClass(unit))] then return nil, "no mana user" end
+    -- buffing yourself flags nothing (code review 1.1.0, F-05)
+    if UnitIsPVP(unit) and not UnitIsUnit(unit, "player") and not db.pvpBuff and not FlaggedForGood() then
+        return nil, "flagged for PvP"
+    end
+    local level = UnitLevel(unit)
+    if level and level <= 0 then level = nil end -- "??": unknown, not rank 1
+    local spell = IntellectSpell(level)
+    if not spell then return nil, "no rank known" end
+    if not NeedsIntellect(unit, ns.SpellName(D.SPELL_ARCANE_INTELLECT), ns.SpellName(D.SPELL_ARCANE_BRILLIANCE)) then
+        return nil, "has it"
+    end
+    if not InSpellRange(spell, unit) then return nil, "out of range" end
+    return spell
+end
+
+-- The middle click's attributes as every out-of-combat update leaves them, whether the button
+-- is shown or not - its key works with the button hidden (Michel). Never at load: after a
+-- /reload in combat the files load in the lockdown.
+local function ArmBuffRun()
+    local on = db.buffRun
+    intel.hintMiddleKey = on and "HINT_BUFF_RUN" or nil
+    SetAttr(intel, "type3", on and "macro" or nil)
+    SetAttr(intel, "macrotext3", on and BUFF_RUN_MACRO or nil)
+    SetAttr(buffRun, "type", "spell")
+    SetAttr(buffRun, "unit", "target")
+    SetAttr(buffRun, "spell", nil)
+end
+ns.ArmBuffRun = ArmBuffRun
+
+-- Just before a middle click, out of combat: the rank for the current target. While the chosen
+-- spell is on cooldown the click does nothing at all, so no player is passed by. Demo mode
+-- casts nothing, targets on, and says on the press what it would cast.
+intel:SetScript("PreClick", function(_, button, down)
+    if button ~= "MiddleButton" or InCombatLockdown() or not db or not db.buffRun then return end
+    SetAttr(buffRun, "spell", nil)
+    local spell, why = ns.BuffRunSpell("target")
+    -- nil for a spell the client does not know - demo mode treats every rank as known
+    local cd = spell and C_Spell.GetSpellCooldown(spell)
+    local cooling = cd and cd.startTime > 0
+    if down then -- the PreClick sees down and up; one entry per press
+        ns.Log("buffrun " .. (cooling and "wait: cooldown" or spell and tostring(spell) or ("none: " .. why)))
+    end
+    if cooling then
+        SetAttr(intel, "type3", nil)
+        return
+    end
+    SetAttr(intel, "type3", "macro")
+    if IsDemo() then
+        if spell and down then ns.DemoPrint(L.DEMO_CAST, ns.SpellName(spell) or "?") end
+        return
+    end
+    SetAttr(buffRun, "spell", spell)
+end)
 
 ---------------------------------------------------------------------------
 -- Update cycle
@@ -258,6 +453,22 @@ local function UpdateTicker()
     end
 end
 
+-- No event fires when a buff crosses its renew time: one timer waits for the earliest crossing
+-- and runs the update then. It is replaced only when that moment moves, so the group ticker's
+-- updates every second do not pile timers up.
+local renewTimer, renewAt
+local function ScheduleRenew(at)
+    if at == renewAt then return end
+    if renewTimer then renewTimer:Cancel() end
+    renewTimer, renewAt = nil, at
+    if at then
+        renewTimer = C_Timer.NewTimer(at - GetTime(), function()
+            renewTimer, renewAt = nil, nil
+            ns.UpdateBuffState()
+        end)
+    end
+end
+
 -- Count, targets and armor highlight. In combat everything stays frozen at the state of combat
 -- start: the client restricts aura data in combat (every buff would look missing), and
 -- Intellect cannot be cast then anyway. Everything is re-checked once combat ends.
@@ -268,19 +479,25 @@ function ns.UpdateBuffState()
         UpdateTicker()
         return
     end
-    UpdateArmorHighlight()
+    local due = UpdateArmorHighlight()
     if intel:IsShown() then
         if IsDemo() then
             ShowBuffCount(IsInGroup() and 3 or 1)
-            ApplyTargets(intel, "player", "player")
+            ApplyTargets(intel, "player", "player", 1, ReadKnownRanks())
         else
-            local probe = IntellectSpell()
-            local missing, singleUnit, groupUnit = ScanGroup(probe)
+            local known = ReadKnownRanks()
+            local probe = IntellectSpell(nil, known)
+            local missing, singleUnit, groupUnit, intellectDue = ScanGroup(probe, known)
             ShowBuffCount(missing)
-            ApplyTargets(intel, singleUnit, groupUnit)
+            ApplyTargets(intel, singleUnit, groupUnit, missing, known)
+            if intellectDue and (not due or intellectDue < due) then due = intellectDue end
         end
     end
+    ScheduleRenew(due)
     UpdateTicker()
+    ArmBuffRun()
+    -- A new Intellect target changes no glow, but the buff key casts on it (Buttons.lua)
+    ns.UpdateBuffKey()
 end
 local UpdateBuffState = ns.UpdateBuffState
 

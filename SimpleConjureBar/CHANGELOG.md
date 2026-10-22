@@ -3,6 +3,87 @@
 This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-10-22
+
+### Added
+- Buff & Run: a middle click on Arcane Intellect buffs your target and then targets the next
+  friendly player, one click per player. It casts Arcane Intellect only, never Brilliance, in the
+  rank the player's level accepts, and passes anyone who is no mana user or already has it. It
+  does nothing in combat or during the global cooldown, and passes players flagged for PvP unless
+  "Allow PvP buffing" is on or you are flagged yourself without the 5-minute timer - by `/pvp`,
+  in a battleground, an arena or a PvP zone. Both switches are on the General tab; Buff & Run is
+  on by default.
+  It has its own key binding.
+- Arcane Intellect and the armor are renewed before they run out: on the Tracking tab you set how
+  many minutes before (Intellect 0-15, default 5; armor 0-5, default 3). From then on the button
+  glows, counts the buff as needed, and its click - and "Cast next buff" - casts it again; members
+  who have no Intellect at all come first. Buff & Run follows the same rule.
+- A new bug report: a short form - what happened, where (a list of the addon's parts), details -
+  and everything else taken from the game, so a bug can be fixed without asking you back. It
+  holds this session's errors with how long ago they came and whether in combat, the addon's
+  last 50 actions, the state of its buttons and your loaded addons. It never holds chat,
+  positions or the date, and filters out the names the game knows, GUIDs, BattleTags, e-mail
+  addresses and file paths; a name the game does not know can remain, so check "Show content"
+  before you send it. The window lists what it holds and says that an issue is public and the
+  code is not encrypted. The report is one code, already selected; its link opens a GitHub form
+  with one field for it, and "Show content" shows what the code holds.
+- "Window background" beside Scale on the General tab sets the background of the settings and
+  bug report windows from invisible (0 %) to solid (100 %); 60 % is the look they always had.
+  Frame, texts and controls stay as they are.
+- "Show anchor" on the General tab keeps the bar's handle - move, lock, settings - visible. It is
+  on by default, also when you update; switched off, the handle shows only while the mouse is
+  over it, as before.
+- The flyouts of Armor, Teleport and Portal open in a direction you choose on the General tab -
+  automatic by screen half as before, up or down for a horizontal bar, right or left for a
+  vertical one - and close by themselves 1 to 5 seconds (3 by default) after the mouse has left
+  them, also in combat.
+- Three keys under Options > Key Bindings > SimpleConjureBar. "Cast next buff" casts, one press
+  at a time, what the first highlighted button of the bar would fix: your armor, Arcane Intellect
+  on the next member, a mana gem conjured. In combat it keeps what it held when the fight
+  started - your armor, if nothing was highlighted then - and never casts Arcane Intellect, as the
+  button does not. "Buff & Run" is the Arcane Intellect button's middle click, also with the
+  button hidden. "Open Settings" opens or closes the settings window.
+
+### Changed
+- Every button's tooltip names its clicks in one order - left, middle, right - and the left
+  click is named everywhere: "Cast Armor", "Use Water", "Use Food", "Use" and the mana gem's
+  name (or the conjure spell while you carry none), "Teleport", "Create Portal". The middle
+  click of water and food reads "Trade Food & Water", the right click of the flyouts "Choose
+  Armor" and "Choose Destination".
+- The tooltip of the minimap button and of the AddOn menu entry says "Lock bar" and "Unlock bar"
+  for the right click, and changes as soon as you click, without moving the mouse away.
+- `/scb debug` prints the state part of a bug report: every button, flyout entry and key with its
+  click, the items the addon counts, your group by class and your buffs with minutes left.
+- The bug report no longer prints the date and clock, your faction or your exact level (a range
+  instead), and no settings the addon does not know.
+- Teleport and Portal are greyed out in combat and a left click on them does nothing then, as
+  the game refuses them in combat; their flyout still lets you choose.
+- A click in the armor, teleport or portal flyout only chooses, and the flyout closes; the button
+  on the bar casts the choice. Before, the click in the flyout cast at once.
+- Armor, Arcane Intellect and the mana gem are highlighted with the modern client's glow, as a
+  spell ready to use is, instead of the marching ants. Its color and speed are set as before; a
+  change of the speed shows at once.
+- The Arcane Intellect tooltip names what a left click casts and on whom, as it did for the right
+  click: the member for a single buff, "your group" for Arcane Brilliance, in a raid its group by
+  number.
+- A left click on the handle in combat says that the bar cannot move then.
+- `/scb demo` is refused in combat: the buttons cannot switch to demo mode until the fight ends.
+
+### Fixed
+- A click on Arcane Intellect cast it on you again and again when nobody needed it. It now casts
+  nothing then, and the tooltip says "everyone has it". In a raid, Brilliance no longer goes to
+  your own group when no group in need is in range, and the tooltip says that none is.
+- After a login in combat, the bar could jump to the middle of the screen when the fight ended.
+  It now keeps its place.
+- With an account-wide macro named like one of the addon's macros, every "Create macro" added
+  another character macro. It now updates its own and leaves yours alone.
+- No flyout opened in combat while one of them held no spell yet - the portals before you learn
+  them - and BugSack showed "Invalid frame handle".
+- With the flyout direction on automatic, a flyout kept opening towards where the bar had been
+  before you moved it.
+- On a character of another class, hovering or clicking SimpleConjureBar in the AddOn menu next
+  to the minimap raised a Lua error. The entry now does nothing there.
+
 ## [1.0.1] - 2026-10-18
 
 ### Added

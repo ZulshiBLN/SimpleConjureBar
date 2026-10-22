@@ -20,6 +20,36 @@ ns.OnDBReady(function(d) db = d end)
 local UI = {}
 ns.UI = UI
 
+---------------------------------------------------------------------------
+-- Window background, invisible to solid (ruleset plan 2026-10-22-window-opacity). The dialog
+-- texture lets the game show through and can never become solid on its own: it fades out
+-- below today's value, and a black layer beneath it fills in above. At today's value it is
+-- the window as it always was. Frame edge, texts and controls are not touched.
+---------------------------------------------------------------------------
+-- Called right after SetBackdrop; a client without BackdropTemplate has no backdrop to change
+function ns.AddOpacityLayer(window)
+    if not window.Center then return end
+    local layer = window:CreateTexture(nil, "BACKGROUND", nil, -8)
+    layer:SetColorTexture(0, 0, 0, 1)
+    layer:SetPoint("TOPLEFT", 11, -12)     -- the backdrop's insets
+    layer:SetPoint("BOTTOMRIGHT", -12, 11)
+    window.Center:SetDrawLayer("BACKGROUND", -7) -- the dialog texture stays above it
+    window.opacityLayer = layer
+end
+
+function ns.ApplyWindowOpacity(window)
+    if not (db and window.opacityLayer) then return end
+    local o, d = db.windowOpacity / 100, D.WINDOW_OPACITY_TODAY / 100
+    window:SetBackdropColor(1, 1, 1, math.min(1, o / d))
+    window.opacityLayer:SetAlpha(math.max(0, (o - d) / (1 - d)))
+end
+
+-- Both windows at once, for the slider; the report applies again whenever it shows
+function ns.ApplyWindowOpacities()
+    ns.ApplyWindowOpacity(UI.window)
+    ns.ApplyReportOpacity()
+end
+
 local settings = CreateFrame("Frame", "SimpleConjureBarSettings", UIParent, API.BACKDROP_TPL)
 UI.window = settings
 settings:SetSize(300, 290)
@@ -39,6 +69,7 @@ if settings.SetBackdrop then
         tile = true, tileSize = 32, edgeSize = 32,
         insets = { left = 11, right = 12, top = 12, bottom = 11 },
     })
+    ns.AddOpacityLayer(settings)
 end
 tinsert(UISpecialFrames, "SimpleConjureBarSettings") -- closes with Escape
 
@@ -121,11 +152,14 @@ local function CreateCheck(parent, labelKey, key, onChange)
     return cb, text
 end
 
--- Single check box in its own row
-function UI.AddCheck(labelKey, key, onChange)
+-- Single check box in its own row; indent moves it in by that many check box widths (an option
+-- that belongs to the box above it). Returns the check box.
+function UI.AddCheck(labelKey, key, onChange, indent)
     local cb, text = CreateCheck(page, labelKey, key, onChange)
-    cb:SetPoint("TOPLEFT", INSET - 3, Place(26, 2))
-    measures[#measures + 1] = function() return 26 - 3 + 4 + text:GetStringWidth() end
+    local x = INSET - 3 + (indent or 0) * 26
+    cb:SetPoint("TOPLEFT", x, Place(26, 2))
+    measures[#measures + 1] = function() return x - INSET + 26 + 4 + text:GetStringWidth() end
+    return cb
 end
 
 -- Several check boxes next to each other. items = { { label =, key =, onChange = }, ... }
@@ -196,7 +230,7 @@ end
 local MakeSlider = UI.MakeSlider
 
 -- Integer slider with label and value text. fmt(v) returns the displayed value.
-function UI.AddIntSlider(labelKey, key, minV, maxV, fmt, gap)
+function UI.AddIntSlider(labelKey, key, minV, maxV, fmt, gap, onChange)
     local ROW = 36
     local row = CreateFrame("Frame", nil, page)
     row:SetHeight(ROW)
@@ -229,6 +263,7 @@ function UI.AddIntSlider(labelKey, key, minV, maxV, fmt, gap)
         v = math.floor(v + 0.5)
         db[key] = v
         value:SetText(fmt(v))
+        if onChange then onChange(v) end
         ns.UpdateCounts()
     end)
     slider:SetScript("OnMouseWheel", function(self, delta) self:SetValue(self:GetValue() + delta) end)
@@ -251,12 +286,22 @@ end
 
 -- Integer slider with an input box on the right.
 -- o = { label (key or function), icon (function -> texture, optional), min, max, get, set,
---       gap, rows (table that collects the row frames, optional) }
+--       gap, rows (table that collects the row frames, optional),
+--       column ("left" or "right": two sliders share a row, the right one takes the left's) }
+local COLUMN_GAP = 20
+UI.COLUMN_GAP = COLUMN_GAP -- the General tab's Scale row lays out its column with it
 function UI.AddNumberSlider(o)
     local ROW = 42
     local row = CreateFrame("Frame", nil, page)
     row:SetHeight(ROW)
-    row:SetPoint("TOPLEFT", INSET, Place(ROW, o.gap or 6))
+    local y
+    if o.column == "right" then
+        y = page.columnY
+    else
+        y = Place(ROW, o.gap or 6)
+        page.columnY = y
+    end
+    row:SetPoint("TOPLEFT", INSET, y)
     if o.rows then o.rows[#o.rows + 1] = row end
 
     local x = 0
@@ -319,18 +364,28 @@ function UI.AddNumberSlider(o)
         updating = false
         box:SetText(tostring(o.get()))
     end
-    measures[#measures + 1] = function() return x + label:GetStringWidth() + 16 + 40 end
+    -- A column needs room for two halves its width, so no label in either is cut
+    measures[#measures + 1] = function()
+        local need = x + label:GetStringWidth() + 16 + 40
+        if o.column then return 2 * need + COLUMN_GAP end
+        return need
+    end
     stretchers[#stretchers + 1] = function(w)
-        row:SetWidth(w)
-        slider:SetWidth(w - 4)
+        local rowW = o.column and (w - COLUMN_GAP) / 2 or w
+        row:SetWidth(rowW)
+        slider:SetWidth(rowW - 4)
+        if o.column == "right" then
+            row:ClearAllPoints()
+            row:SetPoint("TOPLEFT", INSET + (w + COLUMN_GAP) / 2, y)
+        end
     end
 end
 
--- Highlight speed: 5 steps, 3 = default
+-- Highlight speed: 5 steps, 3 = default. The glow's duration follows at once (ns.ApplyLook).
 function UI.AddSpeedSlider(key)
-    UI.AddIntSlider("OPT_ANTS_SPEED", key, 1, 5, function(v)
+    UI.AddIntSlider("OPT_ANTS_SPEED", key, 1, #D.GLOW_DURATIONS, function(v)
         return v == 3 and (v .. " (" .. L.DEFAULT .. ")") or tostring(v)
-    end)
+    end, nil, function() ns.ApplyLook() end)
 end
 
 -- Centered separator line in WoW style: 2 px gold, strong in the middle, fading to the ends.
@@ -731,6 +786,7 @@ settings:SetScript("OnShow", function()
         Print(L.MENU_COMBAT)
         return
     end
+    ns.ApplyWindowOpacity(settings)
     RefreshAll()
 end)
 
@@ -748,7 +804,10 @@ function ns.OpenSettings(aboveBlizzard)
     if aboveBlizzard then settings:SetFrameStrata("FULLSCREEN_DIALOG") end
     if settings:IsShown() then settings:Raise() else settings:Show() end
 end
-settings:HookScript("OnHide", function() settings:SetFrameStrata("DIALOG") end)
+settings:HookScript("OnHide", function()
+    settings:SetFrameStrata("DIALOG")
+    ns.LogSettings() -- what changed, for the bug report's action log
+end)
 
 -- Combat start: close the window and reopen it afterwards if it was closed because of combat
 do

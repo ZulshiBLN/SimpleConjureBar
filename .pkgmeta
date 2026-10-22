@@ -10,3 +10,4 @@ move-folders:
 
 ignore:
   - tests
+  - tools

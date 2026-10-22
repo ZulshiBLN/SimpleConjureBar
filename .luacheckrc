@@ -19,6 +19,9 @@ globals = {
     "SimpleConjureBar_OnCompartmentClick",
     "SimpleConjureBar_OnCompartmentEnter",
     "SimpleConjureBar_OnCompartmentLeave",
+    -- The Key Bindings section's name. The keys' own names contain spaces, are written
+    -- through _G[...] and luacheck cannot see them; keys_spec checks every global written.
+    "BINDING_HEADER_SIMPLECONJUREBAR",
 }
 
 -- The WoW API the addon reads, listed by hand so a typo or a removed API is
@@ -41,7 +44,7 @@ read_globals = {
     "GetAddOnMetadata", "GetBuildInfo", "GetCVar", "GetCoinText", "GetCoinTextureString",
     "GetContainerItemID", "GetContainerItemInfo", "GetContainerNumSlots",
     "GetCursorPosition", "GetItemCooldown", "GetItemCount", "GetItemIcon", "GetItemInfo",
-    "GetLocale", "GetMacroIndexByName", "GetMerchantItemID", "GetMerchantItemInfo",
+    "GetLocale", "GetMacroIndexByName", "GetMacroInfo", "GetMerchantItemID", "GetMerchantItemInfo",
     "GetMerchantItemLink", "GetMerchantItemMaxStack", "GetMerchantNumItems", "GetMoney",
     "GetNumGroupMembers", "GetNumMacros", "GetNumSubgroupMembers", "GetRaidRosterInfo",
     "GetSpellInfo", "GetSpellTexture", "GetTime", "GetTradePlayerItemLink",
@@ -54,10 +57,12 @@ read_globals = {
     "STANDARD_TEXT_FONT", "Settings", "ShowMacroFrame", "ShowUIPanel",
     "UIDropDownMenu_AddButton", "UIDropDownMenu_CreateInfo", "UIDropDownMenu_Initialize",
     "UIDropDownMenu_SetText", "UIDropDownMenu_SetWidth", "UIParent", "UISpecialFrames",
+    "C_Secrets", "UnitCanAssist", "UnitIsPVP", "IsPVPTimerRunning",
     "UnitBuff", "UnitClass", "UnitExists", "UnitFactionGroup", "UnitGUID", "UnitInRange",
     "UnitIsConnected", "UnitIsDeadOrGhost", "UnitIsFriend", "UnitIsPlayer", "UnitIsUnit",
     "UnitIsVisible", "UnitLevel", "UnitName", "UnregisterStateDriver",
-    "date", "strtrim", "tinsert", "wipe",
+    "issecretvalue", "GetRealmName", "GetNormalizedRealmName", "GetGuildInfo", "UnitAffectingCombat",
+    "date", "time", "strtrim", "tinsert", "wipe",
     SlashCmdList = { fields = { SIMPLECONJUREBAR = { read_only = false } } },
     -- The pre-10.2.5 color picker is configured through these fields; the
     -- current one through SetupColorPickerAndShow. Same baseline as above.
@@ -73,21 +78,16 @@ read_globals = {
     } },
 }
 
--- Unused locals in the unpublished build 1.37, named one by one so a new one is still reported.
--- Each goes with the first change to its file (ruleset archive/decisions.md).
-files["SimpleConjureBar/Bar.lua"] = { ignore = { "211/GAP" } }
-files["SimpleConjureBar/Report.lua"] = { ignore = { "211/L" } }
-
 -- Specs run in plain Lua 5.1 under busted, where file access is how they read
 -- the addon's sources.
 files["tests/"] = {
     std = "lua51+busted",
     read_globals = {
-        "io", "require", "loadfile",
+        "io", "require", "loadfile", "dofile", "os",
         -- What tests/helpers/mock.lua provides to drive the mocked client,
         -- and the named frames the addon creates there
         "NEWOBJ", "FIRE", "RUNTIMERS", "RUNSCRIPT", "TICK", "STATE",
-        "SimpleConjureBarSettings",
+        "SimpleConjureBarSettings", "SimpleConjureBarReport", "SimpleConjureBarMinimapButton",
     },
 }
 
@@ -103,4 +103,11 @@ files["tests/scenario_spec.lua"] = {
     std = "lua51+busted",
     allow_defined_top = true,
     ignore = { "111", "112", "113", "121", "122", "143" },
+}
+
+-- The decoder runs in plain Lua 5.1 on a developer's machine, not in the client: it reads a
+-- file and exits with a status (ruleset plan 2026-10-21-bug-report-code).
+files["tools/"] = {
+    std = "lua51",
+    read_globals = { "io", "os", "arg", "debug", "dofile" },
 }

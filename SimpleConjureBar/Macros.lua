@@ -53,16 +53,25 @@ function ns.ShowMacroWindow()
     end
 end
 
--- Creates the character macro `name`, or updates it when it exists.
+-- The character macro of that name. Character macros use the indexes after the account-wide
+-- ones; GetMacroIndexByName finds an account-wide macro of the same name first.
+local function CharacterMacroIndex(name, maxAccount)
+    local _, characterMacros = GetNumMacros()
+    for index = maxAccount + 1, maxAccount + characterMacros do
+        if GetMacroInfo(index) == name then return index end
+    end
+end
+
+-- Creates the character macro `name`, or updates it when it exists. A player's account-wide
+-- macro of the same name is left alone (code review 1.1.0, F-15).
 -- replaceAccountCopy: the unpublished build 1.33 created "SCB Polymorph" account-wide;
 -- that copy is replaced by the character macro. No other macro of this addon ever existed
 -- account-wide.
 local function CreateOrUpdate(name, body, replaceAccountCopy)
     if InCombatLockdown() then ns.Print(L.NOT_IN_COMBAT) return end
     local maxAccount = MAX_ACCOUNT_MACROS or 120
-    local index = GetMacroIndexByName(name)
-    if index and index > maxAccount then
-        -- Character macros use the indexes after the account-wide ones
+    local index = CharacterMacroIndex(name, maxAccount)
+    if index then
         EditMacro(index, name, MACRO_ICON, body)
         ns.Print(L.MACRO_UPDATED:format(name))
         return
@@ -72,7 +81,10 @@ local function CreateOrUpdate(name, body, replaceAccountCopy)
         ns.Print(L.MACRO_FULL)
         return
     end
-    if replaceAccountCopy and index and index > 0 then DeleteMacro(index) end
+    local accountIndex = GetMacroIndexByName(name)
+    if replaceAccountCopy and accountIndex and accountIndex > 0 and accountIndex <= maxAccount then
+        DeleteMacro(accountIndex)
+    end
     -- 4th argument true = character macro
     CreateMacro(name, MACRO_ICON, body, true)
     ns.Print(L.MACRO_CREATED:format(name))

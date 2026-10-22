@@ -66,10 +66,10 @@ describe(".luacheckrc", function()
         assert.is_true(hasCode("ColorPickerFrame.somethingElse = 1\n", "142"))
     end)
 
-    it("reports a new unused local next to an excepted one", function()
-        local source = "local GAP, EXTRA = 1, 2\n"
-        assert.is_false(hasCode(source:gsub(", EXTRA", ""):gsub(", 2", ""), "211", "SimpleConjureBar/Bar.lua"))
-        assert.is_true(hasCode(source, "211", "SimpleConjureBar/Bar.lua"))
+    -- The two names once excepted are reported again (code review 1.1.0, F-10)
+    it("reports an unused local in every addon file, with no exception left", function()
+        assert.is_true(hasCode("local GAP = 1\n", "211", "SimpleConjureBar/Bar.lua"))
+        assert.is_true(hasCode("local L = 1\n", "211", "SimpleConjureBar/Report.lua"))
         assert.is_true(hasCode("local GAP = 1\n", "211", "SimpleConjureBar/Core.lua"))
     end)
 
@@ -84,6 +84,7 @@ describe(".luacheckrc", function()
             "function SimpleConjureBar_OnCompartmentClick() end",
             "function SimpleConjureBar_OnCompartmentEnter() end",
             "function SimpleConjureBar_OnCompartmentLeave() end",
+            'BINDING_HEADER_SIMPLECONJUREBAR = "x"',
         }, "\n") .. "\n"
         assert.are.equal(0, warningsFor(allowed))
     end)

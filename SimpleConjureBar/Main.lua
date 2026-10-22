@@ -9,12 +9,10 @@ local Print = ns.Print
 local db
 ns.OnDBReady(function(d) db = d end)
 
-local ready = false -- the bar is positioned and built (end of PLAYER_LOGIN)
-
 -- Button texts depend on the language (armor labels, tooltip hints). At login the language
 -- is applied before the bar is positioned, so no rebuild may run yet.
 ns.OnLanguageChanged(function()
-    if ready then ns.Rebuild() end
+    if ns.barReady then ns.Rebuild() end
 end)
 
 local function PrintGreeting()
@@ -28,8 +26,8 @@ local function SetupBar()
     ns.bar:SetScale(db.scale) -- before positioning: the position is stored in the scaled system
     ns.LoadPosition()
     ns.ApplyCombatHide()
+    ns.barReady = true -- before the rebuild, which needs it (Buttons.lua)
     ns.Rebuild()
-    ready = true
 end
 
 local events = CreateFrame("Frame")
@@ -87,34 +85,9 @@ local function PrintHelp()
     end
 end
 
--- Technical output, deliberately not localized
+-- Technical output, deliberately not localized: the bug report's state snapshot (Report.lua)
 local function PrintDebug()
-    Print("KeyDown CVar: " .. tostring(GetCVar("ActionButtonUseKeyDown")))
-    local b = ns.buttons
-    for _, btn in ipairs({ b.Water, b.Food, b.Teleport, b.Portal, b.Intellect }) do
-        Print(string.format("%s shown=%s type1=%s item1=%s spell1=%s unit1=%s type2=%s spell2=%s unit2=%s",
-            btn:GetName(), tostring(btn:IsShown()),
-            tostring(btn:GetAttribute("type1")), tostring(btn:GetAttribute("item1")),
-            tostring(btn:GetAttribute("spell1")), tostring(btn:GetAttribute("unit1")),
-            tostring(btn:GetAttribute("type2")), tostring(btn:GetAttribute("spell2")),
-            tostring(btn:GetAttribute("unit2"))))
-    end
-    -- Own buffs with spell IDs (helps to identify buffs the addon does not know yet)
-    local GetAura = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
-    for i = 1, 40 do
-        local name, spellId
-        if GetAura then
-            local ok, aura = pcall(GetAura, "player", i, "HELPFUL")
-            if not ok or not aura then break end
-            name, spellId = aura.name, aura.spellId
-        else
-            local id
-            name, _, _, _, _, _, _, _, _, id = UnitBuff("player", i)
-            if not name then break end
-            spellId = id
-        end
-        Print(string.format("Buff %d: %s (%s)", i, tostring(name), tostring(spellId)))
-    end
+    for _, line in ipairs(ns.StateSnapshot()) do Print(line) end
 end
 
 SlashCmdList.SIMPLECONJUREBAR = function(msg)
@@ -133,6 +106,8 @@ SlashCmdList.SIMPLECONJUREBAR = function(msg)
         ns.RefreshSettingsWindow()
         Print(db.hideMinimap and L.MINIMAP_HIDDEN or L.MINIMAP_SHOWN)
     elseif msg == "demo" then
+        -- the buttons' actions change only after combat; the switch would come before them
+        if InCombatLockdown() then Print(L.NOT_IN_COMBAT) return end
         db.demo = not db.demo
         ns.Rebuild()
         ns.ApplyLook()
@@ -151,4 +126,5 @@ SlashCmdList.SIMPLECONJUREBAR = function(msg)
     else
         Print(L.CMD_UNKNOWN:format("|cffffd100/scb help|r"))
     end
+    ns.LogSettings() -- lock, minimap and demo change settings outside the window
 end

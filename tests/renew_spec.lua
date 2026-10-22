@@ -99,6 +99,26 @@ describe("Arcane Intellect", function()
         assert.are.equal("1", tostring(b.count:GetText()))
     end)
 
+    -- code review 1.1.0, F-14: the scan asked the spell book for every member's rank
+    it("asks the spell book once per rank in a scan of a full raid", function()
+        local calls = {}
+        _G.SimpleConjureBarDB = nil
+        local ns = addon.load("enUS", function()
+            local known = C_SpellBook.IsSpellKnown
+            C_SpellBook.IsSpellKnown = function(id) calls[#calls + 1] = id return known(id) end
+        end)
+        FIRE("PLAYER_LOGIN"); RUNTIMERS()
+        for i = 1, 40 do STATE.units["raid" .. i] = { class = "PRIEST" } end
+        regroup(ns, true, true, 40)
+        for k in pairs(calls) do calls[k] = nil end
+        ns.UpdateBuffState()
+        assert.are.equal("40", tostring(ns.buttons.Intellect.count:GetText()))
+        local ranks, asked = {}, 0
+        for _, r in ipairs(ns.D.INTELLECT_RANKS) do ranks[r.id] = true end
+        for _, id in ipairs(calls) do if ranks[id] then asked = asked + 1 end end
+        assert.is_true(asked <= #ns.D.INTELLECT_RANKS, asked .. " spell book calls")
+    end)
+
     it("in a raid casts no Brilliance when no subgroup in need is in range", function()
         local ns = login()
         local D, b = ns.D, ns.buttons.Intellect
@@ -108,6 +128,12 @@ describe("Arcane Intellect", function()
         assert.are.equal(D.SPELL_ARCANE_BRILLIANCE, b:GetAttribute("spell1"))
         assert.is_nil(b:GetAttribute("type1"))
         assert.are.equal("raid6", b:GetAttribute("unit2"))
+        -- the tooltip says nobody is in reach, not that everyone has it (code review 1.1.0, F-04)
+        local L = ns.L
+        local lines = tooltipLines(ns)
+        assert.is_true(has(lines, L.HINT_LEFT:format(ns.SpellName(D.SPELL_ARCANE_BRILLIANCE) .. " > " .. L.NONE_IN_RANGE)),
+            table.concat(lines, " | "))
+        assert.are_not.equal(L.EVERYONE_BUFFED, L.NONE_IN_RANGE)
         assert.are.same({}, STATE.errors)
     end)
 

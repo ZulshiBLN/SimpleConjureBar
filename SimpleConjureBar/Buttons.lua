@@ -323,6 +323,9 @@ local shown = {}
 
 function ns.Rebuild()
     if not db then return end
+    -- Not before the bar is positioned (Main.lua, after a login in combat): the re-anchoring
+    -- would save the start position over the player's. The setup rebuilds.
+    if not ns.barReady then pending = true return end
     if InCombatLockdown() then
         pending = true
         UpdateCounts()

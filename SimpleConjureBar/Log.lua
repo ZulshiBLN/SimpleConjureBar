@@ -79,9 +79,6 @@ function ns.LogClicks(b, label, downOnly)
             local v = Attr(self, a, suffix)
             if v ~= nil then parts[#parts + 1] = a .. "=" .. ns.SafeValue(v) end
         end
-        if self.locksInCombat and self.locksInCombat(mouse) and InCombatLockdown() then
-            parts[#parts + 1] = "dropped"
-        end
         ns.Log(table.concat(parts, " "))
     end)
 end

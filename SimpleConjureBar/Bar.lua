@@ -3,7 +3,8 @@
 -- highlight (the client's proc glow), the flyout menus and the colors.
 --
 -- Armor          : left = last armor, right = open the armor flyout (choice is remembered)
--- Intellect      : left = default (solo: single, group: Brilliance), right = the other one
+-- Intellect      : left = default (solo: single, group: Brilliance), right = the other one,
+--                  middle = Buff & Run
 -- Mana Gem       : left = best gem, right = conjure a missing gem
 -- Water / Food   : left = consume, right = conjure, middle = trade water & food to the target
 -- Teleport/Portal: left = last destination, right = open the destinations (choice is remembered)
@@ -13,7 +14,7 @@ local _, ns = ...
 if not ns.enabled then return end
 
 local D, L, API = ns.D, ns.L, ns.API
-local SIZE, GAP, PAD = D.SIZE, D.GAP, D.PAD
+local SIZE, PAD = D.SIZE, D.PAD
 local GetSpellTex, ItemName = API.GetSpellTex, API.ItemName
 local IsDemo, DemoPrint = ns.IsDemo, ns.DemoPrint
 
@@ -369,7 +370,6 @@ end
 ---------------------------------------------------------------------------
 local intel = CreateMainButton("Intellect")
 intel.isBuff = true
-intel.locksInCombat = function() return true end -- for the action log
 -- Intellect is locked in combat (saves mana, and targets cannot change under the lockdown):
 -- the secure snippet drops every click while the player is in combat.
 -- The armor buttons (always on yourself) stay usable in combat.
@@ -485,7 +485,6 @@ local tele   = CreateFlyoutButton("Teleport", function() return ns.KnownTravel("
 local portal = CreateFlyoutButton("Portal", function() return ns.KnownTravel("portal") end, nil, nil, "HINT_PORTAL")
 tele.rune, portal.rune = D.ITEM_RUNE_TELE, D.ITEM_RUNE_PORTAL
 for _, b in ipairs({ tele, portal }) do
-    b.locksInCombat = function(mouse) return mouse == "LeftButton" end -- for the action log
     ns.SetLatinFont(b.count, NumberFontNormal, 14, "OUTLINE") -- digits only
     b.count:SetDrawLayer("OVERLAY", 7)
     -- The game refuses teleports and portals in combat (in game, 2026-10-21): the left click
@@ -518,7 +517,6 @@ buffKey:HookScript("OnClick", function(self, _, down)
         DemoPrint(L.DEMO_CAST, ns.SpellName(self.demoSpell) or "?")
     end
 end)
-buffKey.locksInCombat = function() return buffKey:GetAttribute("scbsource") == "Intellect" end
 ns.LogClicks(buffKey, buffKey:GetName())
 
 -- Flyout child buttons are created on demand

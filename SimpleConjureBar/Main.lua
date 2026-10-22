@@ -9,12 +9,10 @@ local Print = ns.Print
 local db
 ns.OnDBReady(function(d) db = d end)
 
-local ready = false -- the bar is positioned and built (end of PLAYER_LOGIN)
-
 -- Button texts depend on the language (armor labels, tooltip hints). At login the language
 -- is applied before the bar is positioned, so no rebuild may run yet.
 ns.OnLanguageChanged(function()
-    if ready then ns.Rebuild() end
+    if ns.barReady then ns.Rebuild() end
 end)
 
 local function PrintGreeting()
@@ -28,8 +26,8 @@ local function SetupBar()
     ns.bar:SetScale(db.scale) -- before positioning: the position is stored in the scaled system
     ns.LoadPosition()
     ns.ApplyCombatHide()
+    ns.barReady = true -- before the rebuild, which needs it (Buttons.lua)
     ns.Rebuild()
-    ready = true
 end
 
 local events = CreateFrame("Frame")
@@ -108,6 +106,8 @@ SlashCmdList.SIMPLECONJUREBAR = function(msg)
         ns.RefreshSettingsWindow()
         Print(db.hideMinimap and L.MINIMAP_HIDDEN or L.MINIMAP_SHOWN)
     elseif msg == "demo" then
+        -- the buttons' actions change only after combat; the switch would come before them
+        if InCombatLockdown() then Print(L.NOT_IN_COMBAT) return end
         db.demo = not db.demo
         ns.Rebuild()
         ns.ApplyLook()

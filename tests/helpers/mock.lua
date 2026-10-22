@@ -103,7 +103,20 @@ function Methods:GetPoint(i) local p = (rawget(self, "points") or {})[i or 1]; i
 function Methods:GetFontString() if not self.fs then self.fs = New("FontString", nil, self) end return self.fs end
 function Methods:GetRegions() return unpack(self.regions) end
 function Methods:GetChildren() return unpack(self.children) end
-function Methods:GetRect() return 100, 100, self.w, self.h end
+-- The rect follows the frame's last anchor on UIParent (a 2000 x 650 screen), so a saved
+-- position can be told from the start position; other anchors give a fixed rect
+local ANCHOR = { CENTER = { 0.5, 0.5 }, LEFT = { 0, 0.5 }, RIGHT = { 1, 0.5 }, TOP = { 0.5, 1 },
+  BOTTOM = { 0.5, 0 }, BOTTOMLEFT = { 0, 0 }, BOTTOMRIGHT = { 1, 0 }, TOPLEFT = { 0, 1 }, TOPRIGHT = { 1, 1 } }
+function Methods:GetRect()
+  local points = rawget(self, "points") or {}
+  local last = points[#points]
+  if not last or last[2] ~= UIParent then return 100, 100, self.w, self.h end
+  local point, _, rel, x, y = unpack(last)
+  local a, r = ANCHOR[point], ANCHOR[rel or point]
+  if not a or not r then return 100, 100, self.w, self.h end
+  local ax, ay = UIParent.w * r[1] + (x or 0), UIParent.h * r[2] + (y or 0)
+  return ax - self.w * a[1], ay - self.h * a[2], self.w, self.h
+end
 function Methods:GetCenter() return 500, 300 end
 function Methods:GetWidth() return self.w end
 function Methods:GetHeight() return self.h end
@@ -226,7 +239,8 @@ end
 -- (false cancels the action and every post body), the secure action (on key down while
 -- STATE.keyDown, else on key up; a macro's "/click ... 1" acts in both, as the client's did -
 -- ruleset plan 2026-10-21-buff-and-run), the post bodies of the wrappers that returned a
--- message, then the insecure scripts. A spell cast is appended to STATE.casts as
+-- message, then the insecure scripts - none of them after a cancel: the client's OnClick
+-- never runs for a click a snippet dropped (ruleset decisions, 2026-10-21). A spell cast is appended to STATE.casts as
 -- { spell, unit }; a macro runs its "/click Name [button] [1]" and "/targetfriendplayer"
 -- lines, the latter making the next of STATE.friends the target and counting in
 -- STATE.targetedNext.
@@ -266,8 +280,8 @@ function RUNCLICK(frame, button, down, fromMacro)
         if not ok then table.insert(STATE.errors, "snippet: " .. tostring(err)) end
       end
     end
+    Run(frame, "OnClick", button, down)
   end
-  Run(frame, "OnClick", button, down)
 end
 RunMacro = function(text)
   for line in (text or ""):gmatch("[^\n]+") do
@@ -342,6 +356,7 @@ end
 function TICK() for _, t in ipairs(TICKERS) do if not t.cancelled then local ok, e = pcall(t.fn); if not ok then table.insert(STATE.errors, "ticker: "..e) end end end end
 
 UIParent = CreateFrame("Frame", "UIParent")
+UIParent:SetSize(2000, 650)
 Minimap = CreateFrame("Frame", "Minimap")
 GameTooltip = CreateFrame("Frame", "GameTooltip")
 ColorPickerFrame = CreateFrame("Frame", "ColorPickerFrame")
@@ -396,7 +411,11 @@ UnitIsPlayer = function(u) local r = U(u) return not r or r.player ~= false end
 UnitCanAssist = function(_, u) local r = U(u) return not r or r.assist ~= false end
 UnitIsPVP = function(u) local r = U(u) return r and r.pvp == true or false end
 IsPVPTimerRunning = function() return STATE.pvpTimer == true end
-UnitIsUnit = function(a, b) return a == b end
+-- A unit entry with `is = "player"` is the player under another token, as a self-target is
+UnitIsUnit = function(a, b)
+  local function Id(u) local r = STATE.units[u] return r and r.is or u end
+  return Id(a) == Id(b)
+end
 UnitIsFriend = function() return true end
 UnitLevel = function(u) local r = U(u) return r and r.level or 60 end
 UnitName = function(u) if u == "NPC" then return STATE.tradePartner end local r = U(u) return r and r.name or "Name_" .. u end
@@ -494,12 +513,27 @@ C_UnitAuras.GetAuraDataByIndex = function(u, i)
   if l and l[i] then return Aura(l[i]) end
 end
 MACROS = {}
-GetMacroIndexByName = function(n) for i, m in ipairs(MACROS) do if m.name == n then return m.perChar and 120 + i or i end end return 0 end
+-- Indexes as the client's: account-wide macros 1-120 in their order, character macros from 121
+local function MacroIndex(pos)
+  local account, character = 0, 0
+  for i = 1, pos do if MACROS[i].perChar then character = character + 1 else account = account + 1 end end
+  return MACROS[pos].perChar and 120 + character or account
+end
+local function MacroPos(index) for pos = 1, #MACROS do if MacroIndex(pos) == index then return pos end end end
+-- The lowest index of that name, so an account-wide macro comes before a character one
+GetMacroIndexByName = function(n)
+  local best = 0
+  for pos, m in ipairs(MACROS) do
+    if m.name == n then local i = MacroIndex(pos) if best == 0 or i < best then best = i end end
+  end
+  return best
+end
+GetMacroInfo = function(i) local pos = MacroPos(i) if pos then return MACROS[pos].name, nil, MACROS[pos].body end end
 GetNumMacros = function() local a,c=0,0 for _,m in ipairs(MACROS) do if m.perChar then c=c+1 else a=a+1 end end return a,c end
-DeleteMacro = function(i) table.remove(MACROS, i) end
+DeleteMacro = function(i) table.remove(MACROS, MacroPos(i)) end
 MAX_ACCOUNT_MACROS = 120
 CreateMacro = function(n, icon, body, perChar) MACROS[#MACROS+1] = { name = n, body = body, perChar = perChar } return #MACROS end
-EditMacro = function(i, n, icon, body) MACROS[i > 120 and i - 120 or i].body = body end
+EditMacro = function(i, n, icon, body) MACROS[MacroPos(i)].body = body end
 GetBuildInfo = function() return "1.15.0", "99999", "Oct 1 2026", 16001 end
 date = os.date
 -- The clock BugGrabber stamps errors with; moves with STATE.now

@@ -72,6 +72,36 @@ describe("a change in combat", function()
         assert.are.same({}, STATE.errors)
     end)
 
+    -- code review 1.1.0, F-06: demo mode in combat would print demo messages over real actions
+    it("refuses demo mode in combat", function()
+        local ns, db = login()
+        enterCombat()
+        _G.CHAT = {}
+        SlashCmdList.SIMPLECONJUREBAR("demo")
+        assert.is_false(db.demo)
+        assert.is_truthy(CHAT[#CHAT]:find(ns.L.NOT_IN_COMBAT, 1, true))
+        leaveCombat()
+        SlashCmdList.SIMPLECONJUREBAR("demo")
+        assert.is_true(db.demo)
+        assert.are.same({}, STATE.errors)
+    end)
+
+    -- code review 1.1.0, F-01: a rebuild queued before the bar was set up saved the start
+    -- position over the player's
+    it("keeps the saved bar position after a login in combat", function()
+        _G.SimpleConjureBarDB = { point = "LEFT", rel = "BOTTOMLEFT", x = 500, y = 600 }
+        local ns = addon.load("enUS")
+        STATE.combat = true
+        FIRE("PLAYER_LOGIN"); RUNTIMERS()
+        FIRE("SPELLS_CHANGED"); RUNTIMERS()
+        leaveCombat()
+        local db = SimpleConjureBarDB
+        assert.are.same({ "LEFT", "BOTTOMLEFT", 500, 600 }, { db.point, db.rel, db.x, db.y })
+        local point, _, rel, x, y = ns.bar:GetPoint(1)
+        assert.are.same({ "LEFT", "BOTTOMLEFT", 500, 600 }, { point, rel, x, y })
+        assert.are.same({}, STATE.errors)
+    end)
+
     it("leaves the flyouts' close time to after combat", function()
         local ns, db = login()
         local before = ns.header:GetAttribute("autohide")

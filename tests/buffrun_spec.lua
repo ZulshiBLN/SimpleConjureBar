@@ -123,6 +123,14 @@ describe("Buff & Run and the PvP flag", function()
         end
     end)
 
+    -- Buffing yourself flags nothing (code review 1.1.0, F-05)
+    it("never passes the mage, targeted, for the mage's own flag", function()
+        local ns = login()
+        as(SELF["flagged, timer running"])
+        assert.is_not_nil(choice(ns, { is = "player", class = "MAGE", pvp = true }))
+        assert.is_nil(choice(ns, { class = "MAGE", pvp = true })) -- another flagged mage still is
+    end)
+
     it("logs why a flagged player was passed while the mage's flag runs out", function()
         local ns = login()
         as(SELF["flagged, timer running"])

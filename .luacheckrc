@@ -44,7 +44,7 @@ read_globals = {
     "GetAddOnMetadata", "GetBuildInfo", "GetCVar", "GetCoinText", "GetCoinTextureString",
     "GetContainerItemID", "GetContainerItemInfo", "GetContainerNumSlots",
     "GetCursorPosition", "GetItemCooldown", "GetItemCount", "GetItemIcon", "GetItemInfo",
-    "GetLocale", "GetMacroIndexByName", "GetMerchantItemID", "GetMerchantItemInfo",
+    "GetLocale", "GetMacroIndexByName", "GetMacroInfo", "GetMerchantItemID", "GetMerchantItemInfo",
     "GetMerchantItemLink", "GetMerchantItemMaxStack", "GetMerchantNumItems", "GetMoney",
     "GetNumGroupMembers", "GetNumMacros", "GetNumSubgroupMembers", "GetRaidRosterInfo",
     "GetSpellInfo", "GetSpellTexture", "GetTime", "GetTradePlayerItemLink",
@@ -77,11 +77,6 @@ read_globals = {
         cancelFunc = { read_only = false },
     } },
 }
-
--- Unused locals in the unpublished build 1.37, named one by one so a new one is still reported.
--- Each goes with the first change to its file (ruleset archive/decisions.md).
-files["SimpleConjureBar/Bar.lua"] = { ignore = { "211/GAP" } }
-files["SimpleConjureBar/Report.lua"] = { ignore = { "211/L" } }
 
 -- Specs run in plain Lua 5.1 under busted, where file access is how they read
 -- the addon's sources.

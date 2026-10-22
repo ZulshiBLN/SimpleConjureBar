@@ -48,7 +48,9 @@ describe("the window background", function()
         db.windowOpacity = 20
         ns.ApplyWindowOpacities()
         db.windowOpacity = 90 -- changed while the report is closed, as the slider may
-        ns.ToggleSettings(); ns.ApplyWindowOpacity(SimpleConjureBarSettings)
+        ns.ToggleSettings() -- the settings window applies it as it opens (code review 1.1.0, F-07)
+        assert.is_true(SimpleConjureBarSettings:IsShown())
+        checkWindow(ns.D, SimpleConjureBarSettings, 90, "settings")
         ns.OpenBugReport()
         checkWindow(ns.D, SimpleConjureBarReport, 90, "report")
     end)

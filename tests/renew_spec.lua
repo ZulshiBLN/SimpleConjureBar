@@ -86,6 +86,19 @@ describe("Arcane Intellect", function()
         assert.are.equal("2", tostring(b.count:GetText()))
     end)
 
+    -- code review 1.1.0, F-08
+    it("in a party passes a dead and an offline member", function()
+        local ns = login()
+        local D, b = ns.D, ns.buttons.Intellect
+        STATE.units.player = { auras = { intellect(D, 30) } }
+        STATE.units.party1 = { class = "PRIEST", dead = true }
+        STATE.units.party2 = { class = "DRUID", connected = false }
+        STATE.units.party3 = { class = "PALADIN" }
+        regroup(ns, true, false, 4)
+        assert.are.equal("party3", b:GetAttribute("unit2"))
+        assert.are.equal("1", tostring(b.count:GetText()))
+    end)
+
     it("in a raid casts no Brilliance when no subgroup in need is in range", function()
         local ns = login()
         local D, b = ns.D, ns.buttons.Intellect

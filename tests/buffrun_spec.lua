@@ -238,10 +238,19 @@ describe("the Buff & Run click", function()
             middle(ns)
             assert.are.same({ {}, 0 }, { STATE.casts, STATE.targetedNext })
             STATE.cooldowns[spell] = nil
+            -- armed again, so only the combat lock can stop the clicks below (code review
+            -- 1.1.0, F-02: the cooldown click had left the middle click empty)
+            ns.UpdateBuffState()
+            assert.are.equal("macro", ns.buttons.Intellect:GetAttribute("type3"))
 
-            STATE.combat = true; FIRE("PLAYER_REGEN_DISABLED")
+            FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
             middle(ns)
             assert.are.same({ {}, 0 }, { STATE.casts, STATE.targetedNext })
+            for _, button in ipairs({ "LeftButton", "RightButton" }) do
+                RUNCLICK(ns.buttons.Intellect, button, keyDown)
+                RUNCLICK(ns.buttons.Intellect, button, not keyDown)
+            end
+            assert.are.same({}, STATE.casts)
             STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
             middle(ns)
             assert.are.same({ { spell = spell, unit = "target" } }, STATE.casts)

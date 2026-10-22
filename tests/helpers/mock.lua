@@ -38,7 +38,15 @@ function Methods:Hide() if self.shown then self.shown = false; Run(self, "OnHide
 function Methods:SetShown(v) if v then self:Show() else self:Hide() end end
 function Methods:IsShown() return self.shown end
 function Methods:IsVisible() return self.shown end
-function Methods:SetAttribute(k, v) self.attrs[k] = v; self.attrWrites = (self.attrWrites or 0) + 1 end
+-- In combat the client refuses an addon's write to a protected frame (ADDON_ACTION_BLOCKED):
+-- recorded as an error and not written. Secure snippets write through their handles instead.
+function Methods:SetAttribute(k, v)
+  if STATE.combat and self.protected then
+    table.insert(STATE.errors, ("BLOCKED SetAttribute %s %s"):format(tostring(self.name), tostring(k)))
+    return
+  end
+  self.attrs[k] = v; self.attrWrites = (self.attrWrites or 0) + 1
+end
 function Methods:GetAttribute(k) return self.attrs[k] end
 function Methods:SetScript(s, f) self.scripts[s] = f end
 function Methods:GetScript(s) return self.scripts[s] end
@@ -360,7 +368,16 @@ tinsert = table.insert
 CreateColor = function(r, g, b, a) return { r = r, g = g, b = b, a = a } end
 PixelUtil = { SetSize = function(t, w, h) t:SetSize(w, h) end }
 Settings = { RegisterCanvasLayoutCategory = function(p, n) return { GetID = function() return 1 end } end, RegisterAddOnCategory = noop }
-RegisterStateDriver = noop; UnregisterStateDriver = noop
+-- A state driver is recorded on its frame as { state, value }; in combat the client refuses
+-- both calls, as it does SetAttribute
+RegisterStateDriver = function(f, state, value)
+  if STATE.combat then table.insert(STATE.errors, "BLOCKED RegisterStateDriver " .. tostring(f.name)) return end
+  f.stateDriver = { state, value }
+end
+UnregisterStateDriver = function(f)
+  if STATE.combat then table.insert(STATE.errors, "BLOCKED UnregisterStateDriver " .. tostring(f.name)) return end
+  f.stateDriver = nil
+end
 InCombatLockdown = function() return STATE.combat end
 UnitAffectingCombat = function() return STATE.affecting == true or STATE.combat == true end
 IsInGroup = function() return STATE.group end

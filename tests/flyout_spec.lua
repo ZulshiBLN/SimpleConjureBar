@@ -181,7 +181,7 @@ describe("Teleport and Portal in combat", function()
         local ns = login(nil)
         for _, key in ipairs({ "Teleport", "Portal" }) do
             local b = ns.buttons[key]
-            STATE.combat = true; FIRE("PLAYER_REGEN_DISABLED")
+            FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
             assert.is_true(b.icon.desaturated, key)
             assert.is_true(b.icon:GetAlpha() < 1, key)
             _G.STATE.casts = {}

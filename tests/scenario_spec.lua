@@ -156,7 +156,7 @@ describe("the addon in a mocked client", function()
 
     it("keeps the settings closed in combat", function()
         SimpleConjureBarSettings:Hide()
-        STATE.combat = true; FIRE("PLAYER_REGEN_DISABLED")
+        FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
         SlashCmdList.SIMPLECONJUREBAR("")
         assert.is_false(SimpleConjureBarSettings:IsShown())
         STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED")
@@ -177,7 +177,7 @@ describe("the addon in a mocked client", function()
         STATE.group = false; _G.AURAS = { ["playerSpell1459"] = true }; _G.AURALIST = {}
         ns.UpdateBuffState()
         assert.are.equal("", b.Intellect.count:GetText())
-        STATE.combat = true; FIRE("PLAYER_REGEN_DISABLED"); _G.AURAS = {}
+        FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true; _G.AURAS = {}
         FIRE("UNIT_AURA", "player"); RUNTIMERS(); ns.UpdateBuffState()
         assert.are.equal("", b.Intellect.count:GetText())
         assert.is_true(not b.Armor.antsShown or b.Armor.antsShown == armorBefore)

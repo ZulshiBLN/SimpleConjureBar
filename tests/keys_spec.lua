@@ -121,7 +121,7 @@ describe("Cast next buff", function()
         auras(ns)
         assert.are.same(clears(b.Intellect), action(key))
 
-        STATE.combat = true; FIRE("PLAYER_REGEN_DISABLED")
+        FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
         _G.STATE.casts = {}
         RUNCLICK(key, "LeftButton", false)
         assert.are.same({}, STATE.casts) -- Intellect is locked in combat
@@ -168,7 +168,7 @@ describe("Cast next buff", function()
         local b, key = ns.buttons, _G[BUFF_KEY]
         assert.are.equal("Armor", key:GetAttribute("scbsource"))
         RUNCLICK(b.Armor, "RightButton", false) -- open the armor flyout before combat
-        STATE.combat = true; FIRE("PLAYER_REGEN_DISABLED")
+        FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
 
         local other = b.Armor.fly.buttons[2]
         assert.are_not.equal(other:GetAttribute("spell"), key:GetAttribute("spell1"))

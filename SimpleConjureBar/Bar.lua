@@ -262,7 +262,10 @@ function ns.ShowTooltip(self)
         if left then GameTooltip:AddLine(left, 0, 1, 0) end
         if middle then GameTooltip:AddLine(middle, 0, 1, 0) end
         if right then GameTooltip:AddLine(right, 0, 1, 0) end
-        if self.hint2 then GameTooltip:AddLine(self.hint2, 0, 1, 0) end
+        if self.hint2 then
+            GameTooltip:AddLine(" ") -- set apart from the clicks (Michel)
+            GameTooltip:AddLine(self.hint2, 0, 1, 0)
+        end
     end
     GameTooltip:Show()
 end

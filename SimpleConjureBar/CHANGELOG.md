@@ -25,6 +25,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   no names, realm, guild, chat, date or file paths; the window lists what it holds and says that
   an issue is public. The report is one code, already selected; its link opens a GitHub form
   with one field for it, and "Show content" shows what the code holds.
+- "Window background" beside Scale on the General tab sets the background of the settings and
+  bug report windows from invisible (0 %) to solid (100 %); 60 % is the look they always had.
+  Frame, texts and controls stay as they are.
 - "Show anchor" on the General tab keeps the bar's handle - move, lock, settings - visible. It is
   on by default, also when you update; switched off, the handle shows only while the mouse is
   over it, as before.

@@ -3,6 +3,13 @@
 This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - Unreleased
+
+### Fixed
+- The mana gem's tooltip could read "Left-click: Use ?" until the bar was rebuilt - in demo
+  mode without a gem, say - because the game had not loaded the gem's name yet. It now names
+  the gem as soon as the game knows it.
+
 ## [1.1.0] - 2026-10-22
 
 ### Added

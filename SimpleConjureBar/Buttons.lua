@@ -75,6 +75,18 @@ local UpdateCounts = ns.UpdateCounts
 -- known but missing gems, so a gem conjured during combat can be used right away. With several
 -- gems a later line can still report the shared cooldown or a missing item, which is accepted.
 ---------------------------------------------------------------------------
+-- An item's name reads nil until the client has loaded its data - in demo mode, say, with no gem
+-- in the bags. The gem's line then waits for ITEM_DATA_LOAD_RESULT instead of showing "?".
+local requestedNames = {}
+local function GemName(item)
+    local name = ItemName(item)
+    if not name and not requestedNames[item] and C_Item and C_Item.RequestLoadItemDataByID then
+        requestedNames[item] = true
+        C_Item.RequestLoadItemDataByID(item)
+    end
+    return name or "?"
+end
+
 local function SetupGem(b)
     local knownGems, ownedLines, missingLines = {}, {}, {}
     local owned, conjure
@@ -99,7 +111,7 @@ local function SetupGem(b)
     b.leftItem, b.conjureSpell = owned, conjure
     b.spellId = not owned and conjure or nil
     -- Left uses the best gem; without one it conjures, and the line says so
-    b.hintLeft = owned and L.HINT_USE_ITEM:format(ItemName(owned) or "?")
+    b.hintLeft = owned and L.HINT_USE_ITEM:format(GemName(owned))
         or L.HINT_LEFT:format(ns.SpellName(conjure) or L.CONJURE)
     b.hint = L.HINT_RIGHT:format(ns.SpellName(conjure) or L.CONJURE)
 
@@ -409,8 +421,15 @@ events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("BAG_UPDATE_COOLDOWN")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
 events:RegisterEvent("PLAYER_REGEN_DISABLED")
-events:SetScript("OnEvent", function(_, event)
+events:RegisterEvent("ITEM_DATA_LOAD_RESULT")
+events:SetScript("OnEvent", function(_, event, ...)
     if not db then return end
+    if event == "ITEM_DATA_LOAD_RESULT" then
+        -- text only, no attribute: allowed in combat too
+        local item, ok = ...
+        if ok and gem.leftItem == item then gem.hintLeft = L.HINT_USE_ITEM:format(GemName(item)) end
+        return
+    end
     if event == "PLAYER_REGEN_DISABLED" then
         ArmorForCombat()
     elseif event == "PLAYER_TARGET_CHANGED" then

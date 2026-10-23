@@ -145,6 +145,28 @@ describe("the water and food tooltips", function()
     end)
 end)
 
+-- The client answers an item's name only once its data is loaded; before that the gem's line
+-- read "Use ?" until the next rebuild (seen in game, 2026-10-23, demo mode without a gem)
+describe("the mana gem's tooltip", function()
+    it("names the gem once the client has loaded its data", function()
+        local loaded, requested = false, {}
+        _G.SimpleConjureBarDB = nil
+        local ns = addon.load("enUS", function()
+            local name = C_Item.GetItemNameByID
+            C_Item.GetItemNameByID = function(id) if loaded then return name(id) end end
+            C_Item.RequestLoadItemDataByID = function(id) requested[#requested + 1] = id end
+        end)
+        FIRE("PLAYER_LOGIN"); RUNTIMERS()
+        local gem, L = ns.buttons.ManaGem, ns.L
+        assert.is_not_nil(gem.leftItem)
+        assert.are.same({ gem.leftItem }, requested)
+        loaded = true
+        FIRE("ITEM_DATA_LOAD_RESULT", gem.leftItem, true)
+        assert.are.equal(L.HINT_USE_ITEM:format(C_Item.GetItemNameByID(gem.leftItem)), gem.hintLeft)
+        assert.are.same({}, STATE.errors)
+    end)
+end)
+
 describe("the minimap button's tooltip", function()
     it("says the right click locks or unlocks the bar, and follows the click at once", function()
         local ns = login()

@@ -13,7 +13,7 @@
 ## Notes-zhCN: 简洁的法师动作条：水、食物、传送、传送门和材料购买
 ## Notes-zhTW: 簡潔的法師動作條：水、食物、傳送、傳送門和材料購買
 ## Author: ZulshiBLN
-## Version: 1.1.0
+## Version: 1.1.1
 ## X-License: MIT
 ## X-Curse-Project-ID: 1751327
 ## X-Wago-ID: x61xWVN1

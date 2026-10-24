@@ -102,15 +102,16 @@ describe("every button's tooltip", function()
         STATE.units.player = {} -- Intellect missing: the count follows the clicks
         ns.UpdateBuffState()
         local intel = clickLines(ns, b.Intellect)
-        assert.are.same({ b.Intellect.hintLeft, L.HINT_BUFF_RUN, b.Intellect.hint }, { intel[1], intel[2], intel[3] })
-        assert.is_truthy(intel[4]) -- "Missing Arcane Intellect: 1"
-        assert.is_nil(intel[5])
+        -- solo no right click; the line names the case (ruleset plan 2026-10-23-intellect-range)
+        assert.are.same({ b.Intellect.hintLeft, L.HINT_BUFF_RUN }, { intel[1], intel[2] })
+        assert.are.equal(b.Intellect.hint2, intel[3]) -- "Missing: Arcane Intellect"
+        assert.is_nil(intel[4])
         -- set apart from the clicks by an empty line (Michel)
         local raw = {}
         GameTooltip.AddLine = function(_, text) raw[#raw + 1] = text end
         ns.ShowTooltip(b.Intellect)
         assert.are.equal(" ", raw[#raw - 1])
-        assert.are.equal(intel[4], raw[#raw])
+        assert.are.equal(intel[3], raw[#raw])
         assert.is_truthy(L.HINT_PICK_ARMOR:find("Choose Armor", 1, true))
         assert.is_truthy(L.HINT_PICK:find("Choose Destination", 1, true))
         assert.are.same({}, STATE.errors)

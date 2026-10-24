@@ -121,8 +121,9 @@ local function InSpellRange(spell, unit)
         local v = IsSpellInRange(ns.SpellName(spell), unit)
         if v == 1 then r = true elseif v == 0 then r = false end
     end
-    if r == nil then r = UnitInRange(unit) end
-    return r and true or false
+    -- no answer counts as out of range: UnitInRange answers true at any distance (in game,
+    -- 2026-10-23), so it is no fallback
+    return r == true
 end
 
 -- Whether the unit needs a buff from us (ruleset plan 2026-10-23-intellect-range):
@@ -166,19 +167,23 @@ end
 ---------------------------------------------------------------------------
 -- Group scan
 ---------------------------------------------------------------------------
--- Reused between scans (no allocations per scan)
-local missingBySub, expiringBySub, firstInRangeBySub = {}, {}, {}
-local missingInRangeBySub, expiringInRangeBySub = {}, {}
-local pick = {} -- single-target candidates: missing/weaker/expiring, in range/out of range
+-- Reused between scans (no allocations per scan): counts of members in range per subgroup,
+-- and the first such member, for the raid's Brilliance
+local missingIn, weakerIn, expiringIn = {}, {}, {}
+local missingUnit, weakerUnit = {}, {}
+local pick = {} -- single-target candidates in range: missing / weaker / expiring
 
--- Returns: the number of mana users in need - missing, weaker or expiring (range ignored,
--- offline/dead excluded) -, the best single target, the best Brilliance target, each nil when
--- nobody needs it, the earliest moment a buff falls due (nil if none will), and the player's
--- own need.
---   Single:     missing, then weaker, then expiring - each in range before out of range
---   Brilliance: in a raid the subgroup in need with a member in range - most missing, then most
---               expiring, then the lowest number; in a party yourself (it covers your party)
-local function ScanGroup(probe, known)
+-- Returns (ruleset plan 2026-10-23-intellect-range):
+--   needing  - mana users in need: missing, weaker or expiring (offline and dead excluded)
+--   needIn   - those of them in range (the player always is)
+--   single   - the first in range: missing, then weaker, then expiring
+--   group    - the Brilliance target, nil unless it reaches `threshold` (nil: no Brilliance):
+--              in a party the player while needIn reaches it; in a raid the subgroup with at
+--              least that many missing or weaker in range - most missing, then weaker, then
+--              expiring, then the lowest number - on its first missing, else weaker member
+--   nextDue  - the earliest moment a buff falls due (nil if none will)
+--   selfNeed - the player's own need
+local function ScanGroup(probe, known, threshold)
     local aiName = ns.SpellName(D.SPELL_ARCANE_INTELLECT)
     local abName = ns.SpellName(D.SPELL_ARCANE_BRILLIANCE)
     local inRaid = IsInRaid()
@@ -186,9 +191,8 @@ local function ScanGroup(probe, known)
     local count
     if inRaid then count = GetNumGroupMembers() else count = grouped and GetNumSubgroupMembers() + 1 or 1 end
 
-    wipe(missingBySub); wipe(expiringBySub); wipe(firstInRangeBySub)
-    wipe(missingInRangeBySub); wipe(expiringInRangeBySub); wipe(pick)
-    local needing, nextDue, selfNeed = 0, nil, nil
+    wipe(missingIn); wipe(weakerIn); wipe(expiringIn); wipe(missingUnit); wipe(weakerUnit); wipe(pick)
+    local needing, needIn, nextDue, selfNeed = 0, 0, nil, nil
     for i = 1, count do
         local unit, sub
         if inRaid then
@@ -199,47 +203,48 @@ local function ScanGroup(probe, known)
             sub = 1
         end
         if UnitExists(unit) and UnitIsConnected(unit) and not UnitIsDeadOrGhost(unit) then
-            local inRange = not grouped or (probe and InSpellRange(probe, unit))
             local _, classFile = UnitClass(unit)
             if MANA_CLASSES[classFile] then
                 local need, due = NeedsIntellect(unit, aiName, abName, known)
                 if need then
                     needing = needing + 1
                     if unit == "player" then selfNeed = need end
-                    -- a weaker buff lacks strength as a missing one does
-                    local bySub, inRangeBySub = missingBySub, missingInRangeBySub
-                    if need == "expiring" then bySub, inRangeBySub = expiringBySub, expiringInRangeBySub end
-                    bySub[sub] = (bySub[sub] or 0) + 1
-                    local slot = need .. (inRange and "In" or "Far")
-                    pick[slot] = pick[slot] or unit
-                    if inRange then inRangeBySub[sub] = inRangeBySub[sub] or unit end
+                    if not grouped or (probe and InSpellRange(probe, unit)) then
+                        needIn = needIn + 1
+                        pick[need] = pick[need] or unit
+                        if need == "missing" then
+                            missingIn[sub] = (missingIn[sub] or 0) + 1
+                            missingUnit[sub] = missingUnit[sub] or unit
+                        elseif need == "weaker" then
+                            weakerIn[sub] = (weakerIn[sub] or 0) + 1
+                            weakerUnit[sub] = weakerUnit[sub] or unit
+                        else
+                            expiringIn[sub] = (expiringIn[sub] or 0) + 1
+                        end
+                    end
                 elseif due and (not nextDue or due < nextDue) then
                     nextDue = due
                 end
             end
-            if inRange then firstInRangeBySub[sub] = firstInRangeBySub[sub] or unit end
         end
     end
 
-    local single = pick.missingIn or pick.missingFar or pick.weakerIn or pick.weakerFar
-        or pick.expiringIn or pick.expiringFar
-    if not grouped or not inRaid then
-        -- Solo and in a party both buffs go on yourself or reach you: only your own need counts
-        -- solo, anyone's in a party
-        local group = (needing > 0) and "player" or nil
-        return needing, grouped and single or group, group, nextDue, selfNeed
-    end
-    local bestSub, bestMissing, bestExpiring
-    for sub, unit in pairs(firstInRangeBySub) do
-        local m, e = missingBySub[sub] or 0, expiringBySub[sub] or 0
-        if unit and m + e > 0 and (not bestSub or m > bestMissing
-            or (m == bestMissing and (e > bestExpiring or (e == bestExpiring and sub < bestSub)))) then
-            bestSub, bestMissing, bestExpiring = sub, m, e
+    local single = pick.missing or pick.weaker or pick.expiring
+    local group
+    if threshold and grouped and not inRaid then
+        if needIn >= threshold then group = "player" end
+    elseif threshold and inRaid then
+        local best, bestM, bestW, bestE
+        for sub = 1, 8 do
+            local m, w, e = missingIn[sub] or 0, weakerIn[sub] or 0, expiringIn[sub] or 0
+            if m + w >= threshold and (not best or m > bestM or (m == bestM and (w > bestW
+                or (w == bestW and e > bestE)))) then
+                best, bestM, bestW, bestE = sub, m, w, e
+            end
         end
+        group = best and (missingUnit[best] or weakerUnit[best]) or nil
     end
-    local group = bestSub and (missingInRangeBySub[bestSub] or expiringInRangeBySub[bestSub]
-        or firstInRangeBySub[bestSub]) or nil
-    return needing, single, group, nextDue, selfNeed
+    return needing, needIn, single, group, nextDue, selfNeed
 end
 
 ---------------------------------------------------------------------------
@@ -272,10 +277,8 @@ local function TargetText(spell, unit)
     return (ns.SpellName(spell) or "?") .. " > " .. whom
 end
 
--- Sets spells, fixed target units and the tooltip hint (out of combat only)
 -- A click whose unit is nil has nothing to do: it gets no action type, so it casts nothing, and
--- its line says everyone has the buff (ruleset plan 2026-10-21-buff-renew) - or, while members
--- need it, that none of them is in reach (code review 1.1.0, F-04).
+-- its line says the buff is active - or, while members need it, that they are out of range.
 local function ClickText(spell, unit, needing)
     if not unit then
         return (ns.SpellName(spell) or "?") .. " > " .. (needing > 0 and L.NONE_IN_RANGE or L.EVERYONE_BUFFED)
@@ -283,50 +286,39 @@ local function ClickText(spell, unit, needing)
     return TargetText(spell, unit)
 end
 
+-- The left click casts the one recommendation (out of combat only): Brilliance on groupUnit when
+-- it reached the threshold, else the single buff on singleUnit. The right click casts nothing:
+-- in a group it opens the threshold slider (OnClick below), solo it has no line.
 local function ApplyTargets(b, singleUnit, groupUnit, needing, known)
     -- Rank fitting the chosen player's level; without a target the highest, for the icon
     local level = singleUnit and singleUnit ~= "player" and UnitLevel(singleUnit) or nil
     if level and level <= 0 then level = nil end
-    local single = IntellectSpell(level, known)
-
-    -- Group buff only when learned and Arcane Powder is in the bags
-    local group
-    if IsKnown(D.SPELL_ARCANE_BRILLIANCE) and (IsDemo() or (ItemCount(D.ITEM_ARCANE_POWDER) or 0) > 0) then
-        group = D.SPELL_ARCANE_BRILLIANCE
-    end
-
-    -- Left = default (solo: single, group: Brilliance), right = the other one
-    local grouped = IsInGroup()
-    local left, right
-    if grouped then
-        left, right = group or single, single
-    else
-        left, right = single, group or single
-    end
-    -- Not "a and b or c": a nil groupUnit (nobody in need in reach) must stay nil
-    local leftUnit, rightUnit = singleUnit, singleUnit
-    if left == group then leftUnit = groupUnit end
-    if right == group and right ~= single then rightUnit = groupUnit end
+    local left, leftUnit = IntellectSpell(level, known), singleUnit
+    if groupUnit then left, leftUnit = D.SPELL_ARCANE_BRILLIANCE, groupUnit end
 
     if b.leftSpell ~= left then b.icon:SetTexture(GetSpellTex(left)) end
-    b.leftSpell, b.rightSpell, b.spellId = left, right, left
+    b.leftSpell, b.rightSpell, b.spellId = left, nil, left
     b.leftItem = nil
     b.hintLeft = L.HINT_LEFT:format(ClickText(left, leftUnit, needing))
-    b.hint = L.HINT_RIGHT:format(ClickText(right, rightUnit, needing))
+    b.hint = nil
+    b.hintKey = IsInGroup() and "HINT_THRESHOLD" or nil
 
     if IsDemo() then
         SetAttr(b, "type1", nil)
-        SetAttr(b, "type2", nil)
     else
         -- Always cast on a fixed unit, so the current target is never buffed
         SetAttr(b, "type1", leftUnit and "spell" or nil)
         SetAttr(b, "spell1", left)
         SetAttr(b, "unit1", leftUnit)
-        SetAttr(b, "type2", rightUnit and "spell" or nil)
-        SetAttr(b, "spell2", right)
-        SetAttr(b, "unit2", rightUnit)
     end
+    SetAttr(b, "type2", nil)
 end
+
+-- In a group the right click opens the settings on the threshold slider's tab; on the release
+-- only, as the button gets down and up. In combat the snippet drops the click (Bar.lua).
+intel:HookScript("OnClick", function(_, button, down)
+    if button == "RightButton" and not down and IsInGroup() then ns.OpenSettings(nil, "TAB_TRACKING") end
+end)
 
 -- Called by Rebuild; spells and targets follow right after in UpdateBuffState
 function ns.SetupIntellect(b)
@@ -335,18 +327,21 @@ function ns.SetupIntellect(b)
     return true
 end
 
--- selfNeed: the player's own need, which names the line solo - one player needs no number
+-- The count is those in need in range; the line names all in need and those out of range, or
+-- solo the player's own need without a number. asGroup: demo mode shows the group lines.
 local SELF_LINE = { missing = "SELF_MISSING", weaker = "SELF_WEAKER", expiring = "SELF_EXPIRING" }
-local function ShowBuffCount(count, selfNeed)
+local function ShowBuffCount(count, needing, selfNeed, asGroup)
     intel.count:SetText(count > 0 and count or "") -- only shown when greater than 0
     ns.SetAnts(intel, count > 0)
     local name = ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT")
-    if count <= 0 then
+    if needing <= 0 then
         intel.hint2 = nil
-    elseif not IsInGroup() then
+    elseif not asGroup and not IsInGroup() then
         intel.hint2 = L[SELF_LINE[selfNeed] or "SELF_MISSING"]:format(name)
+    elseif needing > count then
+        intel.hint2 = L.BUFF_MISSING_FAR:format(name, needing, needing - count)
     else
-        intel.hint2 = L.BUFF_MISSING:format(name, count)
+        intel.hint2 = L.BUFF_MISSING:format(name, needing)
     end
 end
 
@@ -504,15 +499,25 @@ function ns.UpdateBuffState()
     end
     local due = UpdateArmorHighlight()
     if intel:IsShown() then
+        -- Brilliance once it is learned, Arcane Powder is in the bags and the threshold is not never
+        local t = db.brillianceThreshold
+        local brilliance = IsKnown(D.SPELL_ARCANE_BRILLIANCE) and t < D.BRILLIANCE_NEVER
+            and (IsDemo() or (ItemCount(D.ITEM_ARCANE_POWDER) or 0) > 0)
         if IsDemo() then
-            ShowBuffCount(IsInGroup() and 3 or 1)
-            ApplyTargets(intel, "player", "player", 1, ReadKnownRanks())
+            -- Always the group as it looks at the threshold; never: the single buff on yourself
+            local n = brilliance and t or 1
+            ShowBuffCount(n, n, "missing", true)
+            ApplyTargets(intel, "player", brilliance and "player" or nil, n, ReadKnownRanks())
+            local spell = brilliance and D.SPELL_ARCANE_BRILLIANCE or IntellectSpell(nil, ReadKnownRanks())
+            local whom = brilliance and L.TARGET_GROUP or UnitShortName("player")
+            intel.hintLeft = L.HINT_LEFT:format((ns.SpellName(spell) or "?") .. " > " .. whom)
         else
             local known = ReadKnownRanks()
             local probe = IntellectSpell(nil, known)
-            local missing, singleUnit, groupUnit, intellectDue, selfNeed = ScanGroup(probe, known)
-            ShowBuffCount(missing, selfNeed)
-            ApplyTargets(intel, singleUnit, groupUnit, missing, known)
+            local needing, needIn, singleUnit, groupUnit, intellectDue, selfNeed =
+                ScanGroup(probe, known, brilliance and t or nil)
+            ShowBuffCount(needIn, needing, selfNeed)
+            ApplyTargets(intel, singleUnit, groupUnit, needing, known)
             if intellectDue and (not due or intellectDue < due) then due = intellectDue end
         end
     end

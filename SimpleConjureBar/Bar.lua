@@ -284,8 +284,8 @@ local function DemoClick(b, btn)
         return
     end
     if b.isBuff then
-        local id = (btn == "RightButton") and b.rightSpell or b.leftSpell
-        DemoPrint(L.DEMO_CAST, ns.SpellName(id) or "?")
+        -- the right click casts nothing: in a group it opens the settings (Intellect.lua)
+        if btn ~= "RightButton" then DemoPrint(L.DEMO_CAST, ns.SpellName(b.leftSpell) or "?") end
         return
     end
     if b.key then

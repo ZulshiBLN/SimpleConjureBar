@@ -243,6 +243,14 @@ for _, s in ipairs({
     })
 end
 
+-- Arcane Brilliance from this many in need, or never (ruleset plan 2026-10-23-intellect-range)
+UI.AddNumberSlider({
+    label = "OPT_BRILLIANCE_THRESHOLD", min = 1, max = D.BRILLIANCE_NEVER,
+    valueText = function(v) return v == D.BRILLIANCE_NEVER and L.OPT_NEVER or tostring(v) end,
+    get = function() return db.brillianceThreshold end,
+    set = function(v) db.brillianceThreshold = v; ns.UpdateBuffState() end,
+})
+
 ---------------------------------------------------------------------------
 -- Tab 3: Supplies (reagent tracking and auto-buy)
 ---------------------------------------------------------------------------

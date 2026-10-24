@@ -123,6 +123,9 @@ D.GOLD_RESERVE_MAX = 1000 -- gold
 D.FLYOUT_DIRS = { AUTO = true, FIRST = true, SECOND = true }
 D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX = 1, 5 -- seconds a flyout stays open after the mouse left it
 D.INTELLECT_RENEW_MAX, D.ARMOR_RENEW_MAX = 15, 5 -- minutes; as SmartBlessingBar's renew times
+-- Arcane Brilliance from this many in need (1-5); the slider's last step means never (ruleset
+-- plan 2026-10-23-intellect-range)
+D.BRILLIANCE_NEVER = 6
 -- The windows' background opacity (%) that shows the dialog texture as it always was: a
 -- black square of 60 % matched it in game (ruleset plan 2026-10-22-window-opacity)
 D.WINDOW_OPACITY_TODAY = 60
@@ -226,6 +229,7 @@ D.VALUE_DEFAULTS = {
     -- 0 = only once it is gone (ruleset plan 2026-10-21-buff-renew)
     intellectRenewMinutes = 5,
     armorRenewMinutes = 3,
+    brillianceThreshold = 3, -- Brilliance from this many in need; D.BRILLIANCE_NEVER = never
     buffRun       = true,  -- Buff & Run on the Intellect button's middle click
     pvpBuff       = false, -- Buff & Run also buffs players flagged for PvP
     scale         = 1,

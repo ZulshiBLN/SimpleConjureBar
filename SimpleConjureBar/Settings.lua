@@ -287,7 +287,8 @@ end
 -- Integer slider with an input box on the right.
 -- o = { label (key or function), icon (function -> texture, optional), min, max, get, set,
 --       gap, rows (table that collects the row frames, optional),
---       column ("left" or "right": two sliders share a row, the right one takes the left's) }
+--       column ("left" or "right": two sliders share a row, the right one takes the left's),
+--       valueText (function v -> text for the box, e.g. a word at the last step; optional) }
 local COLUMN_GAP = 20
 UI.COLUMN_GAP = COLUMN_GAP -- the General tab's Scale row lays out its column with it
 function UI.AddNumberSlider(o)
@@ -320,8 +321,12 @@ function UI.AddNumberSlider(o)
     box:SetSize(40, 20)
     box:SetPoint("TOPRIGHT", 0, 0)
     box:SetAutoFocus(false)
-    box:SetNumeric(true)
-    box:SetMaxLetters(#tostring(o.max))
+    -- A value shown as a word needs letters; digits typed are still read as the number
+    box:SetNumeric(not o.valueText)
+    box:SetMaxLetters(o.valueText and 0 or #tostring(o.max))
+    local function Shown(v) return o.valueText and o.valueText(v) or tostring(v) end
+    local probe = o.valueText and row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    if probe then probe:Hide() end
     box:SetJustifyH("CENTER")
 
     local slider = MakeSlider(row)
@@ -337,7 +342,7 @@ function UI.AddNumberSlider(o)
         updating = true
         slider:SetValue(v)
         updating = false
-        box:SetText(tostring(v))
+        box:SetText(Shown(v))
         ns.UpdateCounts()
     end
     slider:SetScript("OnValueChanged", function(_, v)
@@ -347,14 +352,14 @@ function UI.AddNumberSlider(o)
 
     box:SetScript("OnEnterPressed", function(self)
         local v = tonumber(self:GetText())
-        if v then SetValue(v) else self:SetText(tostring(o.get())) end
+        if v then SetValue(v) else self:SetText(Shown(o.get())) end
         self:ClearFocus()
     end)
     box:SetScript("OnEscapePressed", function(self)
-        self:SetText(tostring(o.get()))
+        self:SetText(Shown(o.get()))
         self:ClearFocus()
     end)
-    box:SetScript("OnEditFocusLost", function(self) self:SetText(tostring(o.get())) end)
+    box:SetScript("OnEditFocusLost", function(self) self:SetText(Shown(o.get())) end)
 
     refreshers[#refreshers + 1] = function()
         if type(o.label) == "function" then label:SetText(o.label()) end -- e.g. item names
@@ -362,11 +367,17 @@ function UI.AddNumberSlider(o)
         updating = true
         slider:SetValue(o.get())
         updating = false
-        box:SetText(tostring(o.get()))
+        box:SetText(Shown(o.get()))
     end
     -- A column needs room for two halves its width, so no label in either is cut
     measures[#measures + 1] = function()
-        local need = x + label:GetStringWidth() + 16 + 40
+        local boxW = 40
+        if o.valueText then -- room for the word at the last step, in the current language
+            probe:SetText(o.valueText(o.max))
+            boxW = math.max(40, probe:GetStringWidth() + 16)
+            box:SetWidth(boxW)
+        end
+        local need = x + label:GetStringWidth() + 16 + boxW
         if o.column then return 2 * need + COLUMN_GAP end
         return need
     end
@@ -800,8 +811,12 @@ function ns.CloseSettings()
     settings:Hide()
 end
 
-function ns.OpenSettings(aboveBlizzard)
+-- tab: the title key of a tab to show, e.g. "TAB_TRACKING" from the Intellect button's right click
+function ns.OpenSettings(aboveBlizzard, tab)
     if aboveBlizzard then settings:SetFrameStrata("FULLSCREEN_DIALOG") end
+    for i, pg in ipairs(pages) do
+        if tab and pg.titleKey == tab then ShowPage(i) end
+    end
     if settings:IsShown() then settings:Raise() else settings:Show() end
 end
 settings:HookScript("OnHide", function()

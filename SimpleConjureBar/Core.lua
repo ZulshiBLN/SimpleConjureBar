@@ -122,6 +122,7 @@ function ns.InitDB()
     db.flyoutAutoClose = Num(db.flyoutAutoClose, D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX, V.flyoutAutoClose, true)
     db.intellectRenewMinutes = Num(db.intellectRenewMinutes, 0, D.INTELLECT_RENEW_MAX, V.intellectRenewMinutes, true)
     db.armorRenewMinutes = Num(db.armorRenewMinutes, 0, D.ARMOR_RENEW_MAX, V.armorRenewMinutes, true)
+    db.brillianceThreshold = Num(db.brillianceThreshold, 1, D.BRILLIANCE_NEVER, V.brillianceThreshold, true)
     db.windowOpacity = Num(db.windowOpacity, 0, 100, V.windowOpacity, true)
     for _, key in ipairs({ "antsSpeed", "armorAntsSpeed", "gemAntsSpeed" }) do
         db[key] = Num(db[key], 1, #D.GLOW_DURATIONS, V[key], true)
@@ -154,7 +155,8 @@ function ns.InitDB()
         db.showGreeting = nil -- removed setting: the login message is always shown
     end
     -- Version 4 adds flyoutDir, flyoutAutoClose, buffRun, pvpBuff, showAnchor,
-    -- intellectRenewMinutes, armorRenewMinutes and windowOpacity; the defaults above fill them in
+    -- intellectRenewMinutes, armorRenewMinutes, windowOpacity and brillianceThreshold; the
+    -- defaults above fill them in
     db.dbVersion = D.DB_VERSION
 
     -- Button order: keep the saved order, drop unknown keys, append new buttons at the end

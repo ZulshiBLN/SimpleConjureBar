@@ -173,7 +173,8 @@ local pick = {} -- single-target candidates: missing/weaker/expiring, in range/o
 
 -- Returns: the number of mana users in need - missing, weaker or expiring (range ignored,
 -- offline/dead excluded) -, the best single target, the best Brilliance target, each nil when
--- nobody needs it, and the earliest moment a buff falls due (nil if none will).
+-- nobody needs it, the earliest moment a buff falls due (nil if none will), and the player's
+-- own need.
 --   Single:     missing, then weaker, then expiring - each in range before out of range
 --   Brilliance: in a raid the subgroup in need with a member in range - most missing, then most
 --               expiring, then the lowest number; in a party yourself (it covers your party)
@@ -187,7 +188,7 @@ local function ScanGroup(probe, known)
 
     wipe(missingBySub); wipe(expiringBySub); wipe(firstInRangeBySub)
     wipe(missingInRangeBySub); wipe(expiringInRangeBySub); wipe(pick)
-    local needing, nextDue = 0, nil
+    local needing, nextDue, selfNeed = 0, nil, nil
     for i = 1, count do
         local unit, sub
         if inRaid then
@@ -204,6 +205,7 @@ local function ScanGroup(probe, known)
                 local need, due = NeedsIntellect(unit, aiName, abName, known)
                 if need then
                     needing = needing + 1
+                    if unit == "player" then selfNeed = need end
                     -- a weaker buff lacks strength as a missing one does
                     local bySub, inRangeBySub = missingBySub, missingInRangeBySub
                     if need == "expiring" then bySub, inRangeBySub = expiringBySub, expiringInRangeBySub end
@@ -225,7 +227,7 @@ local function ScanGroup(probe, known)
         -- Solo and in a party both buffs go on yourself or reach you: only your own need counts
         -- solo, anyone's in a party
         local group = (needing > 0) and "player" or nil
-        return needing, grouped and single or group, group, nextDue
+        return needing, grouped and single or group, group, nextDue, selfNeed
     end
     local bestSub, bestMissing, bestExpiring
     for sub, unit in pairs(firstInRangeBySub) do
@@ -237,7 +239,7 @@ local function ScanGroup(probe, known)
     end
     local group = bestSub and (missingInRangeBySub[bestSub] or expiringInRangeBySub[bestSub]
         or firstInRangeBySub[bestSub]) or nil
-    return needing, single, group, nextDue
+    return needing, single, group, nextDue, selfNeed
 end
 
 ---------------------------------------------------------------------------
@@ -333,10 +335,19 @@ function ns.SetupIntellect(b)
     return true
 end
 
-local function ShowBuffCount(count)
+-- selfNeed: the player's own need, which names the line solo - one player needs no number
+local SELF_LINE = { missing = "SELF_MISSING", weaker = "SELF_WEAKER", expiring = "SELF_EXPIRING" }
+local function ShowBuffCount(count, selfNeed)
     intel.count:SetText(count > 0 and count or "") -- only shown when greater than 0
     ns.SetAnts(intel, count > 0)
-    intel.hint2 = count > 0 and L.BUFF_MISSING:format(ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT"), count) or nil
+    local name = ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT")
+    if count <= 0 then
+        intel.hint2 = nil
+    elseif not IsInGroup() then
+        intel.hint2 = L[SELF_LINE[selfNeed] or "SELF_MISSING"]:format(name)
+    else
+        intel.hint2 = L.BUFF_MISSING:format(name, count)
+    end
 end
 
 -- Armor: highlight while none of the mage armors is active, or the active one has at most its
@@ -499,8 +510,8 @@ function ns.UpdateBuffState()
         else
             local known = ReadKnownRanks()
             local probe = IntellectSpell(nil, known)
-            local missing, singleUnit, groupUnit, intellectDue = ScanGroup(probe, known)
-            ShowBuffCount(missing)
+            local missing, singleUnit, groupUnit, intellectDue, selfNeed = ScanGroup(probe, known)
+            ShowBuffCount(missing, selfNeed)
             ApplyTargets(intel, singleUnit, groupUnit, missing, known)
             if intellectDue and (not due or intellectDue < due) then due = intellectDue end
         end

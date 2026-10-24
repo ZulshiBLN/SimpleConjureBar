@@ -348,3 +348,63 @@ describe("the renew times", function()
         assert.are.same({ 7, 2 }, { db.intellectRenewMinutes, db.armorRenewMinutes })
     end)
 end)
+
+-- ruleset plan 2026-10-23-intellect-range, phase 3
+describe("the Brilliance threshold", function()
+    it("is a setting of version 4, default 3, clamped to 1-never and kept", function()
+        local ns, db = login({ dbVersion = 4 })
+        local D = ns.D
+        assert.are.equal(D.VALUE_DEFAULTS.brillianceThreshold, db.brillianceThreshold)
+        assert.are.equal(3, db.brillianceThreshold)
+        db = select(2, login({ dbVersion = 4, brillianceThreshold = "x" }))
+        assert.are.equal(3, db.brillianceThreshold)
+        db = select(2, login({ dbVersion = 4, brillianceThreshold = 99 }))
+        assert.are.equal(D.BRILLIANCE_NEVER, db.brillianceThreshold)
+        db = select(2, login({ dbVersion = 4, brillianceThreshold = 0 }))
+        assert.are.equal(1, db.brillianceThreshold)
+        db = select(2, login(select(2, login({ dbVersion = 4, brillianceThreshold = 5 }))))
+        assert.are.equal(5, db.brillianceThreshold)
+    end)
+
+    it("has a slider below the renew sliders that shows never at its end", function()
+        local ns, db = login()
+        local D, L = ns.D, ns.L
+        ns.ToggleSettings()
+        local row, slider, box = rowOf(L.OPT_BRILLIANCE_THRESHOLD)
+        assert.is_not_nil(row); assert.is_not_nil(slider); assert.is_not_nil(box)
+        local intelRow = rowOf(ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT"))
+        assert.are.equal(intelRow:GetParent(), row:GetParent())
+        assert.is_true(select(3, row:GetPoint()) < select(3, intelRow:GetPoint()))
+        RUNSCRIPT(slider, "OnValueChanged", D.BRILLIANCE_NEVER)
+        assert.are.equal(D.BRILLIANCE_NEVER, db.brillianceThreshold)
+        assert.are.equal(L.OPT_NEVER, box:GetText())
+        box:SetText("2"); RUNSCRIPT(box, "OnEnterPressed")
+        assert.are.equal(2, db.brillianceThreshold)
+        assert.are.equal("2", box:GetText())
+        assert.are.same({}, STATE.errors)
+    end)
+
+    it("opens the settings on the Tracking tab when asked", function()
+        local ns = login()
+        local row = rowOf(ns.L.OPT_BRILLIANCE_THRESHOLD)
+        ns.OpenSettings(nil, "TAB_TRACKING")
+        assert.is_true(SimpleConjureBarSettings:IsShown())
+        assert.is_true(row:GetParent():IsShown())
+    end)
+end)
+
+describe("the solo count line", function()
+    it("names the case without a number", function()
+        local ns = login()
+        local D, L = ns.D, ns.L
+        local name = ns.LocalName(ns.SpellName(D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT")
+        local lowest = D.INTELLECT_RANKS[#D.INTELLECT_RANKS].id
+        for key, auras in pairs({
+            SELF_MISSING = {}, SELF_WEAKER = { intellect(D, 30, lowest) }, SELF_EXPIRING = { intellect(D, 2) },
+        }) do
+            STATE.units.player = { auras = auras }
+            ns.UpdateBuffState()
+            assert.are.equal(L[key]:format(name), ns.buttons.Intellect.hint2, key)
+        end
+    end)
+end)

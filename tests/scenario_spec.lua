@@ -182,7 +182,9 @@ describe("the addon in a mocked client", function()
         assert.are.equal("", b.Intellect.count:GetText())
         assert.is_true(not b.Armor.antsShown or b.Armor.antsShown == armorBefore)
         STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
-        assert.is_truthy(b.Intellect.hint2 and b.Intellect.hint2:find("1$"))
+        -- solo the line names the case, without a number (ruleset plan 2026-10-23-intellect-range)
+        assert.are.equal(ns.L.SELF_MISSING:format(ns.LocalName(ns.SpellName(ns.D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT")),
+            b.Intellect.hint2)
     end)
 
     it("opens above the Blizzard settings panel", function()

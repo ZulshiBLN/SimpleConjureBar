@@ -64,6 +64,17 @@ describe("the Buff & Run choice", function()
         assert.are.equal(rankFor(D, 20), choice(ns, { class = "PRIEST", level = 20, auras = { 8098 } }))
     end)
 
+    -- ruleset plan 2026-10-23-intellect-range: a lower rank with time left takes ours
+    it("casts our rank on a lower rank with time left", function()
+        local ns = login()
+        local D = ns.D
+        local lowest = D.INTELLECT_RANKS[#D.INTELLECT_RANKS].id
+        local weak = { id = lowest, as = D.SPELL_ARCANE_INTELLECT, expires = GetTime() + 1800 }
+        assert.are.equal(rankFor(D, 60), choice(ns, { class = "PRIEST", level = 60, auras = { weak } }))
+        local ours = { id = rankFor(D, 60), as = D.SPELL_ARCANE_INTELLECT, expires = GetTime() + 1800 }
+        assert.is_nil(choice(ns, { class = "PRIEST", level = 60, auras = { ours } }))
+    end)
+
     it("buffs a flagged player once allowed, and nobody while auras are secret", function()
         local ns, db = login()
         db.pvpBuff = true

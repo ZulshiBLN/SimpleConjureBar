@@ -75,6 +75,44 @@ describe("Arcane Intellect", function()
         assert.is_nil(b:GetAttribute("type2"))
     end)
 
+    -- ruleset plan 2026-10-23-intellect-range: a lower rank than ours is needed, after the
+    -- missing ones (Michel learned a higher rank and nothing glowed)
+    it("counts a weaker rank with time left, after the missing", function()
+        local ns = login()
+        local D, b = ns.D, ns.buttons.Intellect
+        local lowest = D.INTELLECT_RANKS[#D.INTELLECT_RANKS].id
+        STATE.units.player = { auras = { intellect(D, 30, lowest) } }
+        ns.UpdateBuffState()
+        assert.are.same({ "spell", "player" }, { b:GetAttribute("type1"), b:GetAttribute("unit1") })
+        assert.is_true(b.antsShown)
+        assert.are.equal("1", tostring(b.count:GetText()))
+
+        STATE.units.player = { auras = { intellect(D, 30) } }
+        STATE.units.party1 = { class = "PRIEST", auras = { intellect(D, 30, lowest) } }
+        STATE.units.party2 = { class = "PRIEST" }
+        regroup(ns, true, false, 3)
+        assert.are.equal("2", tostring(b.count:GetText()))
+        assert.are.equal("party2", b:GetAttribute("unit2")) -- the missing one first
+        STATE.units.party2 = { class = "PRIEST", auras = { intellect(D, 30) } }
+        ns.UpdateBuffState()
+        assert.are.equal("party1", b:GetAttribute("unit2"))
+    end)
+
+    it("does not count our rank with time left, a buff without expiry or an unknown one", function()
+        local ns = login()
+        local D, b = ns.D, ns.buttons.Intellect
+        local unknown = { id = 999999, as = D.SPELL_ARCANE_INTELLECT, expires = GetTime() + 1800 }
+        for name, aura in pairs({
+            ours = intellect(D, 30),
+            ["no expiry"] = D.INTELLECT_RANKS[#D.INTELLECT_RANKS].id,
+            unknown = unknown,
+        }) do
+            STATE.units.player = { auras = { aura } }
+            ns.UpdateBuffState()
+            assert.is_false(b.antsShown, name)
+        end
+    end)
+
     it("in a party buffs a missing member before an expiring one", function()
         local ns = login()
         local D, b = ns.D, ns.buttons.Intellect

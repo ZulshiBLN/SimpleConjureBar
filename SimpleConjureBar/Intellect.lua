@@ -125,24 +125,34 @@ local function InSpellRange(spell, unit)
     return r and true or false
 end
 
--- Whether the unit needs a buff from us: "missing" without Arcane Intellect or Brilliance (any
--- rank, by name) and without another Intellect buff at least as strong as our rank; "expiring"
--- when its Intellect or Brilliance has at most the renew time left - unless it is stronger
--- than our rank, which the client would refuse to overwrite. nil otherwise, then also the
--- moment it falls due (nil when it never does).
+-- Whether the unit needs a buff from us (ruleset plan 2026-10-23-intellect-range):
+--   "missing"  - no Arcane Intellect or Brilliance (any rank, by name, any caster) and no other
+--                Intellect buff at least as strong as our rank;
+--   "weaker"   - only a known lower rank than ours for its level, with a readable expiry;
+--   "expiring" - our strength (or an ID that cannot be read) with at most the renew time left.
+-- nil for a stronger buff (the client would refuse ours) or one without a readable expiry, then
+-- also the moment it falls due (nil when it never does). With both buffs the stronger decides.
 local function NeedsIntellect(unit, aiName, abName, known)
     local level = UnitLevel(unit)
     local ours = IntellectSpell(level and level > 0 and level or nil, known)
     local oursValue = ours and D.INTELLECT_BUFFS[ours] or 0
-    local found, latest = false, nil
+    local found, latest, weaker = false, nil, false
     for i = 1, 2 do -- Intellect, then Brilliance; no table per unit and scan
         local aura = FindBuff(unit, i == 1 and aiName or abName)
         if aura then
             local ok, value = pcall(rawget, D.INTELLECT_BUFFS, type(aura) == "table" and aura.spellId or nil)
             local at = ExpiresAt(aura)
             if (ok and value and value > oursValue) or not at then return nil end
-            found, latest = true, math.max(latest or at, at)
+            if ok and value and value < oursValue then
+                weaker = true
+            else
+                found, latest = true, math.max(latest or at, at)
+            end
         end
+    end
+    if weaker and not found then
+        if StrongestIntellectBuff(unit, oursValue) >= oursValue then return nil end
+        return "weaker"
     end
     if found then
         local due = RenewAt(latest, db.intellectRenewMinutes)
@@ -159,12 +169,12 @@ end
 -- Reused between scans (no allocations per scan)
 local missingBySub, expiringBySub, firstInRangeBySub = {}, {}, {}
 local missingInRangeBySub, expiringInRangeBySub = {}, {}
-local pick = {} -- single-target candidates: missing/expiring, in range/out of range
+local pick = {} -- single-target candidates: missing/weaker/expiring, in range/out of range
 
--- Returns: the number of mana users in need - missing or expiring (range ignored, offline/dead
--- excluded) -, the best single target, the best Brilliance target, each nil when nobody needs
--- it, and the earliest moment a buff falls due (nil if none will).
---   Single:     missing in range, missing out of range, expiring in range, expiring out of range
+-- Returns: the number of mana users in need - missing, weaker or expiring (range ignored,
+-- offline/dead excluded) -, the best single target, the best Brilliance target, each nil when
+-- nobody needs it, and the earliest moment a buff falls due (nil if none will).
+--   Single:     missing, then weaker, then expiring - each in range before out of range
 --   Brilliance: in a raid the subgroup in need with a member in range - most missing, then most
 --               expiring, then the lowest number; in a party yourself (it covers your party)
 local function ScanGroup(probe, known)
@@ -194,6 +204,7 @@ local function ScanGroup(probe, known)
                 local need, due = NeedsIntellect(unit, aiName, abName, known)
                 if need then
                     needing = needing + 1
+                    -- a weaker buff lacks strength as a missing one does
                     local bySub, inRangeBySub = missingBySub, missingInRangeBySub
                     if need == "expiring" then bySub, inRangeBySub = expiringBySub, expiringInRangeBySub end
                     bySub[sub] = (bySub[sub] or 0) + 1
@@ -208,7 +219,8 @@ local function ScanGroup(probe, known)
         end
     end
 
-    local single = pick.missingIn or pick.missingFar or pick.expiringIn or pick.expiringFar
+    local single = pick.missingIn or pick.missingFar or pick.weakerIn or pick.weakerFar
+        or pick.expiringIn or pick.expiringFar
     if not grouped or not inRaid then
         -- Solo and in a party both buffs go on yourself or reach you: only your own need counts
         -- solo, anyone's in a party

@@ -5,7 +5,25 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 
 ## [1.1.1] - Unreleased
 
+### Added
+- The Arcane Brilliance threshold on the Tracking tab (1-5 or never, default 3): how many in
+  need in range make the Intellect button cast Brilliance. In a group its right click opens it.
+
+### Changed
+- The Intellect button's left click casts one recommendation: Arcane Brilliance once the
+  threshold is reached - in a party by everyone in need in range, in a raid by one subgroup's
+  members who have none or a weaker one - else Arcane Intellect on the first in need. The right
+  click no longer casts the other spell; solo it does nothing.
+- The tooltip says "active" instead of "everyone has it", "out of range" for members in need
+  too far away, how many of those in need are out of range, and solo whether your buff is
+  missing, weaker or expiring.
+
 ### Fixed
+- Members out of range were counted, made the Intellect button glow and were picked for a buff
+  that could not reach them. Only members in range count now.
+- After learning a higher Arcane Intellect rank, members with a lower one and time left were
+  not offered the new rank; the button and Buff & Run passed them. A weaker rank now counts as
+  needed, after those who have none.
 - The mana gem's tooltip could read "Left-click: Use ?" until the bar was rebuilt - in demo
   mode without a gem, say - because the game had not loaded the gem's name yet. It now names
   the gem as soon as the game knows it.

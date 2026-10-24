@@ -29,21 +29,26 @@ The addon loads for mages only.
 | Button | Left click | Right click | Middle click |
 |---|---|---|---|
 | Armor | Cast the last armor | Open the armor flyout (choice is remembered) | – |
-| Arcane Intellect | Solo: single buff, group: Arcane Brilliance | The other one | Buff & Run |
+| Arcane Intellect | The recommended buff: Arcane Brilliance from the threshold, else the single buff | In a group: open the Brilliance threshold | Buff & Run |
 | Mana Gem | Use the best gem | Conjure the highest missing gem | – |
 | Water / Food | Consume the best item | Conjure (rank fitting a targeted player) | Trade water & food to the target |
 | Teleport / Portal | Last destination | Open the destinations (choice is remembered) | – |
 | Handle | Move the bar | Lock / unlock | Open the settings |
 
-- **Arcane Intellect** never buffs your current target: solo it always targets you, in a group the
-  addon picks the next mana user without the buff (members in range first). In a raid, Brilliance
-  goes to the subgroup with the most missing buffs. The button is locked and greyed out in combat.
-  The number on the button shows how many mana users need the buff; its tooltip names what
-  each click casts and on whom - the member, "your group" for Brilliance, in a raid its group.
-  A buff with less than its renew time left (Tracking tab, 5 minutes by default) is needed again,
-  after everyone who has none. When nobody needs it, a click casts nothing and the tooltip says
-  "everyone has it"; in a raid Brilliance waits until a group in need is in range, and the
-  tooltip says that none is.
+- **Arcane Intellect** never buffs your current target: solo it always targets you, in a group
+  only mana users in range count and are buffed. A member needs it who has none, then one with a
+  weaker rank than yours for his level, then one whose buff runs out within its renew time
+  (Tracking tab, 5 minutes by default). The left click casts one recommendation: Arcane Brilliance
+  once enough are in need in range - the Brilliance threshold, 3 by default; in a party all of
+  them, in a raid those of one subgroup who have none or a weaker one - else the single buff on
+  the first in need. Without Brilliance, Arcane Powder or with the threshold at "never" it is
+  always the single buff. In a group the right click opens the threshold on the Tracking tab;
+  solo it does nothing. The button is locked and greyed out in combat.
+  The number on the button shows how many need the buff in range; the tooltip names the click's
+  spell and target - the member, "Group" for Brilliance, in a raid its group - and how many need
+  it, how many of them out of range. Solo it says whether yours is missing, weaker or expiring.
+  When nobody needs it, a click casts nothing and the tooltip says "active", or "out of range"
+  while those in need are too far.
 - **Buff & Run** - a middle click on Arcane Intellect buffs the player you target and then targets
   the next friendly player, so you can buff passing players by clicking again and again. Only
   Arcane Intellect, never Brilliance, in the highest rank his level accepts, and only for a mana
@@ -80,7 +85,8 @@ window closes when combat starts and reopens afterwards.
   are buffed anyway), Report bug, Reload UI
 - **Tracking**: show/hide and colors of Armor, Intellect and Mana Gem, highlight speed; how many
   minutes before it runs out Arcane Intellect (0-15, default 5) and the armor (0-5, default 3)
-  count as needed again - 0 means only once they are gone
+  count as needed again - 0 means only once they are gone; the Arcane Brilliance threshold
+  (1-5 or never, default 3)
 - **Supplies**: rune warning threshold and colors, auto-buy, gold reserve and target amounts
 - **Order**: drag and drop the button order
 - **Macros**: the Polymorph macro with its raid marker, the Ice Block macro, the stopcasting

@@ -11,6 +11,20 @@ local function login()
 end
 
 describe("the guards", function()
+    -- Michel, 2026-10-26: SetAttr itself refuses in combat, as SmartBlessingBar's does
+    it("write no secure attribute in combat", function()
+        local ns = login()
+        local b = ns.buttons.Intellect
+        local before = b:GetAttribute("spell1")
+        STATE.combat = true
+        ns.SetAttr(b, "spell1", 424242)
+        assert.are.equal(before, b:GetAttribute("spell1"))
+        assert.are.same({}, STATE.errors)
+        STATE.combat = false
+        ns.SetAttr(b, "spell1", 424242)
+        assert.are.equal(424242, b:GetAttribute("spell1"))
+    end)
+
     it("keep the action log's last 50 in order once it wraps", function()
         local ns = login()
         for i = 1, 60 do ns.Log("entry " .. i) end

@@ -289,8 +289,11 @@ function ns.KnownTravel(key)
 end
 
 -- Secure attributes are only written when they change: every SetAttribute triggers
--- OnAttributeChanged on the secure button, which is wasted work for unchanged values.
+-- OnAttributeChanged on the secure button, which is wasted work for unchanged values. Never in
+-- combat, where the client refuses the write (ADDON_ACTION_BLOCKED): callers queue such changes
+-- themselves, this only keeps one that forgot from raising the error (Michel, 2026-10-26).
 function ns.SetAttr(b, key, value)
+    if InCombatLockdown() then return end
     if b:GetAttribute(key) ~= value then b:SetAttribute(key, value) end
 end
 

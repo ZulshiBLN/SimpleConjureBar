@@ -7,7 +7,7 @@ on:
   push:
     branches: [develop, main]
   # The release workflow runs these same checks before it publishes, with its
-  # tag. No upload token reaches them: the rehearsal runs without one (ruleset plan 2026-10-26-release-hardening).
+  # tag. No upload token reaches them: the rehearsal runs without one (ruleset plan 2026-10-25-release-hardening).
   workflow_call:
     inputs:
       tag:

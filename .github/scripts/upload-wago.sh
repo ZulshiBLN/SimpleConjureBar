@@ -30,7 +30,7 @@ label="v$(toc_field Version)"
 target=${GAME_VERSION:-$(interface_to_version "$(toc_field Interface)")}
 
 # A real upload needs the token, checked before anything goes over the network; the
-# rehearsal runs without it (ruleset plan 2026-10-26-release-hardening)
+# rehearsal runs without it (ruleset plan 2026-10-25-release-hardening)
 [ -n "$dry" ] || [ -n "${WAGO_API_TOKEN:-}" ] || fail "WAGO_API_TOKEN is not set"
 if [ -n "${WAGO_VERSIONS_FILE:-}" ]; then
     versions=$(cat "$WAGO_VERSIONS_FILE")

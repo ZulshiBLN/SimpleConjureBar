@@ -1,5 +1,5 @@
 -- Guards that every spec passed by before: removing one left the suite green (found by
--- SmartBlessingBar's 1.1.0 review, F-05, and checked in SCB by mutation, 2026-10-26).
+-- SmartBlessingBar's 1.1.0 review, F-05, and checked in SCB by mutation, 2026-10-25).
 
 local addon = require("addon")
 
@@ -11,7 +11,7 @@ local function login()
 end
 
 describe("the guards", function()
-    -- Michel, 2026-10-26: SetAttr itself refuses in combat, as SmartBlessingBar's does
+    -- Michel, 2026-10-25: SetAttr itself refuses in combat, as SmartBlessingBar's does
     it("write no secure attribute in combat", function()
         local ns = login()
         local b = ns.buttons.Intellect

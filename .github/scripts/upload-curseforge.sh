@@ -31,7 +31,7 @@ label="v$(toc_field Version)"
 target=${GAME_VERSION:-$(interface_to_version "$(toc_field Interface)")}
 
 if [ -n "$dry" ] && [ -z "${CF_VERSIONS_FILE:-}" ] && [ -z "${CF_API_TOKEN:-}" ]; then
-    # The rehearsal runs without the token (ruleset plan 2026-10-26-release-hardening): the version list
+    # The rehearsal runs without the token (ruleset plan 2026-10-25-release-hardening): the version list
     # needs it, so the version comes from the TOC and the ID stays 0
     chosen=$target
     id=0

@@ -37,7 +37,7 @@ done < "$toc"
 
 # Nothing else ships: every file is one the TOC loads, the TOC itself, or one of the four
 # above, and every folder lies above one of them. A list of what must not ship would let a
-# file added to the repository later through (ruleset plan 2026-10-26-release-hardening).
+# file added to the repository later through (ruleset plan 2026-10-25-release-hardening).
 lists=$(mktemp -d)
 trap 'rm -rf "$work" "$lists"' EXIT
 {

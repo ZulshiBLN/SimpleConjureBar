@@ -1,4 +1,4 @@
--- The workflows' rights and the upload tokens (ruleset plan 2026-10-26-release-hardening, after
+-- The workflows' rights and the upload tokens (ruleset plan 2026-10-25-release-hardening, after
 -- SmartBlessingBar's): no checkout keeps the job's token in .git/config - nothing in them pushes -
 -- and the upload jobs only read; the github job keeps the write right release.yml gives it, to
 -- create the release. Read as text: a few line checks need no YAML parser.

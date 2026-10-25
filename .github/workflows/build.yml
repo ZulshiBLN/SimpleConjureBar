@@ -84,7 +84,7 @@ jobs:
           if bash .github/scripts/check-package.sh "$zip" .release/release.json v0.0.0; then
               echo "the check accepted a tag that is not the TOC's version"; exit 1
           fi
-          # Only the addon's own files ship (ruleset plan 2026-10-26-release-hardening)
+          # Only the addon's own files ship (ruleset plan 2026-10-25-release-hardening)
           stray="$RUNNER_TEMP/stray"
           mkdir -p "$stray" && unzip -q "$zip" -d "$stray"
           echo "notes" > "$stray/SimpleConjureBar/notes.txt"
@@ -156,7 +156,7 @@ jobs:
           check_fallback Wago "$RUNNER_TEMP/wago.log"
           echo "both sites refused a list without Forever and fell back with a warning, as they must"
 
-      # No upload token reaches CI (ruleset plan 2026-10-26-release-hardening): both dry runs
+      # No upload token reaches CI (ruleset plan 2026-10-25-release-hardening): both dry runs
       # pass without one, and a real run without one stops before the network
       - name: Upload controls - no token
         env:

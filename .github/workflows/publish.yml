@@ -15,7 +15,7 @@ on:
         required: true
     # Passed by release.yml's publish job only. GitHub resolves an environment secret in a
     # called workflow only when the caller passes it by name; the jobs below that read them
-    # name the environment "release", which only v* tag runs may use (ruleset plan 2026-10-26-release-hardening). The rehearsal
+    # name the environment "release", which only v* tag runs may use (ruleset plan 2026-10-25-release-hardening). The rehearsal
     # passes none.
     secrets:
       CF_API_TOKEN:

@@ -9,12 +9,16 @@ Built for **WoW Forever**. Loads for mages only.
 
 ## ✨ Buffs that look after themselves
 
-- **Arcane Intellect** finds the next mana user who needs it - solo it is you, in a raid it
-  is the group missing the most. A number on the button says how many still need it.
-- **Renewed in time:** Intellect and your armor glow a few minutes before they run out.
+- **Arcane Intellect** casts one recommendation: Arcane Brilliance once enough of your group
+  need it - you set how many - else the single buff on the next mana user in range. A number
+  on the button says how many in range still need it.
+- **Renewed in time:** Intellect and your armor glow a few minutes before they run out, and
+  a member with a weaker rank than yours gets your stronger one.
 - **Buff & Run:** middle-click to buff the player you target and jump to the next one -
   perfect for buffing passers-by in town.
 - **Cast next buff:** one key casts whatever the bar is glowing for.
+- **Ready for a fight:** in combat the bar greys out what cannot work there, and its tooltips
+  show only the clicks that do.
 
 ![Intellect tooltip and tracking](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/03-tracking.jpg)
 

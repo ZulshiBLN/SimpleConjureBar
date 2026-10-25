@@ -3,6 +3,8 @@
 A slim mage bar for **WoW Forever** (Classic content on the modern Retail client, Interface 16001).
 It bundles everything a mage conjures, buffs and travels with into one movable bar.
 
+![The bar in demo mode, the handle's tooltip and the settings' General tab](.previews/01-general.jpg)
+
 ## Installation
 
 SimpleConjureBar is published on
@@ -78,6 +80,8 @@ armor the left click casts.
 - **Teleport and Portal** are greyed out in combat, where the game refuses them; their flyout
   still lets you choose the next destination.
 
+![The armor flyout open above the bar, and the language list on the General tab](.previews/02-flyout-armor-languages.jpg)
+
 ## Settings
 
 Open with `/scb`, the minimap button, the AddOn compartment, a middle click on the handle or
@@ -102,6 +106,14 @@ window closes when combat starts and reopens afterwards.
   macros, and "Show macro" in the bottom right corner (opens the macro window on the
   character tab; the settings window stays open)
 
+| Supplies, with the mana gem's clicks | Order, with the water's clicks |
+|---|---|
+| ![Supplies tab and the Mana Ruby tooltip](.previews/04-supplies.jpg) | ![Order tab and the water tooltip](.previews/05-order.jpg) |
+
+| Macros, with the teleport flyout open | The minimap button |
+|---|---|
+| ![Macros tab and the teleport flyout](.previews/06-macros-flyout-teleport.jpg) | ![The minimap button's tooltip](.previews/08-minimap.jpg) |
+
 In the Polymorph section, "Create macro" creates (or updates) the character macro **SCB Polymorph**:
 the first click sets a hostile, living target as focus and marks it with the chosen raid marker
 (default: moon); further clicks cast Polymorph on the focus; a dead focus is cleared automatically.
@@ -117,6 +129,8 @@ characters) and are created or updated the same way, as character macros:
 A macro for a spell you have not learned yet shows a question mark until you learn it.
 
 ## Reporting a bug
+
+![The bug report window beside the settings](.previews/07-bug-report.jpg)
 
 "Report bug" (General tab) or `/scb bug` opens a short form: what happened, where - a list of
 the addon's parts - and optional details. Everything else the report takes from the game, so a

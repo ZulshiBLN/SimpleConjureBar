@@ -10,6 +10,12 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   need in range make the Intellect button cast Brilliance. In a group its right click opens it.
 
 ### Changed
+- The chat speaks only in demo mode and as the answer to a chat command: a click refused in
+  combat - the handle, the minimap button, the settings key, the macro buttons, "Report bug" -
+  says nothing; `/scb` and `/scb bug` still say why. Locking the bar from the minimap button or
+  the AddOn menu shows the new state in its tooltip instead of the chat. A macro button's result
+  shows for a few seconds beside "Show macro". Auto-buy, trading and the login lines stay in
+  the chat.
 - The Intellect button's left click casts one recommendation: Arcane Brilliance once the
   threshold is reached - in a party by everyone in need in range, in a raid by one subgroup's
   members who have none or a weaker one - else Arcane Intellect on the first in need. The right

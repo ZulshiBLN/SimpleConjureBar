@@ -113,3 +113,49 @@ describe("a change in combat", function()
         leaveCombat()
     end)
 end)
+
+-- In combat the bar offers only what works there (ruleset plan 2026-10-25-combat-locks, item 1)
+describe("the combat locks", function()
+    it("drop water, food and the gem's conjure, grey them, hide Intellect's count, and give all back", function()
+        local ns = login()
+        local b = ns.buttons
+        STATE.units.player = {} -- Intellect missing: a count and a glow before combat
+        ns.UpdateBuffState()
+        assert.are.equal(1, b.Intellect.count:GetText())
+        assert.is_true(b.Intellect.antsShown)
+
+        enterCombat()
+        STATE.casts, STATE.uses = {}, {}
+        for _, key in ipairs({ "Water", "Food" }) do
+            for _, button in ipairs({ "LeftButton", "RightButton" }) do RUNCLICK(b[key], button, false) end
+        end
+        RUNCLICK(b.ManaGem, "RightButton", false)
+        assert.are.same({}, STATE.casts)
+        assert.are.same({}, STATE.uses)
+        RUNCLICK(b.ManaGem, "LeftButton", false) -- a gem is still used
+        assert.are.equal(b.ManaGem.leftItem, STATE.uses[1])
+
+        for _, key in ipairs({ "Intellect", "Water", "Food", "Teleport", "Portal" }) do
+            assert.is_true(b[key].icon.desaturated, key)
+        end
+        assert.are.equal("", b.Intellect.count:GetText())
+        assert.is_false(b.Intellect.antsShown)
+        for _, key in ipairs({ "Water", "Food" }) do
+            assert.is_true(b[key].count.textColor[1] < 1, key)
+        end
+        assert.are.same({}, STATE.errors)
+
+        leaveCombat()
+        for _, key in ipairs({ "Intellect", "Water", "Food" }) do
+            assert.is_false(b[key].icon.desaturated, key)
+            assert.are.equal(1, b[key].icon:GetAlpha(), key)
+        end
+        assert.are.equal(1, b.Intellect.count:GetText())
+        assert.is_true(b.Intellect.antsShown)
+        assert.are.equal(1, b.Water.count.textColor[1])
+        STATE.casts = {}
+        RUNCLICK(b.Water, "RightButton", false)
+        assert.are.same({ { spell = b.Water:GetAttribute("spell2") } }, STATE.casts)
+        assert.are.same({}, STATE.errors)
+    end)
+end)

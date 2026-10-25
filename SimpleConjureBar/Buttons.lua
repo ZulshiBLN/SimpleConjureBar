@@ -303,15 +303,18 @@ function ns.UpdateBuffKey()
     key.demoSpell = b and (b.isGem and b.conjureSpell or b.leftSpell or b.spellId) or nil
 end
 
--- Combat freezes the key; with nothing glowing at its start it casts Armor, as the button on
--- the bar does (Michel, 2026-10-21). PLAYER_REGEN_DISABLED comes right before the lockdown,
--- the last moment the key can be written; combat's end sets it from the glow again.
-local function ArmorForCombat()
+-- Combat freezes the key, and in combat it casts the armor only, as the button on the bar does
+-- (Michel, 2026-10-21 and 2026-10-25): it takes the armor at combat start when it holds
+-- nothing or what is locked there - Intellect, the gem's conjure. PLAYER_REGEN_DISABLED comes
+-- right before the lockdown, the last moment the key can be written; Bar.lua calls this after
+-- the combat look, and combat's end sets the key from the glow again.
+function ns.ArmorForCombat()
     local key = ns.buffKey
-    if InCombatLockdown() or key:GetAttribute("scbsource") or not armor:IsShown() then return end
+    if InCombatLockdown() or key:GetAttribute("scbsource") == "Armor" or not armor:IsShown() then return end
     SetAttr(key, "scbsource", "Armor")
     SetAttr(key, "type1", armor:GetAttribute("type1"))
     SetAttr(key, "spell1", armor:GetAttribute("spell1"))
+    SetAttr(key, "unit1", nil)
     key.demoSpell = armor.spellId
 end
 
@@ -420,7 +423,6 @@ events:RegisterEvent("GROUP_ROSTER_UPDATE")
 events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("BAG_UPDATE_COOLDOWN")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
-events:RegisterEvent("PLAYER_REGEN_DISABLED")
 events:RegisterEvent("ITEM_DATA_LOAD_RESULT")
 events:SetScript("OnEvent", function(_, event, ...)
     if not db then return end
@@ -430,9 +432,7 @@ events:SetScript("OnEvent", function(_, event, ...)
         if ok and gem.leftItem == item then gem.hintLeft = L.HINT_USE_ITEM:format(GemName(item)) end
         return
     end
-    if event == "PLAYER_REGEN_DISABLED" then
-        ArmorForCombat()
-    elseif event == "PLAYER_TARGET_CHANGED" then
+    if event == "PLAYER_TARGET_CHANGED" then
         UpdateConjureForTarget()
     elseif event == "BAG_UPDATE_COOLDOWN" then
         UpdateCounts() -- cooldown and numbers only, no full rebuild
@@ -443,6 +443,7 @@ events:SetScript("OnEvent", function(_, event, ...)
         elseif conjurePending then
             UpdateConjureForTarget()
         end
+        UpdateCounts() -- the gem's glow, hidden in combat
         ns.UpdateBuffKey() -- drops the Armor of ArmorForCombat, and applies what waited
     else
         ns.QueueRebuild()

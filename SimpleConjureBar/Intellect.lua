@@ -454,7 +454,6 @@ end)
 ---------------------------------------------------------------------------
 -- Update cycle
 ---------------------------------------------------------------------------
-local groupDirty = false -- auras changed during combat; re-check afterwards
 local inCombat = false   -- PLAYER_REGEN_DISABLED fires before InCombatLockdown() turns true
 local ticker
 
@@ -489,11 +488,11 @@ end
 
 -- Count, targets and armor highlight. In combat everything stays frozen at the state of combat
 -- start: the client restricts aura data in combat (every buff would look missing), and
--- Intellect cannot be cast then anyway. Everything is re-checked once combat ends.
+-- Intellect cannot be cast then anyway - its count and glow are hidden (Bar.lua
+-- ApplyCombatLook). Everything is checked again once combat ends.
 function ns.UpdateBuffState()
     if not db then return end
     if inCombat or InCombatLockdown() then
-        groupDirty = true
         UpdateTicker()
         return
     end
@@ -559,19 +558,15 @@ events:SetScript("OnEvent", function(_, event, unit)
     if event == "UNIT_AURA" then
         if unit == "player" then
             QueueUpdate()
-        elseif unit and IsGroupUnit(unit) then -- pets, nameplates and others are ignored
-            if InCombatLockdown() then groupDirty = true else QueueUpdate() end
+        elseif unit and IsGroupUnit(unit) and not InCombatLockdown() then -- pets and others are ignored
+            QueueUpdate()
         end
     elseif event == "PLAYER_REGEN_DISABLED" then
         inCombat = true
         UpdateTicker()
     elseif event == "PLAYER_REGEN_ENABLED" then
         inCombat = false
-        if groupDirty then
-            groupDirty = false
-            QueueUpdate()
-        end
-        UpdateTicker()
+        UpdateBuffState() -- the count and glow hidden in combat, and what changed there
     else
         QueueUpdate()
     end

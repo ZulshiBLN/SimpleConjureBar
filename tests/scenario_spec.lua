@@ -65,13 +65,14 @@ describe("the addon in a mocked client", function()
         TICK()
     end)
 
-    it("freezes the count in combat and recounts after it", function()
+    it("hides the count in combat and recounts after it", function()
         STATE.combat = true
         FIRE("PLAYER_REGEN_DISABLED")
         assert.is_true(TICKERS[1].cancelled)
         AURAS["party1Spell1459"] = true
         FIRE("UNIT_AURA", "party1"); RUNTIMERS()
-        assert.are.equal(2, b.Intellect.count:GetText())
+        -- no click works in combat (ruleset plan 2026-10-25-combat-locks)
+        assert.are.equal("", b.Intellect.count:GetText())
         FIRE("UNIT_AURA", "partypet1"); RUNTIMERS()
         FIRE("PLAYER_TARGET_CHANGED"); RUNTIMERS()
         STATE.combat = false

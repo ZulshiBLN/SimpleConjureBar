@@ -5,7 +5,7 @@ local objects = {}
 -- one; this one puts the settings window (made at load) before the report (made on demand)
 local eventFrames, eventOrder = {}, {}
 local timers = {}
-STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {},
+STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {}, uses = {},
           units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false, now = 100 }
 
 local Methods = {}
@@ -96,6 +96,7 @@ function Methods:SetAlpha(a) self.alpha = a end
 function Methods:GetAlpha() return self.alpha or 1 end
 function Methods:SetTexture(t) self.texture = t end
 function Methods:SetVertexColor(r, g, b, a) self.vertexColor = { r, g, b, a } end
+function Methods:SetTextColor(r, g, b, a) self.textColor = { r, g, b, a } end
 -- The anchors a region was last given, in order (ClearAllPoints empties them)
 function Methods:SetPoint(...) self.points = rawget(self, "points") or {}; table.insert(self.points, { ... }) end
 function Methods:ClearAllPoints() self.points = {} end
@@ -241,7 +242,8 @@ end
 -- ruleset plan 2026-10-21-buff-and-run), the post bodies of the wrappers that returned a
 -- message, then the insecure scripts - none of them after a cancel: the client's OnClick
 -- never runs for a click a snippet dropped (ruleset decisions, 2026-10-21). A spell cast is appended to STATE.casts as
--- { spell, unit }; a macro runs its "/click Name [button] [1]" and "/targetfriendplayer"
+-- { spell, unit }, an item used - by an "item" action or a macro's "/use item:N" - to STATE.uses as its
+-- ID; a macro runs its "/click Name [button] [1]" and "/targetfriendplayer"
 -- lines, the latter making the next of STATE.friends the target and counting in
 -- STATE.targetedNext.
 local function Attr(frame, name, button)
@@ -270,6 +272,8 @@ function RUNCLICK(frame, button, down, fromMacro)
       local kind = Attr(frame, "type", button)
       if kind == "spell" and Attr(frame, "spell", button) ~= nil then
         STATE.casts[#STATE.casts + 1] = { spell = Attr(frame, "spell", button), unit = Attr(frame, "unit", button) }
+      elseif kind == "item" then
+        STATE.uses[#STATE.uses + 1] = tonumber(tostring(Attr(frame, "item", button)):match("%d+"))
       elseif kind == "macro" then
         RunMacro(Attr(frame, "macrotext", button))
       end
@@ -289,6 +293,8 @@ RunMacro = function(text)
     if name then
       local target = _G[name]
       if target then RUNCLICK(target, mouse ~= "" and mouse or "LeftButton", keyDown == "1", true) end
+    elseif line:match("^/use item:%d+") then
+      STATE.uses[#STATE.uses + 1] = tonumber(line:match("^/use item:(%d+)"))
     elseif line:match("^/targetfriendplayer") then
       STATE.units.target = table.remove(STATE.friends, 1)
       STATE.targetedNext = STATE.targetedNext + 1

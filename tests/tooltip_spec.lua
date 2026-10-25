@@ -203,3 +203,29 @@ describe("the handle", function()
         STATE.combat = false
     end)
 end)
+
+-- In combat a tooltip lists only the clicks that work there (ruleset plan 2026-10-25-combat-locks,
+-- item 2)
+describe("a tooltip in combat", function()
+    it("leaves out the lines of the clicks locked there, and has them back after", function()
+        local ns = login()
+        local L, b = ns.L, ns.buttons
+        STATE.units.player = {} -- Intellect missing: it has a bottom line
+        ns.UpdateBuffState()
+        FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
+        assert.are.same({}, clickLines(ns, b.Intellect))
+        assert.are.same({}, clickLines(ns, b.Water))
+        assert.are.same({}, clickLines(ns, b.Food))
+        assert.are.same({ b.ManaGem.hintLeft }, clickLines(ns, b.ManaGem))
+        assert.are.same({ L.HINT_PICK }, clickLines(ns, b.Teleport))
+        assert.are.same({ L.HINT_PICK }, clickLines(ns, b.Portal))
+        assert.are.same({ L.HINT_CAST_ARMOR, L.HINT_PICK_ARMOR }, clickLines(ns, b.Armor))
+
+        STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.are.same({ b.Water.hintLeft, L.HINT_MIDDLE, b.Water.hint }, clickLines(ns, b.Water))
+        assert.are.same({ b.ManaGem.hintLeft, b.ManaGem.hint }, clickLines(ns, b.ManaGem))
+        assert.are.same({ L.HINT_TELEPORT, L.HINT_PICK }, clickLines(ns, b.Teleport))
+        assert.are.equal(b.Intellect.hint2, clickLines(ns, b.Intellect)[3])
+        assert.are.same({}, STATE.errors)
+    end)
+end)

@@ -114,7 +114,8 @@ describe("Cast next buff", function()
         assert.are.same({}, STATE.errors)
     end)
 
-    it("keeps its action in combat, drops Intellect, and catches up when combat ends", function()
+    -- In combat the key casts only the armor (ruleset plan 2026-10-25-combat-locks, item 3)
+    it("takes the armor in combat when it held Intellect, and catches up when combat ends", function()
         local ns = login()
         local b, key = ns.buttons, _G[BUFF_KEY]
         _G.AURAS["player" .. ns.SpellName(ns.D.ARMOR_BUFF_IDS[1])] = true
@@ -122,15 +123,16 @@ describe("Cast next buff", function()
         assert.are.same(clears(b.Intellect), action(key))
 
         FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
+        assert.are.same(clears(b.Armor), action(key))
         _G.STATE.casts = {}
         RUNCLICK(key, "LeftButton", false)
-        assert.are.same({}, STATE.casts) -- Intellect is locked in combat
+        assert.are.same({ { spell = b.Armor:GetAttribute("spell1") } }, STATE.casts)
 
         -- A gem change in combat leaves the key as it was
         local writes = key.attrWrites
         ITEMS[8008] = 0; bags()
         assert.are.equal(writes, key.attrWrites)
-        assert.are.same(clears(b.Intellect), action(key))
+        assert.are.same(clears(b.Armor), action(key))
 
         STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
         assert.are.same(clears(b.Intellect), action(key)) -- Intellect still comes before the gem
@@ -183,6 +185,37 @@ describe("Cast next buff", function()
         RUNCLICK(key, "LeftButton", false)
         assert.are.same({ { spell = other:GetAttribute("spell") } }, STATE.casts)
         STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.are.same({}, STATE.errors)
+    end)
+
+    it("takes the armor in combat when it held the gem's conjure, and drops a held gem without one", function()
+        local ns, db = login()
+        local b, key = ns.buttons, _G[BUFF_KEY]
+        _G.AURAS["player" .. ns.SpellName(ns.D.ARMOR_BUFF_IDS[1])] = true
+        _G.AURAS["player" .. ns.SpellName(ns.D.SPELL_ARCANE_INTELLECT)] = true
+        ITEMS[8008] = 0; bags(); auras(ns)
+        assert.are.same(clears(b.ManaGem, true), action(key))
+
+        RUNCLICK(b.Armor, "RightButton", false) -- the armor flyout open before combat
+        FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
+        assert.are.same(clears(b.Armor), action(key))
+        local other = b.Armor.fly.buttons[2]
+        RUNCLICK(other, "LeftButton", false) -- a choice in combat reaches the key
+        _G.STATE.casts = {}
+        RUNCLICK(key, "LeftButton", false)
+        assert.are.same({ { spell = other:GetAttribute("spell") } }, STATE.casts)
+        STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.are.same(clears(b.ManaGem, true), action(key))
+
+        -- No armor on the bar: the key keeps the gem, and in combat casts nothing
+        db.showArmor = false; ns.Rebuild()
+        assert.are.same(clears(b.ManaGem, true), action(key))
+        FIRE("PLAYER_REGEN_DISABLED"); STATE.combat = true
+        _G.STATE.casts = {}
+        RUNCLICK(key, "LeftButton", false)
+        assert.are.same({}, STATE.casts)
+        STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        ITEMS[8008] = 1
         assert.are.same({}, STATE.errors)
     end)
 

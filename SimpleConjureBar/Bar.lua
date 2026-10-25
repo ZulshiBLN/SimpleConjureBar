@@ -3,8 +3,8 @@
 -- highlight (the client's proc glow), the flyout menus and the colors.
 --
 -- Armor          : left = last armor, right = open the armor flyout (choice is remembered)
--- Intellect      : left = default (solo: single, group: Brilliance), right = the other one,
---                  middle = Buff & Run
+-- Intellect      : left = the recommendation (Brilliance from the threshold, else the single
+--                  buff), right = the threshold (in a group), middle = Buff & Run
 -- Mana Gem       : left = best gem, right = conjure a missing gem
 -- Water / Food   : left = consume, right = conjure, middle = trade water & food to the target
 -- Teleport/Portal: left = last destination, right = open the destinations (choice is remembered)
@@ -194,6 +194,8 @@ combatEvents:SetScript("OnEvent", function(_, event)
     local inCombat = (event == "PLAYER_REGEN_DISABLED")
     ns.ApplyCombatLook(inCombat)
     if inCombat then
+        -- after the look: it hid the glows the key followed, without moving the key
+        if db then ns.ArmorForCombat() end
         StopDrag()
     elseif db then
         if combatPending then ns.ApplyCombatHide() end
@@ -258,6 +260,13 @@ function ns.ShowTooltip(self)
     local left = self.hintLeftKey and L[self.hintLeftKey] or self.hintLeft
     local middle = self.hintMiddleKey and L[self.hintMiddleKey] or self.hintMiddle
     local right = self.hintKey and L[self.hintKey] or self.hint
+    -- In combat only the lines of clicks that work there (ruleset plan 2026-10-25-combat-locks)
+    local locked = InCombatLockdown() and self.lockedInCombat
+    if locked then
+        if locked.left then left = nil end
+        if locked.middle then middle = nil end
+        if locked.right then right = nil end
+    end
     if left or middle or right then
         GameTooltip:AddLine(" ")
         if left then GameTooltip:AddLine(left, 0, 1, 0) end
@@ -350,9 +359,9 @@ local function AttachAnts(btn, colorKey, speedKey)
     antsButtons[#antsButtons + 1] = btn
 end
 
--- Shows or hides a button's highlight and starts or stops its animation
-function ns.SetAnts(btn, shown)
-    if shown == btn.antsShown then return end
+-- Shows or hides a button's highlight and starts or stops its animation; true when it changed
+local function ShowAnts(btn, shown)
+    if shown == btn.antsShown then return false end
     btn.antsShown = shown
     if shown then
         btn.ants:Show()
@@ -361,8 +370,12 @@ function ns.SetAnts(btn, shown)
         btn.ants:Hide()
         btn.antsAnim:Stop()
     end
+    return true
+end
+
+function ns.SetAnts(btn, shown)
     -- The buff key casts what clears the first glowing button (Buttons.lua)
-    if ns.UpdateBuffKey then ns.UpdateBuffKey() end
+    if ShowAnts(btn, shown) and ns.UpdateBuffKey then ns.UpdateBuffKey() end
 end
 
 ---------------------------------------------------------------------------
@@ -374,6 +387,8 @@ intel.isBuff = true
 -- the secure snippet drops every click while the player is in combat.
 -- The armor buttons (always on yourself) stay usable in combat.
 header:WrapScript(intel, "OnClick", [[ if PlayerInCombat() then return false end ]])
+local ALL_LOCKED = { left = true, middle = true, right = true }
+intel.lockedInCombat = ALL_LOCKED
 
 -- Number: centered, big and bold (thick outline)
 intel.count:ClearAllPoints()
@@ -389,6 +404,12 @@ local water = CreateMainButton("Water")
 water.spells, water.items = D.WATER_SPELLS, D.WATER_ITEMS
 local food = CreateMainButton("Food")
 food.spells, food.items = D.FOOD_SPELLS, D.FOOD_ITEMS
+-- Nobody eats, drinks or conjures them in a fight (Michel, 2026-10-25): every click is dropped
+-- in combat, the trade too
+for _, b in ipairs({ water, food }) do
+    header:WrapScript(b, "OnClick", [[ if PlayerInCombat() then return false end ]])
+    b.lockedInCombat = ALL_LOCKED
+end
 
 -- Mana Gem: highlight while no gem is in the bags; cooldown swipe
 local gem = CreateMainButton("ManaGem")
@@ -396,6 +417,12 @@ gem.isGem = true
 AttachAnts(gem, "gemAntsColor", "gemAntsSpeed")
 gem.cooldown = CreateFrame("Cooldown", nil, gem, "CooldownFrameTemplate")
 gem.cooldown:SetAllPoints(gem.icon)
+-- Every gem costs more mana to conjure than it gives: its conjure is dropped in combat, a gem
+-- is still used
+header:WrapScript(gem, "OnClick", [[
+    if button == "RightButton" and PlayerInCombat() then return false end
+]])
+gem.lockedInCombat = { right = true }
 
 ---------------------------------------------------------------------------
 -- Flyout buttons (Armor, Teleport, Portal)
@@ -492,6 +519,7 @@ for _, b in ipairs({ tele, portal }) do
     header:WrapScript(b, "OnClick", [[
         if button == "LeftButton" and PlayerInCombat() then return false end
     ]])
+    b.lockedInCombat = { left = true }
 end
 
 ns.buttons = {
@@ -508,9 +536,10 @@ buffKey:Hide()
 buffKey:RegisterForClicks("AnyUp", "AnyDown")
 ns.buffKey = buffKey
 header:SetFrameRef("buffkey", buffKey)
--- Intellect is locked in combat on the key as on its button
+-- In combat the key casts the armor only: Intellect and the gem's conjure are locked there, as
+-- on their buttons; without an armor on the bar it keeps them (Buttons.lua ArmorForCombat)
 header:WrapScript(buffKey, "OnClick", [[
-    if PlayerInCombat() and self:GetAttribute("scbsource") == "Intellect" then return false end
+    if PlayerInCombat() and self:GetAttribute("scbsource") ~= "Armor" then return false end
 ]])
 buffKey:HookScript("OnClick", function(self, _, down)
     if IsDemo() and not down and self.demoSpell then
@@ -609,11 +638,22 @@ function ns.ApplyLook()
     end
 end
 
--- Intellect, Teleport and Portal are greyed out in combat: their clicks are dropped then
-local COMBAT_LOCKED = { intel, tele, portal }
+-- Intellect, water, food, Teleport and Portal are greyed out in combat: their clicks are
+-- dropped then. Intellect's count and glow go too, and the gem's glow - its conjure is locked.
+-- Hiding a glow leaves the key alone: ArmorForCombat decides from what it held. Combat's end
+-- shows them again (UpdateBuffState, UpdateCounts).
+local COMBAT_LOCKED = { intel, water, food, tele, portal }
+local GREY = 0.5
 function ns.ApplyCombatLook(inCombat)
     for _, b in ipairs(COMBAT_LOCKED) do
         b.icon:SetDesaturated(inCombat)
         b.icon:SetAlpha(inCombat and 0.6 or 1)
+    end
+    local c = inCombat and GREY or 1
+    for _, b in ipairs({ water, food }) do b.count:SetTextColor(c, c, c, 1) end
+    if inCombat then
+        intel.count:SetText("")
+        ShowAnts(intel, false)
+        ShowAnts(gem, false)
     end
 end

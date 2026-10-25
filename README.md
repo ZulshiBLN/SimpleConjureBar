@@ -265,7 +265,9 @@ This is not legal advice; it says how bug reports are handled.
 ## License
 
 MIT, see [LICENSE](LICENSE). Author: ZulshiBLN. World of Warcraft screenshots and game art are
-(c) Blizzard Entertainment and not covered by the MIT license.
+(c) Blizzard Entertainment and not covered by the MIT license. The font of the screenshots'
+titles, Cinzel, is under the SIL Open Font License ([tools/fonts/OFL.txt](tools/fonts/OFL.txt));
+it is a tool's and never ships with the addon.
 
 ## Known limits
 

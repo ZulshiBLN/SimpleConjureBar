@@ -514,3 +514,35 @@ describe("the loaded addons", function()
         assert.is_truthy(lines[61]:find("4 more", 1, true))
     end)
 end)
+
+-- A name beside any non-letter and in any case the filter folds (ruleset plan
+-- 2026-10-25-report-filter-fixes, item 2 and 3, SmartBlessingBar's audit S-01)
+describe("the report's name filter", function()
+    it("finds a name beside any non-letter, inside CJK text and in non-ASCII capitals", function()
+        local ns = login(nil)
+        STATE.units.player = { name = "Testplayer" }
+        STATE.units.party1 = { name = "Иван", class = "PRIEST" }
+        STATE.units.party2 = { name = "Tèstplayer", class = "DRUID" }
+        STATE.group, STATE.members = true, 3
+        local inputs = {
+            "\226\128\158Testplayer\226\128\156", "\194\171Testplayer\194\187", "\194\161Testplayer!",
+            "\194\191Testplayer?", "Testplayer\226\128\166", "Testplayer\226\128\148ok",
+            "Testplayer\239\188\140\229\165\189", "\227\128\128Testplayer",
+            "\228\189\160\229\165\189Testplayer\228\189\160\229\165\189", "Testplayer\234\176\128",
+            "TESTPLAYER", "\208\152\208\146\208\144\208\157", "T\195\136STPLAYER",
+        }
+        local half = math.floor(#inputs / 2)
+        local text = report(ns, "OTHER", table.concat(inputs, " ", 1, half),
+            table.concat(inputs, " ", half + 1))
+        for _, bad in ipairs({ "Testplayer", "TESTPLAYER", "\208\152\208\146\208\144\208\157",
+            "T\195\136STPLAYER", "Tèstplayer" }) do
+            assert.is_nil(text:find(bad, 1, true), bad .. " leaked:\n" .. text)
+        end
+        local _, count = text:gsub("<name>", "")
+        assert.is_true(count >= #inputs, text)
+        -- as before: a name before a space goes, one inside a longer word stays
+        text = report(ns, "OTHER", "Testplayer Secondname", "Testplayerish")
+        assert.is_truthy(text:find("<name> Secondname", 1, true), text)
+        assert.is_truthy(text:find("Testplayerish", 1, true), text)
+    end)
+end)

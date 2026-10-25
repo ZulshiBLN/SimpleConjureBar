@@ -44,6 +44,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 ### Security
 - Names and GUIDs the game keeps secret are no longer compared before they are checked: the
   bug report, the trade fill and the Intellect tooltip could raise an error on one.
+- The bug report finds a name beside any punctuation, inside Chinese, Japanese or Korean text
+  and in capitals of Latin-1 and Cyrillic letters; before, „Name“, «Name», ИВАН and others
+  stayed in the report.
 
 ## [1.1.0] - 2026-10-22
 

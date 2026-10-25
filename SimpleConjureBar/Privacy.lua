@@ -70,42 +70,81 @@ end
 ---------------------------------------------------------------------------
 -- Filter for free text, error messages, stack lines and addon names
 ---------------------------------------------------------------------------
--- Letters, digits, "_" and every byte of a non-ASCII character count as part of a word
-local function IsWord(b)
-    return b ~= nil and (b >= 128 or b == 95 or (b >= 48 and b <= 57) or (b >= 65 and b <= 90)
-        or (b >= 97 and b <= 122))
-end
+-- The letters of the scripts that part words with spaces: Latin (without × and ÷), Greek,
+-- Cyrillic, Armenian, Hebrew, Arabic. Any other character - punctuation, spaces, symbols, and
+-- the scripts written without spaces (kana, CJK, Hangul) - ends a word, so a name inside
+-- Chinese text or before a Korean particle is still found (ruleset plan
+-- 2026-10-25-report-filter-fixes, after SmartBlessingBar's audit).
+local LETTERS = { { 0xC0, 0xD6 }, { 0xD8, 0xF6 }, { 0xF8, 0x24F }, { 0x370, 0x3FF }, { 0x400, 0x52F },
+    { 0x531, 0x556 }, { 0x561, 0x587 }, { 0x5D0, 0x5EA }, { 0x620, 0x64A }, { 0x1E00, 0x1EFF } }
 
--- Non-ASCII bytes count as letters, but these characters part words: the no-break space and
--- the typographic quotes (a phone or Mac keyboard types a curly apostrophe after a name)
-local BOUNDARIES = { "\194\160", "\226\128\152", "\226\128\153", "\226\128\156", "\226\128\157" }
-
--- Whether a word ends at position i (before = true) or starts there
-local function Edge(text, i, before)
-    if not IsWord(text:byte(i)) then return true end
-    for _, b in ipairs(BOUNDARIES) do
-        local part = before and text:sub(i - #b + 1, i) or text:sub(i, i + #b - 1)
-        if part == b then return true end
+local function IsWordChar(cp)
+    if cp < 128 then
+        return cp == 95 or (cp >= 48 and cp <= 57) or (cp >= 65 and cp <= 90) or (cp >= 97 and cp <= 122)
+    end
+    for _, r in ipairs(LETTERS) do
+        if cp >= r[1] and cp <= r[2] then return true end
     end
     return false
 end
 
--- Whole words only, ASCII letters in any case, found as plain text (realm names hold "-", "'")
-local function ReplaceName(text, name)
-    local lowText, lowName = text:lower(), name:lower()
-    local out, pos, from = {}, 1, 1
+-- The code point of the UTF-8 character starting at byte i; a stray byte is itself
+local function CodePoint(text, i)
+    local c = text:byte(i)
+    local len = c >= 0xF0 and 4 or c >= 0xE0 and 3 or c >= 0xC0 and 2 or 1
+    if len == 1 then return c end
+    local cp = c % (len == 2 and 32 or len == 3 and 16 or 8)
+    for k = i + 1, i + len - 1 do cp = cp * 64 + (text:byte(k) or 0) % 64 end
+    return cp
+end
+
+-- Whether no word character ends at byte i (before = true) or starts there
+local function Edge(text, i, before)
+    if i < 1 or i > #text then return true end
+    if before then
+        -- back to the first byte of the character that ends at i
+        local start = i
+        while start > 1 and start > i - 3 do
+            local b = text:byte(start)
+            if b < 0x80 or b >= 0xC0 then break end
+            start = start - 1
+        end
+        i = start
+    end
+    return not IsWordChar(CodePoint(text, i))
+end
+
+-- Lower case for ASCII, Latin-1 and Cyrillic capitals. Each keeps its byte length, so a
+-- position in the folded text is the same position in the original.
+local function Fold(s)
+    s = s:lower():gsub("\195([\128-\150\152-\158])", function(b) return "\195" .. string.char(b:byte() + 32) end)
+    return (s:gsub("\208([\128-\175])", function(b)
+        b = b:byte()
+        if b < 0x90 then return "\209" .. string.char(b + 0x10) end -- Ѐ-Џ
+        if b < 0xA0 then return "\208" .. string.char(b + 0x20) end -- А-П
+        return "\209" .. string.char(b - 0x20)                       -- Р-Я
+    end))
+end
+
+-- Whole words only, in any case Fold knows, found as plain text (realm names hold "-", "'").
+-- `lowText` is Fold(text), kept beside it so the text is folded once, not once per name; both
+-- come back with the same replacements.
+local function ReplaceName(text, lowText, name)
+    local lowName = Fold(name)
+    local out, lowOut, pos, from = {}, {}, 1, 1
     while true do
         local s, e = lowText:find(lowName, from, true)
         if not s then break end
         if Edge(lowText, s - 1, true) and Edge(lowText, e + 1, false) then
-            out[#out + 1] = text:sub(pos, s - 1)
-            out[#out + 1] = "<name>"
+            out[#out + 1], lowOut[#lowOut + 1] = text:sub(pos, s - 1), lowText:sub(pos, s - 1)
+            out[#out + 1], lowOut[#lowOut + 1] = "<name>", "<name>"
             pos = e + 1
         end
         from = e + 1
     end
-    out[#out + 1] = text:sub(pos)
-    return table.concat(out)
+    if pos == 1 then return text, lowText end
+    out[#out + 1], lowOut[#lowOut + 1] = text:sub(pos), lowText:sub(pos)
+    return table.concat(out), table.concat(lowOut)
 end
 
 local GUID_KINDS = { "Player", "Pet", "Creature", "Vehicle", "GameObject", "Item" }
@@ -134,7 +173,8 @@ function ns.Scrub(text, names)
     end
     text = text:gsub("[^%s#<>\"'=%[%]]+#%d%d%d%d+", "<tag>")
     text = text:gsub("%d+#%d+", "<tag>") -- an account folder, "12345678#1"
-    for _, name in ipairs(names or {}) do text = ReplaceName(text, name) end
+    local low = Fold(text)
+    for _, name in ipairs(names or {}) do text, low = ReplaceName(text, low, name) end
     return text
 end
 

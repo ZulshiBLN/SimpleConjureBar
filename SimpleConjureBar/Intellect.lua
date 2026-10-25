@@ -455,6 +455,26 @@ end)
 -- Update cycle
 ---------------------------------------------------------------------------
 local inCombat = false   -- PLAYER_REGEN_DISABLED fires before InCombatLockdown() turns true
+
+-- Auras are unreadable in combat, so a glowing armor would glow through the fight after it was
+-- cast. A cast of any mage armor of any rank turns the glow off then; when the client keeps the
+-- cast's spell ID secret, a cast after a press on the Armor button or on the key - which holds
+-- only the armor in combat - counts (ruleset plan 2026-10-25-combat-locks). After combat the
+-- aura decides again.
+local ARMOR_SPELLS = {}
+for _, family in ipairs(D.ARMOR_FAMILIES) do
+    for _, id in ipairs(family) do ARMOR_SPELLS[id] = true end
+end
+local armorPressed = false
+local function PressedInCombat() if inCombat then armorPressed = true end end
+armor:HookScript("OnClick", function(_, button) if button == "LeftButton" then PressedInCombat() end end)
+ns.buffKey:HookScript("OnClick", PressedInCombat)
+
+local function ArmorCast(spellID)
+    if not (inCombat and armor.antsShown) then return end
+    local secret = issecretvalue and issecretvalue(spellID)
+    if (secret and armorPressed) or (not secret and ARMOR_SPELLS[spellID]) then ns.SetAnts(armor, false) end
+end
 local ticker
 
 -- Range changes fire no event: in a group the targets are re-chosen every second.
@@ -553,19 +573,22 @@ events:RegisterEvent("PLAYER_ALIVE")
 events:RegisterEvent("PLAYER_UNGHOST")
 events:RegisterEvent("PLAYER_REGEN_DISABLED")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
-events:SetScript("OnEvent", function(_, event, unit)
+events:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+events:SetScript("OnEvent", function(_, event, unit, _, spellID)
     if not db then return end
-    if event == "UNIT_AURA" then
+    if event == "UNIT_SPELLCAST_SUCCEEDED" then
+        if unit == "player" then ArmorCast(spellID) end
+    elseif event == "UNIT_AURA" then
         if unit == "player" then
             QueueUpdate()
         elseif unit and IsGroupUnit(unit) and not InCombatLockdown() then -- pets and others are ignored
             QueueUpdate()
         end
     elseif event == "PLAYER_REGEN_DISABLED" then
-        inCombat = true
+        inCombat, armorPressed = true, false
         UpdateTicker()
     elseif event == "PLAYER_REGEN_ENABLED" then
-        inCombat = false
+        inCombat, armorPressed = false, false
         UpdateBuffState() -- the count and glow hidden in combat, and what changed there
     else
         QueueUpdate()

@@ -258,6 +258,10 @@ function ns.ShowTooltip(self)
     -- line such as the missing count. A field ending in Key holds a text's key, so the line
     -- follows a language switch.
     local left = self.hintLeftKey and L[self.hintLeftKey] or self.hintLeft
+    -- read on every show: a flyout choice in combat changes the spell, not the button's fields
+    if self.hintLeftSpellKey then
+        left = L[self.hintLeftSpellKey]:format(ns.SpellName(self:GetAttribute("spell1")) or "?")
+    end
     local middle = self.hintMiddleKey and L[self.hintMiddleKey] or self.hintMiddle
     local right = self.hintKey and L[self.hintKey] or self.hint
     -- In combat only the lines of clicks that work there (ruleset plan 2026-10-25-combat-locks)
@@ -494,8 +498,9 @@ local function CreateFlyoutButton(key, listFn, hintKey, normalize, leftKey)
     return main
 end
 
-local armor = CreateFlyoutButton("Armor", ns.KnownArmor, "HINT_PICK_ARMOR", ns.NormalizeArmor, "HINT_CAST_ARMOR")
+local armor = CreateFlyoutButton("Armor", ns.KnownArmor, "HINT_PICK_ARMOR", ns.NormalizeArmor)
 armor.isArmor = true
+armor.hintLeftSpellKey = "HINT_CAST_SPELL"
 AttachAnts(armor, "armorAntsColor", "armorAntsSpeed")
 
 -- Short label centered at the bottom of the icon

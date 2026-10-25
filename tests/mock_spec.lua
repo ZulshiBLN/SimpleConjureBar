@@ -86,6 +86,10 @@ describe("the mock", function()
         assert.is_false(C_Secrets.ShouldAurasBeSecret())
         STATE.secret = true
         assert.is_true(C_Secrets.ShouldAurasBeSecret())
+        assert.is_false(issecretvalue(168))
+        STATE.secrets[168] = true
+        assert.is_true(issecretvalue(168))
+        assert.is_false(issecretvalue(nil))
     end)
 
     it("keeps a clock, aura expiry and cancellable timers apart from RUNTIMERS", function()

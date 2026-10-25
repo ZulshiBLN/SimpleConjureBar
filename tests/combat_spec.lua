@@ -159,3 +159,47 @@ describe("the combat locks", function()
         assert.are.same({}, STATE.errors)
     end)
 end)
+
+-- Auras are unreadable in combat: the armor's glow follows a cast there (ruleset plan
+-- 2026-10-25-combat-locks, item 8)
+describe("the armor glow in combat", function()
+    local function cast(id) FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-1", id) end
+
+    it("goes off with a cast of any mage armor, of any rank, and the aura decides after", function()
+        local ns = login()
+        local armor, D = ns.buttons.Armor, ns.D
+        assert.is_true(armor.antsShown) -- no armor at login
+        enterCombat()
+        cast(D.SPELL_ARCANE_INTELLECT)
+        FIRE("UNIT_SPELLCAST_SUCCEEDED", "party1", "Cast-2", D.ARMOR_FAMILIES[1][1])
+        assert.is_true(armor.antsShown)
+        cast(D.ARMOR_FAMILIES[2][1]) -- not rank 1
+        assert.is_false(armor.antsShown)
+        leaveCombat()
+        assert.is_true(armor.antsShown) -- no aura: needed again
+        assert.are.same({}, STATE.errors)
+    end)
+
+    it("goes off with a press when the client keeps the spell ID secret", function()
+        local ns = login()
+        local armor, key = ns.buttons.Armor, ns.buffKey
+        local id = armor:GetAttribute("spell1")
+        STATE.secrets[id] = true
+        enterCombat()
+        cast(id) -- no press: someone else's cast cannot be told apart
+        assert.is_true(armor.antsShown)
+        RUNCLICK(armor, "LeftButton", true); RUNCLICK(armor, "LeftButton", false)
+        cast(id)
+        assert.is_false(armor.antsShown)
+        leaveCombat()
+        assert.is_true(armor.antsShown)
+
+        enterCombat() -- the key holding the armor counts as a press too
+        assert.are.equal("Armor", key:GetAttribute("scbsource"))
+        RUNCLICK(key, "LeftButton", false)
+        cast(id)
+        assert.is_false(armor.antsShown)
+        leaveCombat()
+        assert.are.same({}, STATE.errors)
+    end)
+end)

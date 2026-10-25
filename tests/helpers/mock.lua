@@ -6,7 +6,7 @@ local objects = {}
 local eventFrames, eventOrder = {}, {}
 local timers = {}
 STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {}, uses = {},
-          units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false, now = 100 }
+          units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false, secrets = {}, now = 100 }
 
 local Methods = {}
 local function New(kind, name, parent)
@@ -430,6 +430,8 @@ UnitIsDeadOrGhost = function(u) local r = U(u) return r and r.dead == true or fa
 UnitIsVisible = function() return true end
 UnitInRange = function() return true end
 C_Secrets = { ShouldAurasBeSecret = function() return STATE.secret end }
+-- A value the client keeps secret - a spell ID in an event, say - is marked in STATE.secrets
+issecretvalue = function(v) return v ~= nil and STATE.secrets[v] == true end
 GetLocale = function() return STATE.locale end
 GetRealmName = function() return "Realm" end
 GetNormalizedRealmName = function() return "Realm" end

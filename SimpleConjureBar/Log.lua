@@ -9,11 +9,12 @@ if not ns.enabled then return end
 local D_VALUE_DEFAULTS = ns.D.VALUE_DEFAULTS
 local MAX_ENTRIES = 50
 local entries, first = {}, 1 -- a ring: entries[first] is the oldest
-local loginAt, loginClock = GetTime(), time()
-ns.logStartClock = loginClock -- the report's fallback to tell this session's errors apart
+-- The clock starts when the addon loads - after a /reload too, not only at login
+local loadAt, loadClock = GetTime(), time()
+ns.logStartClock = loadClock -- the report's fallback to tell this session's errors apart
 local combats = {} -- { start = clock, stop = clock or nil }, kept apart from the ring
 
--- How an entry reads in the report: seconds since login, then the text. A field of ns, so a
+-- How an entry reads in the report: seconds since load, then the text. A field of ns, so a
 -- spec can make it fail.
 function ns.LogFormat(e)
     return ("+%.1fs %s"):format(e.since, e.text)
@@ -21,7 +22,7 @@ end
 
 function ns.Log(text)
     pcall(function()
-        local e = { since = GetTime() - loginAt, clock = time(), text = text }
+        local e = { since = GetTime() - loadAt, clock = time(), text = text }
         if #entries < MAX_ENTRIES then
             entries[#entries + 1] = e
         else
@@ -46,7 +47,7 @@ end
 -- "unknown" before the log began - BugGrabber offers no callback on this client to ask at
 -- the moment itself (phase 1 research)
 function ns.CombatAt(clock)
-    if clock < loginClock then return "unknown" end
+    if clock < loadClock then return "unknown" end
     for _, c in ipairs(combats) do
         if clock >= c.start and (not c.stop or clock <= c.stop) then return "yes" end
     end

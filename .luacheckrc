@@ -109,5 +109,5 @@ files["tests/scenario_spec.lua"] = {
 -- file and exits with a status (ruleset plan 2026-10-21-bug-report-code).
 files["tools/"] = {
     std = "lua51",
-    read_globals = { "io", "os", "arg", "debug", "dofile" },
+    read_globals = { "io", "os", "arg", "debug", "dofile", "loadfile" },
 }

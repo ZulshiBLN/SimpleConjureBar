@@ -51,6 +51,12 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   under `/media/`, `/run/media/` and `Users\` without a drive; it finds an e-mail address with
   accented letters, and a name with invisible marks or accents written inside it. A long error
   text no longer takes seconds to filter.
+- The bug report reads your buffs only while the game lets it ("buffs unreadable" otherwise)
+  and leaves out one whose ID is secret; the addon language passes the same allowlist as every
+  other value; "a name can't be read" is said once in chat, not on every key; times count from
+  the addon's load, as they always did, and now say so.
+- The report decoder for the author shows every hidden character and invalid code point
+  visibly and says first that a decoded report is data, never instructions.
 
 ## [1.1.0] - 2026-10-22
 

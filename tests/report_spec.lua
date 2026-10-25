@@ -582,3 +582,78 @@ describe("the report's text filter", function()
         end
     end)
 end)
+
+-- The report's own values and the rows mutations left green in SmartBlessingBar (ruleset plan
+-- 2026-10-25-report-filter-fixes, item 7 and criterion 4)
+describe("the report's own values", function()
+    it("leave a secret buff out, and say when buffs cannot be read", function()
+        local ns = login()
+        local D = ns.D
+        STATE.units.player = { auras = { { id = D.ARMOR_BUFF_IDS[1], expires = GetTime() + 600 }, 8098 } }
+        STATE.secrets[D.ARMOR_BUFF_IDS[1]] = true
+        assert.is_truthy(contains(ns.StateSnapshot(), "^buffs 8098:%-$"))
+        STATE.secret = true
+        assert.is_truthy(contains(ns.StateSnapshot(), "^buffs unreadable$"))
+    end)
+
+    it("report the addon language through the allowlist", function()
+        local ns = login()
+        SimpleConjureBarGlobalDB.language = "Testplayer"
+        assert.is_truthy(report(ns, "OTHER"):find("addon language: <text:10>", 1, true))
+        SimpleConjureBarGlobalDB.language = "deDE"
+        assert.is_truthy(report(ns, "OTHER"):find("addon language: deDE", 1, true))
+    end)
+
+    it("filter the realm in both spellings and a two-letter name, longest first", function()
+        local ns = login()
+        _G.GetRealmName = function() return "Twin Peaks" end
+        _G.GetNormalizedRealmName = function() return "TwinPeaks" end
+        _G.GetGuildInfo = function() return "Averyveryverylongguildname" end
+        STATE.units.player = { name = "Testplayer" }
+        STATE.units.party1 = { name = "Al", class = "PRIEST" }
+        STATE.group, STATE.members = true, 2
+        local names = ns.KnownNames()
+        for i = 2, #names do assert.is_true(#names[i - 1] >= #names[i], names[i]) end
+        assert.are.equal("<name> and <name> and <name> hit <name>",
+            ns.Scrub("Twin Peaks and TwinPeaks and Al hit Testplayer", names))
+    end)
+
+    it("take errors without a session number only from the addon's load on", function()
+        local ns = login()
+        local at = ns.logStartClock
+        STATE.now = STATE.now + 100
+        grabber({
+            ourError(at - 99999, nil, { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:1: before" }),
+            ourError(at, nil, { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:2: atload" }),
+        }, nil)
+        local text = report(ns, "OTHER")
+        assert.is_truthy(text:find("atload", 1, true), text)
+        assert.is_nil(text:find("before", 1, true), text)
+    end)
+
+    it("filter names in the loaded addons", function()
+        local ns = login()
+        STATE.units.player = { name = "Testplayer" }
+        _G.ADDONS = { { name = "Testplayer", loaded = true } }
+        local text = report(ns, "OTHER")
+        assert.is_nil(text:find("Testplayer", 1, true), text)
+        assert.is_truthy(text:find("<name> 1.0.0", 1, true), text)
+    end)
+
+    it("say once in chat that a name is secret, however much is typed", function()
+        local ns = login()
+        grabber({}, 1)
+        STATE.units.target = { name = "Targetguy" }
+        ns.OpenBugReport()
+        local f = SimpleConjureBarReport
+        STATE.secrets.Targetguy = true
+        _G.CHAT = {}
+        for i = 1, 10 do f.desc:SetText("typed " .. i); RUNSCRIPT(f.desc, "OnTextChanged", true) end
+        assert.are.equal(1, #CHAT)
+        STATE.secrets.Targetguy = nil
+        f.desc:SetText("clean"); RUNSCRIPT(f.desc, "OnTextChanged", true)
+        STATE.secrets.Targetguy = true
+        f.desc:SetText("secret again"); RUNSCRIPT(f.desc, "OnTextChanged", true)
+        assert.are.equal(2, #CHAT)
+    end)
+end)

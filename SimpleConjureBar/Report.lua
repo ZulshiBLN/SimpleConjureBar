@@ -49,19 +49,25 @@ local function TrackedItems()
     return ids
 end
 
+-- The player's buffs as far as they can be read: none while the client keeps auras secret (as
+-- Buff & Run in Intellect.lua), and a buff whose ID is secret is left out
 local function OwnBuffs()
+    if C_Secrets and C_Secrets.ShouldAurasBeSecret and C_Secrets.ShouldAurasBeSecret() then
+        return "unreadable"
+    end
     local parts = {}
     local GetAura = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
     for i = 1, 40 do
         local ok, aura = pcall(GetAura, "player", i, "HELPFUL")
         if not ok or not aura then break end
-        local okLeft, left = pcall(function()
-            local e = aura.expirationTime
-            if type(e) == "number" and e > 0 then return math.floor((e - GetTime()) / 60 + 0.5) .. "m" end
-            return "-"
-        end)
-        local okId, id = pcall(tostring, aura.spellId)
-        parts[#parts + 1] = (okId and id or "?") .. ":" .. (okLeft and left or "?")
+        local id, e = aura.spellId, aura.expirationTime
+        if not ns.IsSecret(id) and id ~= nil then
+            local left = "-"
+            if not ns.IsSecret(e) and type(e) == "number" and e > 0 then
+                left = math.floor((e - GetTime()) / 60 + 0.5) .. "m"
+            end
+            parts[#parts + 1] = tostring(id) .. ":" .. left
+        end
     end
     return table.concat(parts, " ")
 end
@@ -180,7 +186,7 @@ local function ErrorWhen(e)
     if type(e.time) ~= "number" then return "time unknown", "unknown" end
     local when = ("%d min ago"):format(math.floor((time() - e.time) / 60 + 0.5))
     local since = e.time - ns.logStartClock
-    if since >= 0 then when = when .. (", %d s after login"):format(since) end
+    if since >= 0 then when = when .. (", %d s after load"):format(since) end
     return when, ns.CombatAt(e.time)
 end
 
@@ -239,7 +245,7 @@ local function BuildReport(form)
         "- Addon version: " .. ns.VERSION,
         "- Client: " .. tostring(version) .. " (build " .. tostring(build) .. ", interface " .. tostring(interface) .. ")",
         "- Client locale: " .. tostring(GetLocale()) .. ", addon language: "
-            .. tostring((SimpleConjureBarGlobalDB and SimpleConjureBarGlobalDB.language) or "auto"),
+            .. ns.SafeValue((SimpleConjureBarGlobalDB and SimpleConjureBarGlobalDB.language) or "auto"),
         "- Character: " .. tostring(classFile) .. ", level " .. LevelBand()
             .. (IsInRaid() and ", raid" or IsInGroup() and ", party" or ", solo"),
         "- Settings: " .. SettingsText(),
@@ -270,7 +276,7 @@ local function BuildReport(form)
         for _, l in ipairs(list) do lines[#lines + 1] = tag .. " " .. (scrub and ns.Scrub(l, names) or l) end
         lines[#lines + 1] = "```"
     end
-    Block("**Last actions (seconds since login):**", "log", ns.LogLines())
+    Block("**Last actions (seconds since load):**", "log", ns.LogLines())
     Block("**State:**", "state", ns.StateSnapshot())
     Block("**Loaded addons:**", "addon", ns.AddonList(), true)
     return ns.CapReport(table.concat(lines, "\n"))
@@ -306,13 +312,16 @@ local function ShowBox()
     SetL(frame.toggle, frame.showContent and "REPORT_SHOW_CODE" or "REPORT_SHOW_CONTENT")
 end
 
--- Each keystroke rebuilds the report; while a name is secret the last clean one stays
+-- Each keystroke rebuilds the report; while a name is secret the last clean one stays, and the
+-- chat says so once, not on every key
 local function Refresh()
     local text = BuildReport(FormValues())
     if not text then
-        ns.Print(L.REPORT_SECRET)
+        if not frame.secretSaid then ns.Print(L.REPORT_SECRET) end
+        frame.secretSaid = true
         return
     end
+    frame.secretSaid = false
     frame.reportText = text
     frame.codeText = ns.ReportCode.Encode(text)
     ShowBox()

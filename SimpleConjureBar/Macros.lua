@@ -9,7 +9,7 @@
 local _, ns = ...
 if not ns.enabled then return end
 
-local D, L = ns.D, ns.L
+local D = ns.D
 
 local db
 ns.OnDBReady(function(d) db = d end)
@@ -32,7 +32,7 @@ end
 
 -- Opens Blizzard's macro window on the character macros (where "SCB Polymorph" is stored)
 function ns.ShowMacroWindow()
-    if InCombatLockdown() then ns.Print(L.NOT_IN_COMBAT) return end
+    if InCombatLockdown() then return end -- the settings window is closed in combat anyway
     if ShowMacroFrame then
         ShowMacroFrame()
     else
@@ -68,17 +68,17 @@ end
 -- that copy is replaced by the character macro. No other macro of this addon ever existed
 -- account-wide.
 local function CreateOrUpdate(name, body, replaceAccountCopy)
-    if InCombatLockdown() then ns.Print(L.NOT_IN_COMBAT) return end
+    if InCombatLockdown() then return end
     local maxAccount = MAX_ACCOUNT_MACROS or 120
     local index = CharacterMacroIndex(name, maxAccount)
     if index then
         EditMacro(index, name, MACRO_ICON, body)
-        ns.Print(L.MACRO_UPDATED:format(name))
+        ns.ShowMacroResult("MACRO_UPDATED", name)
         return
     end
     local _, characterMacros = GetNumMacros()
     if characterMacros >= (MAX_CHARACTER_MACROS or 18) then
-        ns.Print(L.MACRO_FULL)
+        ns.ShowMacroResult("MACRO_FULL")
         return
     end
     local accountIndex = GetMacroIndexByName(name)
@@ -87,7 +87,7 @@ local function CreateOrUpdate(name, body, replaceAccountCopy)
     end
     -- 4th argument true = character macro
     CreateMacro(name, MACRO_ICON, body, true)
-    ns.Print(L.MACRO_CREATED:format(name))
+    ns.ShowMacroResult("MACRO_CREATED", name)
 end
 
 function ns.CreatePolymorphMacro()

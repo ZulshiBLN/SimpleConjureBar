@@ -190,17 +190,15 @@ describe("the minimap button's tooltip", function()
 end)
 
 describe("the handle", function()
-    it("says why a left click in combat does nothing, and stays quiet out of it", function()
+    -- chat speaks only for demo mode and commands (ruleset plan 2026-10-25-chat-and-docked-report)
+    it("stays quiet for a left click in combat, and does not move", function()
         local ns = login()
-        SimpleConjureBarDB.locked = true
+        SimpleConjureBarDB.locked = false
         _G.CHAT = {}
-        RUNSCRIPT(ns.handle, "OnMouseDown", "LeftButton")
-        assert.are.same({}, CHAT)
-
         STATE.combat = true
         RUNSCRIPT(ns.handle, "OnMouseDown", "LeftButton")
-        assert.are.equal(1, #CHAT)
-        assert.is_truthy(CHAT[1]:find(ns.L.NOT_IN_COMBAT, 1, true))
+        assert.are.same({}, CHAT)
+        assert.is_falsy(ns.handle.moving)
         STATE.combat = false
     end)
 end)

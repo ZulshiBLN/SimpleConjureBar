@@ -94,7 +94,10 @@ SlashCmdList.SIMPLECONJUREBAR = function(msg)
     if not db then return end
     msg = strtrim((msg or ""):lower())
     if msg == "" then
+        -- a refusal in combat answers only a command (ruleset plan 2026-10-25-chat-and-docked-report)
+        ns.fromCommand = true
         ns.ToggleSettings()
+        ns.fromCommand = false
     elseif msg == "help" or msg == "?" then
         PrintHelp()
     elseif msg == "lock" then
@@ -120,7 +123,9 @@ SlashCmdList.SIMPLECONJUREBAR = function(msg)
         ns.Rebuild() -- re-anchor at the anchor point
         Print(L.POS_RESET)
     elseif msg == "bug" then
+        ns.fromCommand = true
         ns.OpenBugReport()
+        ns.fromCommand = false
     elseif msg == "debug" then
         PrintDebug()
     else

@@ -499,7 +499,7 @@ local function CreateWindow()
     frame:SetScript("OnShow", function()
         if InCombatLockdown() then
             frame:Hide()
-            ns.Print(L.REPORT_COMBAT)
+            if ns.fromCommand then ns.Print(L.REPORT_COMBAT) end -- only a command gets an answer
             return
         end
         -- A secret name could not be filtered: no report until it is readable again

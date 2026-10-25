@@ -314,9 +314,9 @@ describe("the report form", function()
         grabber({}, 1)
         _G.CHAT = {}
         STATE.combat = true
-        ns.OpenBugReport()
+        ns.OpenBugReport() -- the button: silent; /scb bug says why (chat_spec)
         assert.is_false(SimpleConjureBarReport:IsShown())
-        assert.is_truthy(CHAT[#CHAT]:find(ns.L.REPORT_COMBAT, 1, true))
+        assert.are.same({}, CHAT)
         STATE.combat = false
         ns.OpenBugReport()
         assert.is_true(SimpleConjureBarReport:IsShown())

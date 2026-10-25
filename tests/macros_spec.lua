@@ -138,7 +138,9 @@ describe("the new macros", function()
         assert.are.equal("/cast " .. cyrillic, lines(MACROS[1].body)[3])
     end)
 
-    it("creates nothing without a free character slot, and says so", function()
+    -- The result shows in the Macros tab, not the chat (ruleset plan
+    -- 2026-10-25-chat-and-docked-report)
+    it("creates nothing without a free character slot, and says so in the window", function()
         for i = 1, (MAX_CHARACTER_MACROS or 18) do
             MACROS[#MACROS + 1] = { name = "M" .. i, body = "", perChar = true }
         end
@@ -146,18 +148,17 @@ describe("the new macros", function()
         ns.CreateIceBlockMacro()
         ns.CreateStopcastMacro(ns.D.STOPCAST_SPELLS[1])
         assert.are.equal(before, #MACROS)
-        assert.are.same({ ns.L.MACRO_FULL, ns.L.MACRO_FULL },
-            { CHAT[1]:match(": (.*)$"), CHAT[2]:match(": (.*)$") })
+        assert.are.equal(ns.L.MACRO_FULL, ns.MacroResultLine:GetText())
+        assert.are.same({}, CHAT)
     end)
 
-    it("creates nothing in combat, and says so", function()
+    it("creates nothing in combat, silently", function()
         STATE.combat = true
         ns.CreateIceBlockMacro()
         ns.CreateStopcastMacro(ns.D.STOPCAST_SPELLS[1])
         STATE.combat = false
         assert.are.equal(0, #MACROS)
-        assert.are.equal(ns.L.NOT_IN_COMBAT, CHAT[1]:match(": (.*)$"))
-        assert.are.equal(ns.L.NOT_IN_COMBAT, CHAT[2]:match(": (.*)$"))
+        assert.are.same({}, CHAT)
     end)
 
     it("leaves the Polymorph macro's name and text as they were", function()

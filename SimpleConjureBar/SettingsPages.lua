@@ -504,12 +504,43 @@ do
     UI.AddNote(function() return L.MACRO_STOPCAST_HELP:format(SpellLabel(D.SPELL_COUNTERSPELL)) end, 8, 2)
 end
 
--- "Show macro" in the bottom right corner, as "Reload UI" on the General tab
+-- "Show macro" in the bottom right corner, as "Reload UI" on the General tab; beside it, for 8
+-- seconds, what a create button did - in the window, not the chat (ruleset plan 2026-10-25-chat-and-docked-report)
 do
     local show = UI.AddButton(macroPage, "BTN_SHOW_MACRO", function() ns.ShowMacroWindow() end)
     show:SetPoint("BOTTOMRIGHT", macroPage, "BOTTOMRIGHT", -INSET, INSET - 4)
-    -- Reserve the space, so the button never overlaps the last element
-    Place(22, 8)
+    local result = macroPage:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    result:SetJustifyH("LEFT")
+    result:SetPoint("BOTTOMLEFT", macroPage, "BOTTOMLEFT", INSET, INSET - 4)
+    result:SetPoint("RIGHT", show, "LEFT", -8, 0)
+    result:SetMaxLines(2)
+    result:Hide()
+    ns.MacroResultLine, ns.MacroShowButton = result, show
+    -- The window is wide enough for the longest result of this language in two lines
+    UI.measures[#UI.measures + 1] = function()
+        local name, longest = ("W"):rep(16), 0
+        local shown, text = result:IsShown(), result:GetText()
+        for _, s in ipairs({ L.MACRO_CREATED:format(name), L.MACRO_UPDATED:format(name), L.MACRO_FULL }) do
+            result:SetText(s)
+            longest = math.max(longest, result:GetStringWidth())
+        end
+        result:SetText(text)
+        result:SetShown(shown)
+        return math.ceil(longest / 2) + show:GetWidth() + 8
+    end
+    local timer
+    function ns.ShowMacroResult(key, ...)
+        if timer then timer:Cancel() end
+        ns.SetL(result, key, ...)
+        result:Show()
+        timer = C_Timer.NewTimer(8, function() timer = nil; result:Hide() end)
+    end
+    ns.UI.window:HookScript("OnHide", function()
+        if timer then timer:Cancel(); timer = nil end
+        result:Hide()
+    end)
+    -- Reserve two lines, so neither the button nor the result overlaps the last element
+    Place(28, 8)
 end
 
 UI.CreateTabs()

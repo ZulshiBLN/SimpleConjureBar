@@ -248,7 +248,8 @@ describe("the settings key", function()
         STATE.combat = true
         RUNCLICK(key, "LeftButton", false)
         assert.is_false(SimpleConjureBarSettings:IsShown())
-        assert.is_truthy(CHAT[1] and CHAT[1]:find(L.MENU_COMBAT, 1, true))
+        assert.are.same({}, CHAT) -- a key is refused silently; /scb says why
+        assert.is_string(L.MENU_COMBAT)
         STATE.combat = false
     end)
 end)

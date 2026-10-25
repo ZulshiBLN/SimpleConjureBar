@@ -156,10 +156,9 @@ end)
 
 handle:SetScript("OnMouseDown", function(self, btn)
     if btn == "LeftButton" then
-        -- The bar holds secure buttons, so it is protected in combat and cannot move
-        if InCombatLockdown() then
-            ns.Print(L.NOT_IN_COMBAT)
-        elseif not db.locked then
+        -- The bar holds secure buttons, so it is protected in combat and cannot move; the click
+        -- is refused silently - chat speaks only for demo mode and commands (ruleset plan 2026-10-25-chat-and-docked-report)
+        if not InCombatLockdown() and not db.locked then
             self.moving = true
             bar:StartMoving()
         end

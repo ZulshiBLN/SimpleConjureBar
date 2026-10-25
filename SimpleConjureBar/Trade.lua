@@ -48,7 +48,8 @@ local pendingTrade -- { items = { itemID, ... }, guid = partner GUID, expires = 
 
 local function GiveToTarget()
     local unit = "target"
-    if InCombatLockdown() then Print(L.TRADE_COMBAT) return end
+    -- no click reaches here in combat: the snippet drops water and food there (Bar.lua)
+    if InCombatLockdown() then return end
     if not UnitExists(unit) or not UnitIsPlayer(unit) or UnitIsUnit(unit, "player")
         or not UnitIsFriend("player", unit) then
         Print(L.TRADE_NO_TARGET)

@@ -794,7 +794,8 @@ settings:SetScript("OnShow", function()
     -- The menu cannot be opened in combat (/scb, minimap, handle or WoW options)
     if InCombatLockdown() then
         settings:Hide()
-        Print(L.MENU_COMBAT)
+        -- only a chat command gets an answer in the chat; a click is refused silently
+        if ns.fromCommand then Print(L.MENU_COMBAT) end
         return
     end
     ns.ApplyWindowOpacity(settings)

@@ -24,10 +24,10 @@ local function ShowEntryTooltip(owner, anchor)
     GameTooltip:Show()
 end
 
--- owner, anchor: a tooltip the click came from, shown again so it says the new state at once
-local function ToggleLockWithMessage(owner, anchor)
+-- owner, anchor: a tooltip the click came from, shown again so it says the new state at once -
+-- the only answer: the chat speaks for commands only (ruleset plan 2026-10-25-chat-and-docked-report)
+local function ToggleLockAndRedraw(owner, anchor)
     ns.ToggleLock()
-    ns.Print(db.locked and L.LOCKED or L.UNLOCKED)
     if owner and GameTooltip:IsOwned(owner) then ShowEntryTooltip(owner, anchor) end
 end
 
@@ -85,7 +85,7 @@ minimapBtn:SetScript("OnDragStart", function(self) self:SetScript("OnUpdate", On
 minimapBtn:SetScript("OnDragStop", function(self) self:SetScript("OnUpdate", nil) end)
 
 minimapBtn:SetScript("OnClick", function(self, btn)
-    if btn == "RightButton" then ToggleLockWithMessage(self, "ANCHOR_LEFT") else ns.ToggleSettings() end
+    if btn == "RightButton" then ToggleLockAndRedraw(self, "ANCHOR_LEFT") else ns.ToggleSettings() end
 end)
 minimapBtn:SetScript("OnEnter", function(self) ShowEntryTooltip(self, "ANCHOR_LEFT") end)
 minimapBtn:SetScript("OnLeave", GameTooltip_Hide)
@@ -101,11 +101,18 @@ settingsKey:SetScript("OnClick", function() ns.ToggleSettings() end)
 -- AddOn compartment (Retail addon menu next to the minimap). The globals the TOC names
 -- live in Core.lua, ahead of the mage check, and call these.
 ---------------------------------------------------------------------------
+-- The client passes the click no frame, so the entry the mouse entered redraws its tooltip
+local menuEntry
 function ns.CompartmentClick(_, button, menuButton)
-    if button == "RightButton" then ToggleLockWithMessage(menuButton, "ANCHOR_RIGHT") else ns.ToggleSettings() end
+    if button == "RightButton" then
+        ToggleLockAndRedraw(menuButton or menuEntry, "ANCHOR_RIGHT")
+    else
+        ns.ToggleSettings()
+    end
 end
 
 function ns.CompartmentEnter(_, menuButton)
+    menuEntry = menuButton
     ShowEntryTooltip(menuButton, "ANCHOR_RIGHT")
 end
 

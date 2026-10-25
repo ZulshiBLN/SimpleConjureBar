@@ -113,3 +113,26 @@ describe("water and food without stock", function()
         assert.are.same({}, STATE.errors)
     end)
 end)
+
+-- Demo mode shows a gem without one in the bags; a fight must not take it away (live-test
+-- plan review, 2026-10-25)
+describe("the mana gem in demo mode", function()
+    it("keeps its demo gem through a fight, also when the counts update in it", function()
+        local ns = login()
+        local gem, L = ns.buttons.ManaGem, ns.L
+        own(ns)
+        SimpleConjureBarDB.demo = true; ns.Rebuild()
+        local item, line = gem.leftItem, gem.hintLeft
+        assert.is_not_nil(item)
+        enterCombat()
+        FIRE("BAG_UPDATE_COOLDOWN") -- the counts run in the fight
+        assert.are.equal(item, gem.leftItem)
+        assert.are.equal(line, gem.hintLeft)
+        assert.is_false(gem.icon.desaturated)
+        leaveCombat()
+        assert.are.equal(item, gem.leftItem)
+        assert.are.equal(L.HINT_USE_ITEM:format(C_Item.GetItemNameByID(item)), gem.hintLeft)
+        SimpleConjureBarDB.demo = false
+        assert.are.same({}, STATE.errors)
+    end)
+end)

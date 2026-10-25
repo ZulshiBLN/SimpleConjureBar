@@ -74,7 +74,8 @@ function ns.UpdateCounts()
         local fight = InCombatLockdown()
         -- in demo mode the gem highlight shows like the other highlights
         ns.SetAnts(gem, not fight and (IsDemo() or owned ~= highest))
-        if fight then
+        -- demo mode shows its made-up gem; the real bags would take it away in a fight
+        if fight and not IsDemo() then
             if owned and owned ~= gem.leftItem then
                 gem.icon:SetTexture(ItemIcon(owned))
                 gem.hintLeft = L.HINT_USE_ITEM:format(GemName(owned))

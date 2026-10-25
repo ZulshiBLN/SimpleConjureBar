@@ -27,6 +27,10 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   missing, weaker or expiring.
 
 ### Fixed
+- In instances and PvP the game keeps buffs unreadable even out of combat; the bar then
+  counted every mana user as missing Arcane Intellect and made the armor glow. It now keeps
+  what it showed until the buffs can be read again, and an armor cast there still ends its
+  glow.
 - In combat the mana gem's right click and "Cast next buff" conjured a gem - a mana loss - and
   water and food conjured; the key could hold Arcane Intellect, which does nothing there.
 - The armor kept glowing through a fight after it was cast there; a cast of any mage armor

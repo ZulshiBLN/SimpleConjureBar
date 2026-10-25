@@ -86,6 +86,12 @@ describe("the mock", function()
         assert.is_false(C_Secrets.ShouldAurasBeSecret())
         STATE.secret = true
         assert.is_true(C_Secrets.ShouldAurasBeSecret())
+        -- the reads are refused while auras are secret, and answer again after
+        assert.is_false(pcall(C_UnitAuras.GetAuraDataByIndex, "player", 1, "HELPFUL"))
+        assert.is_false(pcall(C_UnitAuras.GetAuraDataBySpellName, "player", "Spell1459", "HELPFUL"))
+        STATE.secret = false
+        assert.is_true(pcall(C_UnitAuras.GetAuraDataByIndex, "player", 1, "HELPFUL"))
+        STATE.secret = true
         assert.is_false(issecretvalue(168))
         STATE.secrets[168] = true
         assert.is_true(issecretvalue(168))

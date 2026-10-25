@@ -502,7 +502,9 @@ local function Aura(a)
   end
   return { spellId = a, expirationTime = 0, name = "A" .. a, as = a }
 end
+-- While the client keeps auras secret (STATE.secret) it refuses a read with an error
 C_UnitAuras = { GetAuraDataBySpellName = function(u, name)
+  if STATE.secret then error("auras are secret") end
   if AURAS[u .. name] then return { expirationTime = 0 } end
   local r = U(u)
   for _, a in ipairs(r and r.auras or {}) do
@@ -524,6 +526,7 @@ UIDropDownMenu_SetWidth = noop
 UnitGUID = function(u) if u == "NPC" then return STATE.tradeGuid end return "Player-1-" .. u end
 AURALIST = {}
 C_UnitAuras.GetAuraDataByIndex = function(u, i)
+  if STATE.secret then error("auras are secret") end
   local r = U(u)
   local l = AURALIST[u] or (r and r.auras)
   if l and l[i] then return Aura(l[i]) end

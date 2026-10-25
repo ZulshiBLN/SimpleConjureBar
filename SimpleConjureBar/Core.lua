@@ -60,6 +60,16 @@ local ItemCount, Known, GetSpellName = API.ItemCount, API.Known, API.GetSpellNam
 -- truth-tested: ask this first (rules/code.md)
 function ns.IsSecret(v) return issecretvalue ~= nil and issecretvalue(v) end
 
+-- Whether the client lets auras be read now: in combat, and in instances and PvP often out of
+-- it too, it keeps them secret and refuses a read with an error (SmartBlessingBar's BugSack
+-- note, 2026-10-20). Where C_Secrets is missing, one read is tried.
+function ns.AurasReadable()
+    local secret = C_Secrets and C_Secrets.ShouldAurasBeSecret
+    if secret then return not secret() end
+    local read = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
+    return read == nil or (pcall(read, "player", 1, "HELPFUL"))
+end
+
 function ns.Print(msg)
     print("|cff69ccf0SimpleConjureBar|r: " .. msg)
 end

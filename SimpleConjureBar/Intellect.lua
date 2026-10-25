@@ -397,7 +397,7 @@ end
 -- target would look in need. Without a spell the second value says why, for the bug report's
 -- action log.
 function ns.BuffRunSpell(unit)
-    if C_Secrets and C_Secrets.ShouldAurasBeSecret and C_Secrets.ShouldAurasBeSecret() then return nil, "auras secret" end
+    if not ns.AurasReadable() then return nil, "auras secret" end
     if not (UnitExists(unit) and UnitIsPlayer(unit) and UnitCanAssist("player", unit)) then
         return nil, "no friendly player"
     end
@@ -471,15 +471,19 @@ local ARMOR_SPELLS = {}
 for _, family in ipairs(D.ARMOR_FAMILIES) do
     for _, id in ipairs(family) do ARMOR_SPELLS[id] = true end
 end
+-- The same holds while the client keeps auras secret out of combat (ruleset plan
+-- 2026-10-25-secret-auras); a press counts for the next judged cast only.
+local function Frozen() return inCombat or not ns.AurasReadable() end
 local armorPressed = false
-local function PressedInCombat() if inCombat then armorPressed = true end end
-armor:HookScript("OnClick", function(_, button) if button == "LeftButton" then PressedInCombat() end end)
-ns.buffKey:HookScript("OnClick", PressedInCombat)
+local function Pressed() if Frozen() then armorPressed = true end end
+armor:HookScript("OnClick", function(_, button) if button == "LeftButton" then Pressed() end end)
+ns.buffKey:HookScript("OnClick", Pressed)
 
 local function ArmorCast(spellID)
-    if not (inCombat and armor.antsShown) then return end
+    if not (Frozen() and armor.antsShown) then return end
     local secret = ns.IsSecret(spellID)
     if (secret and armorPressed) or (not secret and ARMOR_SPELLS[spellID]) then ns.SetAnts(armor, false) end
+    armorPressed = false
 end
 local ticker
 
@@ -522,6 +526,24 @@ function ns.UpdateBuffState()
         UpdateTicker()
         return
     end
+    -- While the client keeps auras secret out of combat, a read would see every buff missing:
+    -- the armor and Intellect keep what they showed; settings, Buff & Run and the key follow
+    -- (ruleset plan 2026-10-25-secret-auras). Demo mode reads no auras.
+    if not IsDemo() and not ns.AurasReadable() then
+        if intel:IsShown() and not intel.leftSpell then
+            -- never read (a login inside an instance): the icon, no click, no line
+            local spell = IntellectSpell(nil, ReadKnownRanks())
+            intel.icon:SetTexture(GetSpellTex(spell))
+            intel.leftSpell, intel.rightSpell, intel.spellId = spell, nil, spell
+            intel.hintLeft, intel.hint, intel.hintKey = nil, nil, nil
+            SetAttr(intel, "type1", nil)
+        end
+        UpdateTicker()
+        ArmBuffRun()
+        ns.UpdateBuffKey()
+        return
+    end
+    armorPressed = false
     local due = UpdateArmorHighlight()
     if intel:IsShown() then
         -- Brilliance once it is learned, Arcane Powder is in the bags and the threshold is not never

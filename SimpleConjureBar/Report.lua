@@ -52,9 +52,7 @@ end
 -- The player's buffs as far as they can be read: none while the client keeps auras secret (as
 -- Buff & Run in Intellect.lua), and a buff whose ID is secret is left out
 local function OwnBuffs()
-    if C_Secrets and C_Secrets.ShouldAurasBeSecret and C_Secrets.ShouldAurasBeSecret() then
-        return "unreadable"
-    end
+    if not ns.AurasReadable() then return "unreadable" end
     local parts = {}
     local GetAura = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
     for i = 1, 40 do

@@ -276,5 +276,9 @@ it is a tool's and never ships with the addon.
 - The client restricts aura data in combat: the armor highlight there follows a cast, not the
   aura - when the game hides which spell was cast, a cast after a press on the Armor button or the
   key counts, even if that press was refused. Everything updates right after combat.
+- In instances and PvP the client keeps buff data unreadable out of combat too. The armor and
+  Arcane Intellect then keep what they showed - the count may be as old as the visit, and a
+  click may buff a member again who already has it - and update once the buffs can be read;
+  an armor cast there still ends its glow.
 - Intellect buffs the addon does not know yet can be identified with `/scb debug` (lists your
   buffs with spell IDs).

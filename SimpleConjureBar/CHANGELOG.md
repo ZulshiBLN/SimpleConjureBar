@@ -42,6 +42,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   the gem as soon as the game knows it.
 
 ### Security
+- The release pipeline hands the CurseForge and Wago upload tokens only to release-tag runs,
+  through a GitHub environment, and checks them before any channel publishes; a package may
+  hold only the addon's own files. Nothing changes in the game.
 - Names and GUIDs the game keeps secret are no longer compared before they are checked: the
   bug report, the trade fill and the Intellect tooltip could raise an error on one.
 - The bug report finds a name beside any punctuation, inside Chinese, Japanese or Korean text

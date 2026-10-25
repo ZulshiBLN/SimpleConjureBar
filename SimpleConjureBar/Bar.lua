@@ -286,7 +286,7 @@ local function DemoClick(b, btn)
     if btn == "MiddleButton" then return end -- trading has its own demo output
     if b.isGem then
         if btn == "RightButton" then
-            DemoPrint(L.DEMO_CAST, ns.SpellName(b.conjureSpell) or "?")
+            if b.conjureSpell then DemoPrint(L.DEMO_CAST, ns.SpellName(b.conjureSpell) or "?") end
         else
             DemoPrint(L.DEMO_CONSUME, b.leftItem and ItemName(b.leftItem) or L.ITEM)
         end
@@ -644,11 +644,14 @@ end
 -- shows them again (UpdateBuffState, UpdateCounts).
 local COMBAT_LOCKED = { intel, water, food, tele, portal }
 local GREY = 0.5
+function ns.GreyInCombat(b, grey)
+    b.icon:SetDesaturated(grey)
+    b.icon:SetAlpha(grey and 0.6 or 1)
+end
 function ns.ApplyCombatLook(inCombat)
-    for _, b in ipairs(COMBAT_LOCKED) do
-        b.icon:SetDesaturated(inCombat)
-        b.icon:SetAlpha(inCombat and 0.6 or 1)
-    end
+    for _, b in ipairs(COMBAT_LOCKED) do ns.GreyInCombat(b, inCombat) end
+    -- the gem without one in the bags: no click works (Buttons.lua UpdateCounts follows the bags)
+    ns.GreyInCombat(gem, inCombat and not gem.leftItem)
     local c = inCombat and GREY or 1
     for _, b in ipairs({ water, food }) do b.count:SetTextColor(c, c, c, 1) end
     if inCombat then

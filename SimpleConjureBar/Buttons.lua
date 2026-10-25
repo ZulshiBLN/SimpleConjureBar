@@ -21,6 +21,18 @@ local WATER_FOOD  = { water, food }
 local TELE_PORTAL = { tele, portal }
 local WHITE = { r = 1, g = 1, b = 1, a = 1 }
 
+-- An item's name reads nil until the client has loaded its data - in demo mode, say, with no gem
+-- in the bags. The gem's line then waits for ITEM_DATA_LOAD_RESULT instead of showing "?".
+local requestedNames = {}
+local function GemName(item)
+    local name = ItemName(item)
+    if not name and not requestedNames[item] and C_Item and C_Item.RequestLoadItemDataByID then
+        requestedNames[item] = true
+        C_Item.RequestLoadItemDataByID(item)
+    end
+    return name or "?"
+end
+
 ---------------------------------------------------------------------------
 -- Counts (cheap, also runs in combat)
 ---------------------------------------------------------------------------
@@ -48,15 +60,30 @@ function ns.UpdateCounts()
         end
     end
 
-    -- Mana Gem: highlight without a gem, cooldown of the best gem
+    -- Mana Gem: highlight while the highest known gem is missing - never in combat, where its
+    -- conjure is locked - and the cooldown of the best gem. In combat the attributes are frozen,
+    -- but the macro lists every gem: icon and line follow the best one left, greyed without one.
     if gem:IsShown() then
-        local owned
-        if not IsDemo() then -- in demo mode the gem highlight shows like the other highlights
-            for _, g in ipairs(D.MANA_GEMS) do
-                if (ItemCount(g.item) or 0) > 0 then owned = g.item break end
+        local owned, highest
+        for _, g in ipairs(D.MANA_GEMS) do
+            if IsKnown(g.spell) then
+                highest = highest or g.item
+                if not owned and (ItemCount(g.item) or 0) > 0 then owned = g.item end
             end
         end
-        ns.SetAnts(gem, not owned)
+        local fight = InCombatLockdown()
+        -- in demo mode the gem highlight shows like the other highlights
+        ns.SetAnts(gem, not fight and (IsDemo() or owned ~= highest))
+        if fight then
+            if owned and owned ~= gem.leftItem then
+                gem.icon:SetTexture(ItemIcon(owned))
+                gem.hintLeft = L.HINT_USE_ITEM:format(GemName(owned))
+            elseif not owned then
+                gem.hintLeft = nil
+            end
+            gem.leftItem = owned
+            ns.GreyInCombat(gem, not owned)
+        end
         local start, duration = 0, 0
         if owned and API.ItemCooldown then start, duration = API.ItemCooldown(owned) end
         if start and duration and duration > 1.5 then
@@ -75,18 +102,6 @@ local UpdateCounts = ns.UpdateCounts
 -- known but missing gems, so a gem conjured during combat can be used right away. With several
 -- gems a later line can still report the shared cooldown or a missing item, which is accepted.
 ---------------------------------------------------------------------------
--- An item's name reads nil until the client has loaded its data - in demo mode, say, with no gem
--- in the bags. The gem's line then waits for ITEM_DATA_LOAD_RESULT instead of showing "?".
-local requestedNames = {}
-local function GemName(item)
-    local name = ItemName(item)
-    if not name and not requestedNames[item] and C_Item and C_Item.RequestLoadItemDataByID then
-        requestedNames[item] = true
-        C_Item.RequestLoadItemDataByID(item)
-    end
-    return name or "?"
-end
-
 local function SetupGem(b)
     local knownGems, ownedLines, missingLines = {}, {}, {}
     local owned, conjure
@@ -104,29 +119,23 @@ local function SetupGem(b)
         end
     end
     if #knownGems == 0 then b:Hide() return false end
-    conjure = conjure or knownGems[1].spell -- all gems owned: conjure the highest
     for _, line in ipairs(missingLines) do ownedLines[#ownedLines + 1] = line end
     if IsDemo() and not owned then owned = knownGems[1].item end
 
+    -- A click with nothing to do has no action and no line (ruleset plan 2026-10-25-combat-locks):
+    -- the left one without a gem, the right one with every known gem owned - gems are unique
     b.leftItem, b.conjureSpell = owned, conjure
     b.spellId = not owned and conjure or nil
-    -- Left uses the best gem; without one it conjures, and the line says so
-    b.hintLeft = owned and L.HINT_USE_ITEM:format(GemName(owned))
-        or L.HINT_LEFT:format(ns.SpellName(conjure) or L.CONJURE)
-    b.hint = L.HINT_RIGHT:format(ns.SpellName(conjure) or L.CONJURE)
+    b.hintLeft = owned and L.HINT_USE_ITEM:format(GemName(owned)) or nil
+    b.hint = conjure and L.HINT_RIGHT:format(ns.SpellName(conjure) or L.CONJURE) or nil
 
     if IsDemo() then
         SetAttr(b, "type1", nil)
         SetAttr(b, "type2", nil)
     else
-        if owned then
-            SetAttr(b, "type1", "macro")
-            SetAttr(b, "macrotext1", table.concat(ownedLines, "\n"))
-        else
-            SetAttr(b, "type1", "spell")
-            SetAttr(b, "spell1", conjure)
-        end
-        SetAttr(b, "type2", "spell")
+        SetAttr(b, "type1", owned and "macro" or nil)
+        SetAttr(b, "macrotext1", owned and table.concat(ownedLines, "\n") or nil)
+        SetAttr(b, "type2", conjure and "spell" or nil)
         SetAttr(b, "spell2", conjure)
     end
     b.icon:SetTexture(owned and ItemIcon(owned) or GetSpellTex(conjure))
@@ -160,23 +169,17 @@ local function SetupConsumable(b)
         item, b.fakeCount = b.items[1], true -- simulated best water/food
     end
     b.leftItem, b.spellId = item, spell
-    -- The left click uses the best item; without one it conjures, and the line says so
-    if item then
-        b.hintLeft = b == water and L.HINT_USE_WATER or L.HINT_USE_FOOD
-    else
-        b.hintLeft = L.HINT_LEFT:format(ns.SpellName(spell) or L.CONJURE)
-    end
+    -- The left click uses the best item; without one it has no action and no line - the right
+    -- click conjures (ruleset plan 2026-10-25-combat-locks)
+    b.hintLeft = item and (b == water and L.HINT_USE_WATER or L.HINT_USE_FOOD) or nil
     b.hintMiddle = L.HINT_MIDDLE
     if IsDemo() then
         -- No real action, only the demo message
         SetAttr(b, "type1", nil)
         SetAttr(b, "type2", nil)
-    elseif item then
-        SetAttr(b, "type1", "item")
-        SetAttr(b, "item1", "item:" .. item)
     else
-        SetAttr(b, "type1", "spell")
-        SetAttr(b, "spell1", spell)
+        SetAttr(b, "type1", item and "item" or nil)
+        SetAttr(b, "item1", item and ("item:" .. item) or nil)
     end
     ApplyConjure(b)
     b.icon:SetTexture(item and ItemIcon(item) or GetSpellTex(spell))

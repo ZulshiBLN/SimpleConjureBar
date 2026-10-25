@@ -60,7 +60,8 @@ jobs:
 
       # The checks must be able to refuse: a zip without its TOC or without
       # Bindings.xml (the client reads it unlisted, so no TOC line catches it),
-      # a release.json for the wrong flavor, a tag that is not the TOC's version.
+      # a release.json for the wrong flavor, a tag that is not the TOC's version,
+      # and a file that is no part of the addon.
       - name: Control - the checks refuse a wrong package
         run: |
           zip=$(ls .release/*.zip)
@@ -82,7 +83,16 @@ jobs:
           if bash .github/scripts/check-package.sh "$zip" .release/release.json v0.0.0; then
               echo "the check accepted a tag that is not the TOC's version"; exit 1
           fi
-          echo "the checks refused all four wrong packages, as they must"
+          # Only the addon's own files ship (ruleset plan 2026-10-26-release-hardening)
+          stray="$RUNNER_TEMP/stray"
+          mkdir -p "$stray" && unzip -q "$zip" -d "$stray"
+          echo "notes" > "$stray/SimpleConjureBar/notes.txt"
+          mkdir -p "$RUNNER_TEMP/stray-zip"
+          (cd "$stray" && zip -q -r "$RUNNER_TEMP/stray-zip/$(basename "$zip")" SimpleConjureBar)
+          if bash .github/scripts/check-package.sh "$RUNNER_TEMP/stray-zip/$(basename "$zip")" .release/release.json; then
+              echo "the check accepted a zip with a stray file"; exit 1
+          fi
+          echo "the checks refused all five wrong packages, as they must"
 
       # A develop commit is never a merge in main, so the release workflow's
       # first check must refuse it; on main, and on a release tag, it must pass.

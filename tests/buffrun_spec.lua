@@ -290,6 +290,9 @@ describe("the Buff & Run click", function()
             local ns, db = login()
             STATE.keyDown = keyDown
             db.demo = true; ns.Rebuild()
+            -- demo mode counts every rank as known; the client answers no range for one not
+            -- learned, which must not count as out of range (SmartBlessingBar 022d74d)
+            STATE.unknown[rankFor(ns.D, 60)] = true
             STATE.units.target = { class = "PRIEST" }
             STATE.friends = { { class = "MAGE" } }
             _G.CHAT = {}

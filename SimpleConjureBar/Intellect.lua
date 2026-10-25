@@ -122,7 +122,10 @@ local function InSpellRange(spell, unit)
         if v == 1 then r = true elseif v == 0 then r = false end
     end
     -- no answer counts as out of range: UnitInRange answers true at any distance (in game,
-    -- 2026-10-23), so it is no fallback
+    -- 2026-10-23), so it is no fallback. The client gives no answer either for a rank not
+    -- learned, which demo mode counts as known: there it counts as in range, so demo mode names
+    -- what it would cast (SmartBlessingBar 022d74d).
+    if r == nil and IsDemo() then return true end
     return r == true
 end
 

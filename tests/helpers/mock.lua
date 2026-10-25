@@ -6,7 +6,7 @@ local objects = {}
 local eventFrames, eventOrder = {}, {}
 local timers = {}
 STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {}, uses = {},
-          units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false, secrets = {}, now = 100 }
+          units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false, secrets = {}, unknown = {}, now = 100 }
 
 local Methods = {}
 local function New(kind, name, parent)
@@ -462,13 +462,21 @@ ClearCursor = function() CURSOR = nil end
 ClickTradeButton = function(i) if CURSOR then TRADE_SLOTS[i] = CURSOR; CURSOR = nil end end
 SlashCmdList = {}
 NUM_BAG_SLOTS = 4
+-- Every spell is learned but Molten Armor and those in STATE.unknown; asked here, so a spec
+-- counting the spell book's calls counts only the addon's
+local function Learned(id) return id ~= 429307 and not STATE.unknown[id] end
 C_Spell = {
   GetSpellName = function(id) return "Spell" .. id end,
   GetSpellTexture = function(id) return id end,
-  IsSpellInRange = function(_, u) local r = U(u) return not r or r.range ~= false end,
+  -- The client gives no range answer for a spell the player has not learned (SmartBlessingBar
+  -- 022d74d, in game 2026-10-22)
+  IsSpellInRange = function(id, u)
+    if not Learned(id) then return nil end
+    local r = U(u) return not r or r.range ~= false
+  end,
   GetSpellCooldown = function(id) return { startTime = STATE.cooldowns[id] or 0, duration = 1.5 } end,
 }
-C_SpellBook = { IsSpellKnown = function(id) return id ~= 429307 end }
+C_SpellBook = { IsSpellKnown = Learned }
 IsPlayerSpell = function() return false end
 ITEMS = { [8079] = 20, [8076] = 20, [17031] = 3, [17020] = 5, [8008] = 1 }
 C_Item = {

@@ -56,6 +56,10 @@ local ItemCount, Known, GetSpellName = API.ItemCount, API.Known, API.GetSpellNam
 ---------------------------------------------------------------------------
 -- Chat output
 ---------------------------------------------------------------------------
+-- A value the client keeps secret - a name, a GUID, a spell ID - errors when it is compared or
+-- truth-tested: ask this first (rules/code.md)
+function ns.IsSecret(v) return issecretvalue ~= nil and issecretvalue(v) end
+
 function ns.Print(msg)
     print("|cff69ccf0SimpleConjureBar|r: " .. msg)
 end

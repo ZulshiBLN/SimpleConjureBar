@@ -99,6 +99,8 @@ local function FillTrade()
     pendingTrade = nil
     if not p or GetTime() > p.expires then return end
     local partner = UnitGUID("NPC")
+    -- a secret GUID cannot be compared: no trade is filled then
+    if ns.IsSecret(partner) or ns.IsSecret(p.guid) then return end
     if not p.guid or not partner or partner ~= p.guid then return end
 
     local slotIndex = 1

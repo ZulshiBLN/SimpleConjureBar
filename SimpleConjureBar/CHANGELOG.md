@@ -41,6 +41,10 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   mode without a gem, say - because the game had not loaded the gem's name yet. It now names
   the gem as soon as the game knows it.
 
+### Security
+- Names and GUIDs the game keeps secret are no longer compared before they are checked: the
+  bug report, the trade fill and the Intellect tooltip could raise an error on one.
+
 ## [1.1.0] - 2026-10-22
 
 ### Added

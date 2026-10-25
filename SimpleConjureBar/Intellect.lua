@@ -250,8 +250,11 @@ end
 ---------------------------------------------------------------------------
 -- Button setup
 ---------------------------------------------------------------------------
+-- A secret name cannot be shown: the unit token stands in
 local function UnitShortName(unit)
-    return (UnitName(unit)) or unit
+    local name = UnitName(unit)
+    if ns.IsSecret(name) then return unit end
+    return name or unit
 end
 
 -- Whom a click's spell reaches, for its tooltip line: Brilliance covers the target's group -
@@ -472,7 +475,7 @@ ns.buffKey:HookScript("OnClick", PressedInCombat)
 
 local function ArmorCast(spellID)
     if not (inCombat and armor.antsShown) then return end
-    local secret = issecretvalue and issecretvalue(spellID)
+    local secret = ns.IsSecret(spellID)
     if (secret and armorPressed) or (not secret and ARMOR_SPELLS[spellID]) then ns.SetAnts(armor, false) end
 end
 local ticker

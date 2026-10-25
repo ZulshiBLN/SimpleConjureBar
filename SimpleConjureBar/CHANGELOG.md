@@ -31,6 +31,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   counted every mana user as missing Arcane Intellect and made the armor glow. It now keeps
   what it showed until the buffs can be read again, and an armor cast there still ends its
   glow.
+- Trading water and food to a player whose name, level or class the game keeps secret no
+  longer raises an error; the chat line says "your target".
 - In combat the mana gem's right click and "Cast next buff" conjured a gem - a mana loss - and
   water and food conjured; the key could hold Arcane Intellect, which does nothing there.
 - The armor kept glowing through a fight after it was cast there; a cast of any mage armor

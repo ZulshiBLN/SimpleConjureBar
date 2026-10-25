@@ -55,11 +55,16 @@ local function GiveToTarget()
         return
     end
 
+    -- Name, level and class may be secret in an instance: compared or printed they would error
+    -- (ruleset plan 2026-10-25-secret-auras)
     local name = UnitName(unit)
-    local level = UnitLevel(unit) or 1
+    if ns.IsSecret(name) then name = L.TRADE_TARGET end
+    local level = UnitLevel(unit)
+    if ns.IsSecret(level) then level = UnitLevel("player") end
+    level = level or 1
     if level < 1 then level = UnitLevel("player") end -- unknown level (??)
     local _, classFile = UnitClass(unit)
-    local wantsWater = D.MANA_CLASSES[classFile] or false
+    local wantsWater = ns.IsSecret(classFile) or D.MANA_CLASSES[classFile] or false
 
     local items, missing = {}, {}
     local waterId = wantsWater and BestItemForLevel(D.WATER_ITEMS, level)

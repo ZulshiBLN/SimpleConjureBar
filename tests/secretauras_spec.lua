@@ -112,3 +112,26 @@ describe("a login with auras secret", function()
         assert.is_false(ns.AurasReadable())
     end)
 end)
+
+-- Trade compares and prints the target's name, level and class: each may be secret there
+-- (ruleset plan 2026-10-25-secret-auras, item 6)
+describe("a trade with a target whose values are secret", function()
+    it("names him 'your target', takes your level and counts him a mana user, without an error", function()
+        local ns = login()
+        local L, D = ns.L, ns.D
+        for _, list in ipairs({ D.WATER_ITEMS, D.FOOD_ITEMS }) do
+            for _, id in ipairs(list) do ITEMS[id] = 0 end
+        end
+        STATE.target = true
+        STATE.units.target = { name = "Secretguy", level = 37, class = "WARRIOR" }
+        STATE.secrets.Secretguy, STATE.secrets[37], STATE.secrets.WARRIOR = true, true, true
+        _G.CHAT = {}
+        RUNSCRIPT(ns.buttons.Water, "OnClick", "MiddleButton", false)
+        local line = table.concat(CHAT, " ")
+        assert.is_nil(line:find("Secretguy", 1, true), line)
+        assert.is_truthy(line:find(L.TRADE_TARGET, 1, true), line)
+        assert.is_truthy(line:find(L.WATER, 1, true), line) -- a secret class counts as a mana user
+        assert.is_truthy(line:find("(level " .. UnitLevel("player") .. ")", 1, true), line)
+        assert.are.same({}, STATE.errors)
+    end)
+end)

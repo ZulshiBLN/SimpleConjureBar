@@ -105,17 +105,31 @@ function Methods:GetFontString() if not self.fs then self.fs = New("FontString",
 function Methods:GetRegions() return unpack(self.regions) end
 function Methods:GetChildren() return unpack(self.children) end
 -- The rect follows the frame's last anchor on UIParent (a 2000 x 650 screen), so a saved
--- position can be told from the start position; other anchors give a fixed rect
+-- position can be told from the start position, or on another frame whose rect is known (a
+-- report docked to the settings window); other anchors give a fixed rect
 local ANCHOR = { CENTER = { 0.5, 0.5 }, LEFT = { 0, 0.5 }, RIGHT = { 1, 0.5 }, TOP = { 0.5, 1 },
   BOTTOM = { 0.5, 0 }, BOTTOMLEFT = { 0, 0 }, BOTTOMRIGHT = { 1, 0 }, TOPLEFT = { 0, 1 }, TOPRIGHT = { 1, 1 } }
 function Methods:GetRect()
   local points = rawget(self, "points") or {}
   local last = points[#points]
-  if not last or last[2] ~= UIParent then return 100, 100, self.w, self.h end
+  -- SetPoint("CENTER") or SetPoint("TOPLEFT", x, y) on a window of the screen: relative to it
+  if last and type(last[2]) ~= "table" and self.parent == UIParent then
+    last = { last[1], UIParent, last[1], last[2], last[3] }
+  end
+  local relTo = last and last[2]
+  if type(relTo) ~= "table" then return 100, 100, self.w, self.h end
+  local rl, rb, rw, rh
+  if relTo == UIParent then
+    rl, rb, rw, rh = 0, 0, UIParent.w, UIParent.h
+  elseif rawget(relTo, "points") and #relTo.points > 0 then
+    rl, rb, rw, rh = relTo:GetRect()
+  else
+    return 100, 100, self.w, self.h
+  end
   local point, _, rel, x, y = unpack(last)
   local a, r = ANCHOR[point], ANCHOR[rel or point]
   if not a or not r then return 100, 100, self.w, self.h end
-  local ax, ay = UIParent.w * r[1] + (x or 0), UIParent.h * r[2] + (y or 0)
+  local ax, ay = rl + rw * r[1] + (x or 0), rb + rh * r[2] + (y or 0)
   return ax - self.w * a[1], ay - self.h * a[2], self.w, self.h
 end
 function Methods:GetCenter() return 500, 300 end
@@ -333,8 +347,9 @@ TICKERS = {}
 -- NewTimer keeps its delay and waits for ADVANCE: RUNTIMERS would fire it at once, and with the
 -- clock standing still a timer that re-arms itself would run 50 rounds.
 DELAYED = {} -- timers waiting for ADVANCE, visible to specs
+AFTER_DELAYS = {} -- the delay of every C_Timer.After, in order
 C_Timer = {
-  After = function(_, f) table.insert(timers, f) end,
+  After = function(delay, f) AFTER_DELAYS[#AFTER_DELAYS + 1] = delay; table.insert(timers, f) end,
   NewTicker = function(_, f) local t = New("Ticker"); t.fn = f; TICKERS[#TICKERS + 1] = t; return t end,
   NewTimer = function(delay, f)
     local t = { delay = delay, due = GetTime() + delay, fn = f, cancelled = false }

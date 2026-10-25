@@ -189,15 +189,42 @@ end)
 pvpBuff = UI.AddCheck("OPT_PVP_BUFF", "pvpBuff", nil, 1)
 refreshers[#refreshers + 1] = DimPvpBuff
 
--- Bottom row: "Report bug" left, "Reload UI" right (own translations, so they follow the language)
+-- A window line that shows a text for 8 seconds - the newest text wins - and hides with the window
+local function TimedLine(line)
+    local timer
+    ns.UI.window:HookScript("OnHide", function()
+        if timer then timer:Cancel(); timer = nil end
+        line:Hide()
+    end)
+    return function(key, ...)
+        if timer then timer:Cancel() end
+        ns.SetL(line, key, ...)
+        line:Show()
+        timer = C_Timer.NewTimer(8, function() timer = nil; line:Hide() end)
+    end
+end
+
+-- Bottom row: "Report bug" left, "Reload UI" right (own translations, so they follow the language);
+-- below them two lines for why the report did not open, as wide as the page's content (ruleset
+-- plan 2026-10-25-chat-and-docked-report)
 do
+    local HINT_H = 28
     local reload = UI.AddButton(general, "RELOAD_UI", function() ReloadUI() end)
-    reload:SetPoint("BOTTOMRIGHT", general, "BOTTOMRIGHT", -INSET, INSET - 4)
+    reload:SetPoint("BOTTOMRIGHT", general, "BOTTOMRIGHT", -INSET, INSET - 4 + HINT_H)
     local bug = UI.AddButton(general, "BTN_REPORT_BUG", function() ns.OpenBugReport() end)
-    bug:SetPoint("BOTTOMLEFT", general, "BOTTOMLEFT", INSET, INSET - 4)
+    bug:SetPoint("BOTTOMLEFT", general, "BOTTOMLEFT", INSET, INSET - 4 + HINT_H)
     UI.measures[#UI.measures + 1] = function() return bug:GetWidth() + 12 + reload:GetWidth() end
-    -- Reserve the space, so the button never overlaps the last element
-    Place(22, 8)
+    local hint = general:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    hint:SetJustifyH("LEFT")
+    hint:SetPoint("TOPLEFT", bug, "BOTTOMLEFT", 0, -4)
+    hint:SetMaxLines(2)
+    hint:Hide()
+    UI.stretchers[#UI.stretchers + 1] = function(w) hint:SetWidth(w) end
+    ns.ReportSecretHint = hint
+    local show = TimedLine(hint)
+    function ns.ShowReportSecretHint() show("REPORT_SECRET") end
+    -- Reserve the space, so neither the buttons nor the hint overlap the last element
+    Place(22 + HINT_H, 8)
 end
 
 ---------------------------------------------------------------------------
@@ -528,17 +555,7 @@ do
         result:SetShown(shown)
         return math.ceil(longest / 2) + show:GetWidth() + 8
     end
-    local timer
-    function ns.ShowMacroResult(key, ...)
-        if timer then timer:Cancel() end
-        ns.SetL(result, key, ...)
-        result:Show()
-        timer = C_Timer.NewTimer(8, function() timer = nil; result:Hide() end)
-    end
-    ns.UI.window:HookScript("OnHide", function()
-        if timer then timer:Cancel(); timer = nil end
-        result:Hide()
-    end)
+    ns.ShowMacroResult = TimedLine(result)
     -- Reserve two lines, so neither the button nor the result overlaps the last element
     Place(28, 8)
 end

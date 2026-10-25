@@ -44,7 +44,7 @@ describe("the window background", function()
     it("reaches a report opened after the value changed", function()
         local ns, db = login()
         ns.OpenBugReport()
-        SimpleConjureBarReport:Hide()
+        SimpleConjureBarSettings:Hide() -- takes the report along
         db.windowOpacity = 20
         ns.ApplyWindowOpacities()
         db.windowOpacity = 90 -- changed while the report is closed, as the slider may

@@ -198,6 +198,13 @@ local function report(ns, area, description, details)
     return f.BuildText()
 end
 
+-- The settings page shown, by its title key
+local function shownTab()
+    for _, child in ipairs(SimpleConjureBarSettings.children) do
+        if child.titleKey and child:IsShown() then return child.titleKey end
+    end
+end
+
 describe("the report form", function()
     it("carries the area key and both texts, and offers every area", function()
         local ns = login()
@@ -226,46 +233,104 @@ describe("the report form", function()
         assert.are.equal(ns.locales.zhCN.AREA_TRAVEL, menu.selectedText)
     end)
 
-    it("opens beside the open settings window, which stays open, and goes with it", function()
+    -- Always docked: the settings open on General and the report docks to their left (ruleset
+    -- plan 2026-10-25-chat-and-docked-report, item 5)
+    it("opens the settings on General with the report docked to their left, from any tab", function()
         local ns = login()
         grabber({}, 1)
-        ns.ToggleSettings()
         local settings = SimpleConjureBarSettings
-        ns.OpenBugReport()
+        ns.OpenBugReport() -- settings closed
         local window = SimpleConjureBarReport
         assert.is_true(settings:IsShown())
         assert.is_true(window:IsShown())
-        local point, relativeTo, relativePoint = window:GetPoint()
+        assert.are.equal("TAB_GENERAL", shownTab())
+        local point, relativeTo, relativePoint, x = window:GetPoint()
         assert.are.equal("TOPRIGHT", point)
         assert.are.equal(settings, relativeTo)
         assert.are.equal("TOPLEFT", relativePoint)
-        settings:Hide()
-        assert.is_false(window:IsShown())
+        assert.are.equal(-4, x)
+        assert.are.equal("", window.desc:GetText())
 
-        -- without the settings window: in the middle of the screen, as before
-        ns.OpenBugReport()
+        window.desc:SetText("typed")
+        window:Hide() -- closing the report keeps the settings
+        assert.is_true(settings:IsShown())
+        ns.OpenSettings(nil, "TAB_TRACKING")
+        ns.OpenBugReport() -- from another tab: General, and an empty form
+        assert.are.equal("TAB_GENERAL", shownTab())
         assert.is_true(window:IsShown())
-        assert.are.equal("CENTER", (window:GetPoint()))
-        ns.ToggleSettings() -- opening the settings later leaves the report where it is
-        settings:Hide()
-        assert.is_true(window:IsShown())
+        assert.are.equal("", window.desc:GetText())
+        assert.are.equal(settings, select(2, window:GetPoint()))
+
+        settings:Hide() -- closing the settings closes the report
+        assert.is_false(window:IsShown())
+        assert.are.same({}, STATE.errors)
     end)
 
-    it("comes back with the settings after combat when docked to them", function()
+    it("moves the settings just far enough that the report stays on the screen", function()
         local ns = login()
         grabber({}, 1)
-        ns.ToggleSettings()
+        local settings = SimpleConjureBarSettings
+        local function reportRect() return SimpleConjureBarReport:GetRect() end
+        local function placeSettings(point, x, y)
+            settings:ClearAllPoints()
+            settings:SetPoint(point, UIParent, point, x, y)
+        end
+
+        placeSettings("TOPLEFT", 0, -10) -- at the left edge when the report opens
+        ns.OpenBugReport()
+        local left, bottom = reportRect()
+        assert.are.equal(0, left)
+        assert.is_true(bottom >= 0)
+        local settingsLeft = settings:GetRect()
+        assert.are.equal(SimpleConjureBarReport.w + 4, settingsLeft)
+
+        settings:SetHeight(400) -- lower than the report, dragged to the bottom edge
+        placeSettings("BOTTOMLEFT", 900, 0)
+        RUNSCRIPT(SimpleConjureBarReport, "OnDragStop")
+        left, bottom = reportRect()
+        assert.are.equal(0, bottom)
+        assert.is_true(left >= 0)
+        placeSettings("TOPLEFT", 10, -10) -- the settings' own drag
+        RUNSCRIPT(settings, "OnDragStop")
+        assert.are.equal(0, (reportRect()))
+
+        -- a layout that widens the settings: anchored by the centre, its left edge moves left
+        placeSettings("CENTER", -1000 + SimpleConjureBarReport.w + 4 + settings.w / 2, 0)
+        assert.are.equal(0, (reportRect()))
+        local measures = ns.UI.measures
+        measures[#measures + 1] = function() return 900 end
+        ns.ApplyLanguage("enUS")
+        measures[#measures] = nil
+        assert.are.equal(0, (reportRect()))
+
+        placeSettings("TOPLEFT", 1000, -10) -- room enough: nothing moves
+        RUNSCRIPT(settings, "OnDragStop")
+        assert.are.equal("TOPLEFT", (settings:GetPoint()))
+        assert.are.equal(1000, select(4, settings:GetPoint()))
+        assert.are.same({}, STATE.errors)
+    end)
+
+    it("closes with the settings in combat and comes back with them and the text", function()
+        local ns = login()
+        grabber({}, 1)
         ns.OpenBugReport()
         local settings, window = SimpleConjureBarSettings, SimpleConjureBarReport
+        window.desc:SetText("Portal does nothing")
         -- PLAYER_REGEN_DISABLED: the player is in combat, the lockdown not yet
         STATE.affecting = true
         FIRE("PLAYER_REGEN_DISABLED")
         assert.is_false(settings:IsShown())
         assert.is_false(window:IsShown())
         STATE.affecting = false
+        settings:ClearAllPoints() -- the report fits when it comes back, too
+        settings:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, -10)
+        local after = #AFTER_DELAYS
         FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.are.equal(0, AFTER_DELAYS[after + 1]) -- after the settings' own handler
         assert.is_true(settings:IsShown())
         assert.is_true(window:IsShown())
+        assert.are.equal("Portal does nothing", window.desc:GetText())
+        assert.are.equal(0, (window:GetRect()))
         -- closed by hand, the settings take the report along, and it stays closed
         settings:Hide()
         FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
@@ -320,7 +385,9 @@ describe("the report form", function()
         STATE.combat = false
         ns.OpenBugReport()
         assert.is_true(SimpleConjureBarReport:IsShown())
+        STATE.affecting = true -- as in the game when the event comes
         FIRE("PLAYER_REGEN_DISABLED")
+        STATE.affecting = false
         assert.is_false(SimpleConjureBarReport:IsShown())
         FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
         assert.is_true(SimpleConjureBarReport:IsShown())
@@ -450,19 +517,65 @@ describe("the report's privacy", function()
         end
     end)
 
-    it("keeps the window shut while a name is secret", function()
+    -- A secret name: no chat, the settings open on General and say why under "Report bug" for
+    -- 8 seconds (ruleset plan 2026-10-25-chat-and-docked-report, item 6)
+    it("keeps the window shut while a name is secret, and says so under the button", function()
         local ns = login()
         grabber({}, 1)
         STATE.units.target = { name = "Targetguy" }
-        _G.issecretvalue = function(v) return v == "Targetguy" end
+        STATE.secrets.Targetguy = true
         _G.CHAT = {}
         ns.OpenBugReport()
+        local hint = ns.ReportSecretHint
         assert.is_false(SimpleConjureBarReport:IsShown())
-        assert.is_truthy(CHAT[#CHAT]:find(ns.L.REPORT_SECRET, 1, true))
-        _G.issecretvalue = nil
+        assert.is_true(SimpleConjureBarSettings:IsShown())
+        assert.are.equal("TAB_GENERAL", shownTab())
+        assert.is_true(hint:IsShown())
+        assert.are.equal(ns.L.REPORT_SECRET, hint:GetText())
+        assert.are.same({}, CHAT)
+        ADVANCE(5)
+        ns.OpenBugReport() -- the newest wins
+        ADVANCE(5)
+        assert.is_true(hint:IsShown())
+        ADVANCE(3)
+        assert.is_false(hint:IsShown())
+        ns.OpenBugReport()
+        SimpleConjureBarSettings:Hide() -- hidden with the settings
+        assert.is_false(hint:IsShown())
+        ADVANCE(8)
+        assert.are.same({}, STATE.errors)
+
+        -- the report's return after combat checks again
+        STATE.secrets.Targetguy = nil
+        ns.OpenBugReport()
+        assert.is_true(SimpleConjureBarReport:IsShown())
+        STATE.affecting = true
+        FIRE("PLAYER_REGEN_DISABLED")
+        STATE.affecting = false
+        STATE.secrets.Targetguy = true
+        FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.is_true(SimpleConjureBarSettings:IsShown())
+        assert.is_false(SimpleConjureBarReport:IsShown())
+        assert.is_true(hint:IsShown())
+        assert.are.same({}, CHAT)
+        STATE.secrets.Targetguy = nil
     end)
 
-    it("builds nothing new while a name turns secret after the window opened", function()
+    it("fits the secret-name hint into its two lines under Report bug in every language", function()
+        for code in pairs(addon.load("enUS").locales) do
+            _G.SimpleConjureBarDB = nil
+            local ns = addon.load(code)
+            FIRE("PLAYER_LOGIN"); RUNTIMERS()
+            ns.ToggleSettings()
+            local hint = ns.ReportSecretHint
+            hint:SetText(ns.L.REPORT_SECRET)
+            assert.is_true(hint:GetStringWidth() <= 2 * hint:GetWidth(),
+                code .. ": " .. hint:GetStringWidth() .. " > 2 x " .. hint:GetWidth())
+            ns.ToggleSettings()
+        end
+    end)
+
+    it("builds nothing new while a name turns secret after the window opened, and says so above the code", function()
         local ns, db
         ns, db = login(nil)
         poisonedClient()
@@ -470,13 +583,16 @@ describe("the report's privacy", function()
         ns.OpenBugReport()
         local f = SimpleConjureBarReport
         local before = f.report:GetText()
-        _G.issecretvalue = function(v) return v == "Targetguy" end
+        STATE.secrets.Targetguy = true
         _G.CHAT = {}
         f.desc:SetText("Testplayer saw it"); RUNSCRIPT(f.desc, "OnTextChanged", true)
         assert.are.equal(before, f.report:GetText())
         assert.is_nil((ns.ReportCode.Decode(f.report:GetText()) or ""):find("Testplayer", 1, true))
-        assert.is_truthy(CHAT[#CHAT]:find(ns.L.REPORT_SECRET, 1, true))
-        _G.issecretvalue = nil
+        assert.are.equal(ns.L.REPORT_SECRET, f.step2:GetText())
+        assert.are.same({}, CHAT)
+        STATE.secrets.Targetguy = nil
+        f.desc:SetText("clean"); RUNSCRIPT(f.desc, "OnTextChanged", true)
+        assert.are.equal(ns.L.REPORT_STEP2, f.step2:GetText())
     end)
 
     it("stays under 20,000 bytes, cut at a whole character, and shows the data list", function()
@@ -638,22 +754,5 @@ describe("the report's own values", function()
         local text = report(ns, "OTHER")
         assert.is_nil(text:find("Testplayer", 1, true), text)
         assert.is_truthy(text:find("<name> 1.0.0", 1, true), text)
-    end)
-
-    it("say once in chat that a name is secret, however much is typed", function()
-        local ns = login()
-        grabber({}, 1)
-        STATE.units.target = { name = "Targetguy" }
-        ns.OpenBugReport()
-        local f = SimpleConjureBarReport
-        STATE.secrets.Targetguy = true
-        _G.CHAT = {}
-        for i = 1, 10 do f.desc:SetText("typed " .. i); RUNSCRIPT(f.desc, "OnTextChanged", true) end
-        assert.are.equal(1, #CHAT)
-        STATE.secrets.Targetguy = nil
-        f.desc:SetText("clean"); RUNSCRIPT(f.desc, "OnTextChanged", true)
-        STATE.secrets.Targetguy = true
-        f.desc:SetText("secret again"); RUNSCRIPT(f.desc, "OnTextChanged", true)
-        assert.are.equal(2, #CHAT)
     end)
 end)

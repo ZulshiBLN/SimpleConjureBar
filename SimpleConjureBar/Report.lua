@@ -311,15 +311,14 @@ local function ShowBox()
 end
 
 -- Each keystroke rebuilds the report; while a name is secret the last clean one stays, and the
--- chat says so once, not on every key
+-- line above the code box says why until the next clean report (no chat)
 local function Refresh()
     local text = BuildReport(FormValues())
     if not text then
-        if not frame.secretSaid then ns.Print(L.REPORT_SECRET) end
-        frame.secretSaid = true
+        SetL(frame.step2, "REPORT_SECRET")
         return
     end
-    frame.secretSaid = false
+    SetL(frame.step2, "REPORT_STEP2")
     frame.reportText = text
     frame.codeText = ns.ReportCode.Encode(text)
     ShowBox()
@@ -338,26 +337,42 @@ local function AddInput(anchor, width)
     return box
 end
 
+-- Docked to the settings' left: where the report would leave the screen to the left or below,
+-- the settings move just far enough (ruleset plan 2026-10-25-chat-and-docked-report)
+local function FitOnScreen()
+    if not (frame and frame:IsShown()) then return end
+    local left, bottom = frame:GetRect()
+    if not left then return end
+    local dx, dy = math.max(0, -left), math.max(0, -bottom)
+    if dx == 0 and dy == 0 then return end
+    local settings = ns.UI.window
+    local x, y = settings:GetRect()
+    settings:ClearAllPoints()
+    settings:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x + dx, y + dy)
+end
+
 local function CreateWindow()
     local W, H, PAD = 520, 580, 22
     frame = CreateFrame("Frame", "SimpleConjureBarReport", UIParent, API.BACKDROP_TPL)
     frame:SetSize(W, H)
-    frame:SetPoint("CENTER")
     frame:SetFrameStrata("FULLSCREEN_DIALOG")
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
-    -- Docked beside the settings window, a drag moves that window and the report goes with it
-    local function Mover() return frame.docked and ns.UI.window or frame end
-    frame:SetScript("OnDragStart", function() Mover():StartMoving() end)
-    frame:SetScript("OnDragStop", function() Mover():StopMovingOrSizing() end)
-    frame:SetClampedToScreen(true)
-    -- Closing the settings closes a report docked to them
+    -- Always docked beside the settings window: a drag moves that window and the report goes with it
+    local settings = ns.UI.window
+    frame:SetScript("OnDragStart", function() settings:StartMoving() end)
+    frame:SetScript("OnDragStop", function()
+        settings:StopMovingOrSizing()
+        FitOnScreen()
+    end)
+    ns.UI.placers[#ns.UI.placers + 1] = FitOnScreen
+    -- Closing the settings closes the report docked to them
     -- Combat closes both windows, each from its own event, in no set order: whichever closes
     -- the report first marks it to come back once the settings are back
     local reopen = false
-    ns.UI.window:HookScript("OnHide", function()
-        if frame.docked and frame:IsShown() then
+    settings:HookScript("OnHide", function()
+        if frame:IsShown() then
             if UnitAffectingCombat("player") then reopen = true end
             frame:Hide()
         end
@@ -430,6 +445,7 @@ local function CreateWindow()
     local step2 = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     step2:SetPoint("TOPLEFT", frame.details, "BOTTOMLEFT", -6, -12)
     SetL(step2, "REPORT_STEP2")
+    frame.step2 = step2
 
     local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", step2, "BOTTOMLEFT", 0, -6)
@@ -499,19 +515,20 @@ local function CreateWindow()
     frame:SetScript("OnShow", function()
         if InCombatLockdown() then
             frame:Hide()
-            if ns.fromCommand then ns.Print(L.REPORT_COMBAT) end -- only a command gets an answer
             return
         end
-        -- A secret name could not be filtered: no report until it is readable again
+        -- A secret name could not be filtered: no report until it is readable again; the
+        -- settings say why under "Report bug", not the chat
         if not ns.KnownNames() then
             frame:Hide()
-            ns.Print(L.REPORT_SECRET)
+            ns.ShowReportSecretHint()
             return
         end
         -- also when the background was set while the window was closed
         ns.ApplyWindowOpacity(frame)
         Refresh()
         SelectReport()
+        FitOnScreen()
     end)
     local events = CreateFrame("Frame")
     events:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -523,7 +540,7 @@ local function CreateWindow()
             reopen = false
             -- after the settings window's own handler, which may run after this one
             C_Timer.After(0, function()
-                if not frame.docked or ns.UI.window:IsShown() then frame:Show() end
+                if settings:IsShown() then frame:Show() end
             end)
         end
     end)
@@ -536,21 +553,22 @@ function ns.ApplyReportOpacity()
     if frame then ns.ApplyWindowOpacity(frame) end
 end
 
+-- The settings open on General and the report docks to their left, 4 px apart (Michel,
+-- 2026-10-21; always, ruleset plan 2026-10-25-chat-and-docked-report). In combat nothing opens,
+-- and only /scb bug says why.
 function ns.OpenBugReport()
     if not frame then CreateWindow() end
-    -- With the settings window open it stays, and the report opens docked to its left
-    -- (Michel, 2026-10-21); else in the middle of the screen
-    frame:ClearAllPoints()
-    frame.docked = ns.UI.window:IsShown()
-    if frame.docked then
-        frame:SetPoint("TOPRIGHT", ns.UI.window, "TOPLEFT", -4, 0)
-    else
-        frame:SetPoint("CENTER")
+    if InCombatLockdown() then
+        if ns.fromCommand then ns.Print(L.REPORT_COMBAT) end
+        return
     end
+    ns.OpenSettings(nil, "TAB_GENERAL")
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPRIGHT", ns.UI.window, "TOPLEFT", -4, 0)
     frame.desc:SetText("")
     frame.details:SetText("")
     frame.area = "OTHER"
     frame.areaMenu:GenerateMenu()
     frame.showContent = false
-    if frame:IsShown() then Refresh() SelectReport() else frame:Show() end
+    if frame:IsShown() then Refresh() SelectReport() FitOnScreen() else frame:Show() end
 end

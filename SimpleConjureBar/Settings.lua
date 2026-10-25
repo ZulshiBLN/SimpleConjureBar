@@ -58,8 +58,16 @@ settings:SetFrameStrata("DIALOG")
 settings:SetMovable(true)
 settings:EnableMouse(true)
 settings:RegisterForDrag("LeftButton")
+-- placers run when the window moved or changed size: the docked bug report keeps itself on the
+-- screen (ruleset plan 2026-10-25-chat-and-docked-report)
+local placers = {}
+UI.placers = placers
+function UI.Placed() for _, f in ipairs(placers) do f() end end
 settings:SetScript("OnDragStart", settings.StartMoving)
-settings:SetScript("OnDragStop", settings.StopMovingOrSizing)
+settings:SetScript("OnDragStop", function(self)
+    self:StopMovingOrSizing()
+    UI.Placed()
+end)
 settings:SetClampedToScreen(true)
 settings:Hide()
 if settings.SetBackdrop then
@@ -756,6 +764,7 @@ local function LayoutSettings()
     for _, pg in ipairs(pages) do lowest = math.min(lowest, pg.cursorY) end
     -- cursorY points below the last element; replace the last gap with the border
     settings:SetHeight(-lowest - 4 + INSET)
+    UI.Placed()
 end
 
 local function RefreshAll()

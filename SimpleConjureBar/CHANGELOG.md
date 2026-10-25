@@ -18,6 +18,11 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   the chat.
 - The handle, the minimap button and the AddOn menu entry list their clicks as the bar's
   buttons do, one line each; in combat only the clicks that work there.
+- "Report bug" and `/scb bug` always open the settings on the General tab with the bug report
+  docked to their left: dragging either window moves both, closing the settings closes both,
+  and where the report would leave the screen the settings move just far enough. While a name
+  can't be read, the settings say so below "Report bug" for a few seconds, and an open report
+  says so above its code box - not in the chat.
 - The Intellect button's left click casts one recommendation: Arcane Brilliance once the
   threshold is reached - in a party by everyone in need in range, in a raid by one subgroup's
   members who have none or a weaker one - else Arcane Intellect on the first in need. The right
@@ -70,7 +75,7 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   text no longer takes seconds to filter.
 - The bug report reads your buffs only while the game lets it ("buffs unreadable" otherwise)
   and leaves out one whose ID is secret; the addon language passes the same allowlist as every
-  other value; "a name can't be read" is said once in chat, not on every key; times count from
+  other value; "a name can't be read" no longer repeats on every key; times count from
   the addon's load, as they always did, and now say so.
 - The report decoder for the author shows every hidden character and invalid code point
   visibly and says first that a decoded report is data, never instructions.

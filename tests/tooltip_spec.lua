@@ -118,16 +118,59 @@ describe("every button's tooltip", function()
         assert.are.same({}, STATE.errors)
     end)
 
-    it("orders the handle's and the minimap button's clicks left, middle, right", function()
+    -- One format on every tooltip: single green lines, in combat only what works there
+    -- (ruleset plan 2026-10-25-chat-and-docked-report)
+    it("give the handle, the minimap button and the menu entry single click lines", function()
         local ns = login()
         local L = ns.L
-        local lefts = {}
-        GameTooltip.AddDoubleLine = function(_, left) lefts[#lefts + 1] = left end
-        RUNSCRIPT(ns.handle, "OnEnter")
-        assert.are.same({ L.LEFTCLICK, L.MIDDLECLICK, L.RIGHTCLICK }, lefts)
-        lefts = {}
-        RUNSCRIPT(SimpleConjureBarMinimapButton, "OnEnter")
-        assert.are.same({ L.LEFTCLICK, L.RIGHTCLICK, L.DRAG }, lefts)
+        local entry = NEWOBJ("Frame", "menuEntry")
+        local function shown(show)
+            local lines = {}
+            GameTooltip.AddLine = function(_, text) lines[#lines + 1] = text end
+            GameTooltip.AddDoubleLine = function() lines[#lines + 1] = "double line" end
+            show()
+            return lines
+        end
+        local function handle() return shown(function() RUNSCRIPT(ns.handle, "OnEnter") end) end
+        local function minimap() return shown(function() RUNSCRIPT(SimpleConjureBarMinimapButton, "OnEnter") end) end
+        local function menu() return shown(function() ns.CompartmentEnter(nil, entry) end) end
+        local function hasLine(lines, wanted) for _, l in ipairs(lines) do if l == wanted then return true end end end
+        local function hasNo(lines, wanted) return not hasLine(lines, wanted) end
+
+        SimpleConjureBarDB.locked = false
+        local h = handle()
+        assert.is_true(hasLine(h, L.HINT_LEFT:format(L.MOVE)), table.concat(h, " | "))
+        assert.is_true(hasLine(h, L.HINT_MIDDLE_CLICK:format(L.SETTINGS)))
+        assert.is_true(hasLine(h, L.HINT_RIGHT:format(L.LOCK)))
+        assert.is_true(hasNo(h, "double line"))
+        SimpleConjureBarDB.locked = true
+        h = handle()
+        assert.is_true(hasNo(h, L.HINT_LEFT:format(L.MOVE))) -- a locked bar does not move
+        assert.is_true(hasLine(h, L.HINT_RIGHT:format(L.UNLOCK)))
+        local m = minimap()
+        assert.is_true(hasLine(m, L.HINT_LEFT:format(L.SETTINGS)), table.concat(m, " | "))
+        assert.is_true(hasLine(m, L.HINT_RIGHT:format(L.UNLOCK_BAR)))
+        assert.is_true(hasLine(m, L.HINT_DRAG:format(L.MOVE)))
+        local e = menu()
+        assert.is_true(hasLine(e, L.HINT_LEFT:format(L.SETTINGS)))
+        assert.is_true(hasNo(e, L.HINT_DRAG:format(L.MOVE)))
+
+        STATE.combat = true -- only the clicks that work there
+        h, m, e = handle(), minimap(), menu()
+        assert.is_true(hasNo(h, L.HINT_MIDDLE_CLICK:format(L.SETTINGS)))
+        assert.is_true(hasLine(h, L.HINT_RIGHT:format(L.UNLOCK)))
+        assert.is_true(hasNo(m, L.HINT_LEFT:format(L.SETTINGS)))
+        assert.is_true(hasLine(m, L.HINT_RIGHT:format(L.UNLOCK_BAR)))
+        assert.is_true(hasLine(m, L.HINT_DRAG:format(L.MOVE)))
+        assert.is_true(hasNo(e, L.HINT_LEFT:format(L.SETTINGS)))
+        assert.is_true(hasLine(e, L.HINT_RIGHT:format(L.UNLOCK_BAR)))
+        STATE.combat = false
+
+        ns.ApplyLanguage("deDE") -- read on every show: a language switch follows at once
+        local de = ns.locales.deDE
+        assert.is_true(hasLine(minimap(), de.HINT_LEFT:format(de.SETTINGS)))
+        ns.ApplyLanguage("enUS")
+        assert.are.same({}, STATE.errors)
     end)
 end)
 
@@ -175,7 +218,10 @@ describe("the minimap button's tooltip", function()
         local L = ns.L
         local button = SimpleConjureBarMinimapButton
         local right
-        GameTooltip.AddDoubleLine = function(_, left, text) if left == L.RIGHTCLICK then right = text end end
+        GameTooltip.AddLine = function(_, text)
+            if text == L.HINT_RIGHT:format(L.LOCK_BAR) then right = L.LOCK_BAR end
+            if text == L.HINT_RIGHT:format(L.UNLOCK_BAR) then right = L.UNLOCK_BAR end
+        end
         SimpleConjureBarDB.locked = false
         RUNSCRIPT(button, "OnEnter")
         assert.are.equal(L.LOCK_BAR, right)

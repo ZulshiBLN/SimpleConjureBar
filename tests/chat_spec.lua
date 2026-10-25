@@ -56,10 +56,9 @@ describe("the chat", function()
         local ns, db = login()
         _G.CHAT = {}
         local right
-        GameTooltip.AddDoubleLine = function(_, left, text) if left == ns.L.RIGHTCLICK then right = text end end
         GameTooltip.AddLine = function(_, text)
-            if type(text) == "string" and text:find(ns.L.LOCK_BAR, 1, true) then right = ns.L.LOCK_BAR end
-            if type(text) == "string" and text:find(ns.L.UNLOCK_BAR, 1, true) then right = ns.L.UNLOCK_BAR end
+            if text == ns.L.HINT_RIGHT:format(ns.L.LOCK_BAR) then right = ns.L.LOCK_BAR end
+            if text == ns.L.HINT_RIGHT:format(ns.L.UNLOCK_BAR) then right = ns.L.UNLOCK_BAR end
         end
         local entry = NEWOBJ("Frame", "menuEntry")
         db.locked = false

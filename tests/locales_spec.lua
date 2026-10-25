@@ -82,11 +82,11 @@ describe("locales", function()
     -- of the source and it has to notice.
     it("would notice a key missing from a locale", function()
         local source = addon.read("SimpleConjureBar/Locales.lua")
-        local cut, n = source:gsub("(locales%.deDE = {.-)\n%s*DRAG = [^\n]*", "%1", 1)
-        assert.are.equal(1, n, "the test copy should lose deDE.DRAG")
+        local cut, n = source:gsub("(locales%.deDE = {.-)\n%s*TRADE_NO_TARGET = [^\n]*", "%1", 1)
+        assert.are.equal(1, n, "the test copy should lose deDE.TRADE_NO_TARGET")
         local broken = load("deDE", cut)
-        assert.is_nil(lookup(broken.locales.deDE, "DRAG"))
-        assert.are.equal(broken.locales.enUS.DRAG, broken.L.DRAG) -- English at runtime
+        assert.is_nil(lookup(broken.locales.deDE, "TRADE_NO_TARGET"))
+        assert.are.equal(broken.locales.enUS.TRADE_NO_TARGET, broken.L.TRADE_NO_TARGET) -- English at runtime
     end)
 
     it("falls back to English at runtime for the client's language", function()

@@ -138,10 +138,13 @@ local function ShowHandleTooltip(self)
     else
         GameTooltip:AddLine(L.UNLOCKED, 0.4, 0.8, 1)
     end
+    -- One click-line format, as the bar's buttons; in combat only the lock works (ruleset plan
+    -- 2026-10-25-chat-and-docked-report)
+    local fight = InCombatLockdown()
     GameTooltip:AddLine(" ")
-    GameTooltip:AddDoubleLine(L.LEFTCLICK, L.MOVE, 0, 1, 0, 1, 1, 1)
-    GameTooltip:AddDoubleLine(L.MIDDLECLICK, L.SETTINGS, 0, 1, 0, 1, 1, 1)
-    GameTooltip:AddDoubleLine(L.RIGHTCLICK, db.locked and L.UNLOCK or L.LOCK, 0, 1, 0, 1, 1, 1)
+    if not fight and not db.locked then GameTooltip:AddLine(L.HINT_LEFT:format(L.MOVE), 0, 1, 0) end
+    if not fight then GameTooltip:AddLine(L.HINT_MIDDLE_CLICK:format(L.SETTINGS), 0, 1, 0) end
+    GameTooltip:AddLine(L.HINT_RIGHT:format(db.locked and L.UNLOCK or L.LOCK), 0, 1, 0)
     GameTooltip:Show()
 end
 

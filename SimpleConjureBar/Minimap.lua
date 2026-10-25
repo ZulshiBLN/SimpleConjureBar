@@ -15,12 +15,12 @@ ns.OnDBReady(function(d) db = d end)
 local function ShowEntryTooltip(owner, anchor)
     GameTooltip:SetOwner(owner, anchor)
     GameTooltip:SetText("SimpleConjureBar |cffffffffv" .. ns.VERSION .. "|r")
+    -- Single click lines, in combat only what works there: the lock, and the minimap button's
+    -- drag (ruleset plan 2026-10-25-chat-and-docked-report)
     GameTooltip:AddLine(" ")
-    GameTooltip:AddDoubleLine(L.LEFTCLICK, L.SETTINGS, 0, 1, 0, 1, 1, 1)
-    GameTooltip:AddDoubleLine(L.RIGHTCLICK, db.locked and L.UNLOCK_BAR or L.LOCK_BAR, 0, 1, 0, 1, 1, 1)
-    if anchor == "ANCHOR_LEFT" then
-        GameTooltip:AddDoubleLine(L.DRAG, L.MOVE, 0, 1, 0, 1, 1, 1)
-    end
+    if not InCombatLockdown() then GameTooltip:AddLine(L.HINT_LEFT:format(L.SETTINGS), 0, 1, 0) end
+    GameTooltip:AddLine(L.HINT_RIGHT:format(db.locked and L.UNLOCK_BAR or L.LOCK_BAR), 0, 1, 0)
+    if anchor == "ANCHOR_LEFT" then GameTooltip:AddLine(L.HINT_DRAG:format(L.MOVE), 0, 1, 0) end
     GameTooltip:Show()
 end
 

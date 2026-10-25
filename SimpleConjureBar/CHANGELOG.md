@@ -16,6 +16,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   the AddOn menu shows the new state in its tooltip instead of the chat. A macro button's result
   shows for a few seconds beside "Show macro". Auto-buy, trading and the login lines stay in
   the chat.
+- The handle, the minimap button and the AddOn menu entry list their clicks as the bar's
+  buttons do, one line each; in combat only the clicks that work there.
 - The Intellect button's left click casts one recommendation: Arcane Brilliance once the
   threshold is reached - in a party by everyone in need in range, in a raid by one subgroup's
   members who have none or a weaker one - else Arcane Intellect on the first in need. The right

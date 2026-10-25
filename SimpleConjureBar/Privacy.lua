@@ -149,30 +149,65 @@ end
 
 local GUID_KINDS = { "Player", "Pet", "Creature", "Vehicle", "GameObject", "Item" }
 
--- Characters that show nothing: zero-width ones, direction marks, the word joiner, the byte
--- order mark, the soft hyphen, tag characters. Inside or beside a name they hide it.
-local INVISIBLE = { "\226\128[\139-\143]", "\226\128[\170-\174]", "\226\129[\160-\164]",
-    "\226\129[\166-\169]", "\239\187\191", "\194\173", "\243\160[\128-\129][\128-\191]" }
+-- The text without the characters D.HIDDEN lists, nor combining marks (U+0300-036F): inside
+-- or beside a name they hide it, and in a report they mean nothing
+local function LeadByte(cp)
+    if cp < 0x800 then return 0xC0 + math.floor(cp / 0x40) end
+    if cp < 0x10000 then return 0xE0 + math.floor(cp / 0x1000) end
+    return 0xF0 + math.floor(cp / 0x40000)
+end
+
+-- The first bytes those characters can start with: any other character is kept unexamined, so
+-- a long error message in any script costs one table lookup per character
+local HIDDEN_LEADS = { [0xCC] = true, [0xCD] = true }
+for _, r in ipairs(D.HIDDEN) do
+    for b = LeadByte(r[1]), LeadByte(r[2]) do HIDDEN_LEADS[b] = true end
+end
+
+local function Visible(text)
+    return (text:gsub("[\192-\247][\128-\191]*", function(ch)
+        if not HIDDEN_LEADS[ch:byte()] then return nil end
+        local cp = CodePoint(ch, 1)
+        if cp >= 0x300 and cp <= 0x36F then return "" end
+        for _, r in ipairs(D.HIDDEN) do
+            if cp >= r[1] and cp <= r[2] then return "" end
+        end
+    end))
+end
 
 -- Folders that hold a user's name: a path from one of them runs to a quote, bracket or line
--- end, spaces included ("C:\Users\First Last\..."); its line number stays readable
-local HOME_ROOTS = { "%f[%a]%a:[\\/]", "\\\\", "/Users/", "/home/", "/Volumes/", "/Applications/" }
-local function Path(p) return "<path>" .. (p:match("(:%d+:?.*)$") or "") end
+-- end, spaces included ("C:\Users\First Last\..."). Its line number stays readable, and the
+-- rest of the line stays for the next round: it may hold a second path. A replaced path holds
+-- no root, so the rounds end; a loop, not a recursion, so hundreds of paths overflow nothing.
+local HOME_ROOTS = { "%f[%a]%a:[\\/]", "\\\\", "/Users/", "/home/", "/Volumes/", "/Applications/",
+    "/run/media/", "/media/", "%f[%w]Users[\\/]" }
+local function Path(p)
+    local s = p:find(":%d+")
+    if not s then return "<path>" end
+    return "<path>" .. p:sub(s)
+end
 
 function ns.Scrub(text, names)
-    text = tostring(text or "")
-    for _, p in ipairs(INVISIBLE) do text = text:gsub(p, "") end
+    text = Visible(tostring(text or ""))
     -- A path ends at Interface/AddOns, whatever drive or folder the game sits in
     text = text:gsub("%a:[\\/][^%[%]\"'\n]-[\\/][Ii]nterface[\\/][Aa]dd[Oo]ns[\\/]", "Interface/AddOns/")
     text = text:gsub("Interface[\\/]AddOns[\\/][^%]%s\"']*", function(p) return (p:gsub("\\", "/")) end)
-    for _, root in ipairs(HOME_ROOTS) do text = text:gsub(root .. "[^%[%]\"'\n]*", Path) end
+    -- after each change from the first root again, so "/Users/" is never taken for "Users/"
+    local i = 1
+    while i <= #HOME_ROOTS do
+        local after = text:gsub(HOME_ROOTS[i] .. "[^%[%]\"'\n]*", Path)
+        if after ~= text then text, i = after, 1 else i = i + 1 end
+    end
     text = text:gsub("%f[%a][Ww][Tt][Ff][\\/][^%[%]\"'\n]*", "<wtf>")
-    text = text:gsub("[%w%.%%%+%-_]+@[%w%-]+%.[%w%.%-]+", "<email>")
+    -- The frontier starts a match only where a run of address characters starts: without it a
+    -- long run would be scanned again from every byte
+    text = text:gsub("%f[%w%.%%%+%-_\128-\255][%w%.%%%+%-_\128-\255]+@[%w%-]+%.[%w%.%-]+", "<email>")
     for _, kind in ipairs(GUID_KINDS) do
         text = text:gsub(kind .. "%-%d+%-[%x%-]+", "<guid>")
     end
-    text = text:gsub("[^%s#<>\"'=%[%]]+#%d%d%d%d+", "<tag>")
-    text = text:gsub("%d+#%d+", "<tag>") -- an account folder, "12345678#1"
+    -- a frontier as for e-mail: a match starts only where a run starts
+    text = text:gsub("%f[^%s#<>\"'=%[%]][^%s#<>\"'=%[%]]+#%d%d%d%d+", "<tag>")
+    text = text:gsub("%f[%d]%d+#%d+", "<tag>") -- an account folder, "12345678#1"
     local low = Fold(text)
     for _, name in ipairs(names or {}) do text, low = ReplaceName(text, low, name) end
     return text

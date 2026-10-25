@@ -546,3 +546,39 @@ describe("the report's name filter", function()
         assert.is_truthy(text:find("Testplayerish", 1, true), text)
     end)
 end)
+
+-- Every path on a line, more user folders, hidden marks inside a name, and no pattern that
+-- rescans a long run from every byte (ruleset plan 2026-10-25-report-filter-fixes, items 4
+-- and 5, SmartBlessingBar's audit F-01, S-02, S-03)
+describe("the report's text filter", function()
+    it("drops hidden marks inside a name", function()
+        local ns = login(nil)
+        for _, mark in ipairs({ "\239\184\143", "\204\129", "\205\143", "\227\133\164" }) do
+            assert.are.equal("<name>", ns.Scrub("Test" .. mark .. "player", { "Testplayer" }), mark)
+        end
+    end)
+
+    it("filters every path on a line and the other user folders, keeping line numbers", function()
+        local ns = login(nil)
+        local pair = "C:\\Users\\JohnRoe\\a.lua:1: in C:\\Users\\JaneDoe\\b.lua:2"
+        local inputs = { pair, pair:rep(150, " "), "/media/janeroe/x", "/run/media/janeroe/x",
+            "see Users\\Jane Roe\\x", "mail j\195\169r\195\180me@example.ch now" }
+        for _, input in ipairs(inputs) do
+            local out = ns.Scrub(input, {})
+            for _, bad in ipairs({ "JohnRoe", "JaneDoe", "janeroe", "Jane Roe", "j\195\169r\195\180me" }) do
+                assert.is_nil(out:find(bad, 1, true), bad .. " in " .. out:sub(1, 200))
+            end
+        end
+        assert.is_truthy(ns.Scrub(pair, {}):find(":1:", 1, true))
+    end)
+
+    it("scrubs a long run without a space quickly", function()
+        local ns = login(nil)
+        for _, input in ipairs({ ("a"):rep(20000) .. "@", ("a"):rep(20000) .. "#1234", ("1"):rep(20000) .. "#" }) do
+            local start = os.clock()
+            ns.Scrub(input, { "Testplayer" })
+            local took = os.clock() - start
+            assert.is_true(took < 0.5, input:sub(-6) .. ": " .. took .. " s")
+        end
+    end)
+end)

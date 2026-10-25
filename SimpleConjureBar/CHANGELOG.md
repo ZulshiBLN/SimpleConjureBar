@@ -47,6 +47,10 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 - The bug report finds a name beside any punctuation, inside Chinese, Japanese or Korean text
   and in capitals of Latin-1 and Cyrillic letters; before, „Name“, «Name», ИВАН and others
   stayed in the report.
+- The bug report filters every file path on a line, not only the first, and the user folders
+  under `/media/`, `/run/media/` and `Users\` without a drive; it finds an e-mail address with
+  accented letters, and a name with invisible marks or accents written inside it. A long error
+  text no longer takes seconds to filter.
 
 ## [1.1.0] - 2026-10-22
 

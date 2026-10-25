@@ -14,11 +14,24 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   threshold is reached - in a party by everyone in need in range, in a raid by one subgroup's
   members who have none or a weaker one - else Arcane Intellect on the first in need. The right
   click no longer casts the other spell; solo it does nothing.
+- In combat the bar offers only what works there: Arcane Intellect, water and food are greyed
+  out and take no click, Intellect without count and glow; the mana gem is used but not
+  conjured and never glows; the tooltips leave out the locked clicks. "Cast next buff" casts
+  only your armor in combat.
+- A click with nothing to do has no action and no tooltip line: the gem without a gem or with
+  every gem owned, water and food without stock - they conjured before.
+- The mana gem glows while the highest gem you know is missing, not only with none at all.
+- The armor's tooltip line names the armor a left click casts.
 - The tooltip says "active" instead of "everyone has it", "out of range" for members in need
   too far away, how many of those in need are out of range, and solo whether your buff is
   missing, weaker or expiring.
 
 ### Fixed
+- In combat the mana gem's right click and "Cast next buff" conjured a gem - a mana loss - and
+  water and food conjured; the key could hold Arcane Intellect, which does nothing there.
+- The armor kept glowing through a fight after it was cast there; a cast of any mage armor
+  now turns the glow off.
+- In combat a used gem's icon stayed; it now shows the next gem, greyed without one.
 - Members out of range were counted, made the Intellect button glow and were picked for a buff
   that could not reach them. Only members in range count now.
 - After learning a higher Arcane Intellect rank, members with a lower one and time left were

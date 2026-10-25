@@ -30,10 +30,13 @@ The addon loads for mages only.
 |---|---|---|---|
 | Armor | Cast the last armor | Open the armor flyout (choice is remembered) | – |
 | Arcane Intellect | The recommended buff: Arcane Brilliance from the threshold, else the single buff | In a group: open the Brilliance threshold | Buff & Run |
-| Mana Gem | Use the best gem | Conjure the highest missing gem | – |
-| Water / Food | Consume the best item | Conjure (rank fitting a targeted player) | Trade water & food to the target |
+| Mana Gem | Use the best gem (none without a gem) | Conjure the highest missing gem (none with every gem) | – |
+| Water / Food | Consume the best item (none without one) | Conjure (rank fitting a targeted player) | Trade water & food to the target |
 | Teleport / Portal | Last destination | Open the destinations (choice is remembered) | – |
 | Handle | Move the bar | Lock / unlock | Open the settings |
+
+A click with nothing to do has no action and no line in the tooltip. The armor's line names the
+armor the left click casts.
 
 - **Arcane Intellect** never buffs your current target: solo it always targets you, in a group
   only mana users in range count and are buffed. A member needs it who has none, then one with a
@@ -59,7 +62,13 @@ The addon loads for mages only.
   5-minute timer: by `/pvp`, in a battleground, an arena or a PvP zone. Flagged only by the timer,
   as after buffing a flagged player, you still pass them. Both are switched on the General tab.
 - **Highlights** - the modern client's glow - show a missing or expiring armor, missing or expiring
-  Intellect and a missing mana gem. An armor glows from its renew time on (3 minutes by default).
+  Intellect and a missing mana gem - the highest one you know. An armor glows from its renew time
+  on (3 minutes by default).
+- **In combat** the bar offers only what works there; the tooltips leave out the other clicks.
+  Arcane Intellect, water and food are greyed out and take no click - Intellect without count and
+  glow. The mana gem is used but not conjured - every gem costs more mana than it gives - and
+  never glows; its icon follows the best gem left, greyed without one. The armor's glow goes off
+  once you cast an armor.
 - **Rune counts** on Teleport/Portal change color at the warning threshold and at 0.
 - **Auto-buy** buys runes and Arcane Powder at reagent vendors up to the configured amounts and
   never spends below the configured gold reserve (default 1 gold).
@@ -147,7 +156,7 @@ In a section of their own under *Options > Key Bindings > SimpleConjureBar*:
 
 | Key | Action |
 |---|---|
-| Cast next buff | One press, one cast: what the first highlighted button of the bar (in the bar's order) would fix - your armor, Arcane Intellect on the next member, a mana gem conjured. Nothing when nothing is highlighted. In combat it keeps what it held when the fight started - your armor, if nothing was highlighted then - and never casts Arcane Intellect, as the button does not. |
+| Cast next buff | One press, one cast: what the first highlighted button of the bar (in the bar's order) would fix - your armor, Arcane Intellect on the next member, a mana gem conjured. Nothing when nothing is highlighted. In combat it casts only your armor, also one chosen in the flyout there - nothing when the armor is hidden. |
 | Buff & Run | The Arcane Intellect button's middle click: buffs the target, then targets the next friendly player. Also with the button hidden. One player per press. |
 | Open Settings | Opens or closes the settings window; not in combat. |
 
@@ -242,7 +251,8 @@ MIT, see [LICENSE](LICENSE). Author: ZulshiBLN. World of Warcraft screenshots an
 
 - With several mana gems in the bags, a left click in combat may still show the shared cooldown
   message for the second gem line of the macro.
-- Armor and Intellect highlights and the Intellect count are frozen during combat (the client
-  restricts aura data in combat); they update right after combat.
+- The client restricts aura data in combat: the armor highlight there follows a cast, not the
+  aura - when the game hides which spell was cast, a cast after a press on the Armor button or the
+  key counts, even if that press was refused. Everything updates right after combat.
 - Intellect buffs the addon does not know yet can be identified with `/scb debug` (lists your
   buffs with spell IDs).

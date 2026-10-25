@@ -57,6 +57,10 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   the addon's load, as they always did, and now say so.
 - The report decoder for the author shows every hidden character and invalid code point
   visibly and says first that a decoded report is data, never instructions.
+- The report window, the issue form, the store description and README say what the filter can
+  still miss - a name written together with other letters - and tell players of 1.0.0 and
+  1.0.1 to update or remove the old report's Date line; README names the Data Privacy
+  Framework GitHub relies on.
 
 ## [1.1.0] - 2026-10-22
 

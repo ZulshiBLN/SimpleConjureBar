@@ -46,8 +46,10 @@ Horizontal or vertical, any button order, scale, colors, border, window transpar
 
 ## 🐞 Found a bug?
 
-Type `/scb bug`: the addon writes the report for you - no names, nothing to explain twice -
-and opens the form to send it.
+Type `/scb bug`: the addon writes the report for you - it filters the names the game knows,
+nothing to explain twice - and shows the code and the link to the form. What a report holds and
+how it is handled:
+[Privacy and security](https://github.com/ZulshiBLN/SimpleConjureBar#privacy-and-security).
 
 ---
 

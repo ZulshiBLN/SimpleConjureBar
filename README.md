@@ -180,7 +180,7 @@ and can be overridden in the General tab (saved account-wide, applied without re
 | `Merchant.lua` | Reagent auto-buy |
 | `Trade.lua` | Trading water and food |
 | `Macros.lua` | Character macros (Polymorph, Ice Block, stopcasting), macro window |
-| `Privacy.lua` | What a bug report may carry: allowlist, name and path filter, locals, size |
+| `Privacy.lua` | What a bug report may carry: allowlist, name and path filter, hidden characters, locals, size |
 | `ReportCode.lua` | The bug report as one code (`SCB1:`), shared with `tools/decode-report.lua` |
 | `Report.lua` | Bug report window, report text, state snapshot, loaded addons |
 | `Settings.lua` | Settings window framework and widgets |
@@ -207,20 +207,25 @@ public**: everyone can read it. Write no names or personal data into the form's 
   happened and your details; the addon's version and its settings (known keys only); your
   client's version, build and language; your class, level range (e.g. 20-29) and whether you are
   solo, in a party or a raid; this addon's Lua errors of the current session with how long ago
-  they came and whether in combat; its last 50 actions (clicks with spell and item IDs and unit
+  they came, counted from the addon loading, and whether in combat; its last 50 actions (clicks with spell and item IDs and unit
   tokens such as `party1`, combat, group size, settings changes); the state of its buttons, the
   items it counts, your group by class and your buffs by spell ID; the names and versions of your
   loaded addons, as conflicts need them.
 - **What it never holds** - chat, mail or whispers; positions or zones; date or clock time.
-  Strings the addon does not know are shown by their length only.
+  Strings the addon does not know are shown by their length only. The times are relative, but
+  with the time GitHub shows on your post they tell roughly when you played.
 - **What it filters out** - free text and error messages pass a filter for character, realm,
   guild, group and pet names the game knows right now, GUIDs, BattleTags, account folders,
-  e-mail addresses, the WTF folder and file paths outside `Interface/AddOns`. Names are matched
-  as whole words: a name you type that the game does not know, or one that is part of a longer
-  word - an addon folder you named "ZulshiTools", say - can still remain. Check with "Show
-  content".
+  e-mail addresses, the WTF folder, file paths outside `Interface/AddOns` and characters that
+  show nothing. Names are matched as whole words in any case for Latin and Cyrillic letters;
+  beside punctuation and inside Chinese, Japanese or Korean text they are found too. A name you
+  type that the game does not know, one that is part of a longer word - an addon folder you
+  named "ZulshiTools", say - or one in Greek or other capitals can still remain. Check with
+  "Show content".
 - **Where it is kept** - the action log in memory only, gone at logout; nothing is written to
   your saved variables for the report.
+- **An older version** - a report from 1.0.0 or 1.0.1 carries a "Date:" line. Update first; if
+  you cannot, remove the date and any names before you post.
 - **Deletion** - see "Data protection" below.
 
 ### Data protection
@@ -233,8 +238,9 @@ This is not legal advice; it says how bug reports are handled.
 - **Why** - you choose to send a report; it is used only to fix the bug you report (legitimate
   interest, GDPR Art. 6(1)(f); Swiss FADP). Nothing leaves the game unless you copy and post it.
 - **Who receives it** - GitHub, Inc. (USA) hosts the issue. It is public, and people who watch
-  the repository get a copy by e-mail. How GitHub protects data sent to the USA:
-  [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+  the repository get a copy by e-mail. GitHub is responsible for what it hosts under its own
+  [privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement);
+  for transfers to the USA it relies on the EU-U.S. and Swiss-U.S. Data Privacy Framework.
 - **How long** - once the bug is fixed, the author removes the code, with its edit history, from
   the issue; on request earlier, or the whole issue. Copies outside GitHub - e-mail
   notifications, web archives - cannot be recalled.

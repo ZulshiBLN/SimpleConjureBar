@@ -22,6 +22,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # the packager versions from history, the tag check needs main
+          persist-credentials: false # nothing here pushes
 
       # On a branch push the packager builds nothing when HEAD already carries
       # a tag, leaving that to the tag's run. A release merge pushed together
@@ -154,6 +155,31 @@ jobs:
           WAGO_VERSIONS_FILE="$wago" GAME_VERSION=1.99.9 bash .github/scripts/upload-wago.sh --dry-run "$zip" "$notes" > "$RUNNER_TEMP/wago.log" 2>&1
           check_fallback Wago "$RUNNER_TEMP/wago.log"
           echo "both sites refused a list without Forever and fell back with a warning, as they must"
+
+      # No upload token reaches CI (ruleset plan 2026-10-26-release-hardening): both dry runs
+      # pass without one, and a real run without one stops before the network
+      - name: Upload controls - no token
+        env:
+          CF_API_TOKEN: ""
+          WAGO_API_TOKEN: ""
+        run: |
+          zip=$(ls .release/*.zip)
+          notes=.release/notes.md
+          wago="$RUNNER_TEMP/wago-list.json"
+          echo '{"patches":{"forever":["1.60.1"]}}' > "$wago"
+          bash .github/scripts/upload-curseforge.sh --dry-run "$zip" "$notes" > "$RUNNER_TEMP/cf-dry.log" 2>&1 \
+              || { cat "$RUNNER_TEMP/cf-dry.log"; echo "CurseForge: a dry run without a token failed"; exit 1; }
+          grep -q "from the TOC" "$RUNNER_TEMP/cf-dry.log" || { cat "$RUNNER_TEMP/cf-dry.log"; echo "CurseForge: no note on the TOC version"; exit 1; }
+          WAGO_VERSIONS_FILE="$wago" bash .github/scripts/upload-wago.sh --dry-run "$zip" "$notes" \
+              || { echo "Wago: a dry run without a token failed"; exit 1; }
+          for site in curseforge wago; do
+              if bash ".github/scripts/upload-$site.sh" "$zip" "$notes" > "$RUNNER_TEMP/$site-real.log" 2>&1; then
+                  echo "$site: a real run without a token passed"; exit 1
+              fi
+              grep -q "is not set" "$RUNNER_TEMP/$site-real.log" \
+                  || { cat "$RUNNER_TEMP/$site-real.log"; echo "$site: failed, but not for the missing token"; exit 1; }
+          done
+          echo "dry runs passed without tokens, real runs refused without them, as they must"
 
       # upload-artifact skips hidden directories such as .release, so the three
       # checked files move to a plain one rather than allowing hidden files.

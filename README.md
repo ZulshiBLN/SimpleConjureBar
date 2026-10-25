@@ -86,7 +86,9 @@ armor the left click casts.
 
 Open with `/scb`, the minimap button, the AddOn compartment, a middle click on the handle or
 *Options > AddOns > SimpleConjureBar*. The settings window cannot be opened in combat; an open
-window closes when combat starts and reopens afterwards.
+window closes when combat starts and reopens afterwards. The minimap button's left click opens
+the settings, its right click locks or unlocks the bar - the tooltip shows the new state - and a
+drag moves it around the minimap; the AddOn compartment entry works the same, without the drag.
 
 - **General**: language, hide in combat, hide the minimap button, scale, the background of the
   settings and bug report windows (0 % invisible to 100 % solid; 60 % is the look they always
@@ -132,7 +134,8 @@ A macro for a spell you have not learned yet shows a question mark until you lea
 
 ![The bug report window beside the settings](.previews/07-bug-report.jpg)
 
-"Report bug" (General tab) or `/scb bug` opens a short form: what happened, where - a list of
+"Report bug" (General tab) or `/scb bug` opens the settings on the General tab with a short form
+docked to their left: what happened, where - a list of
 the addon's parts - and optional details. Everything else the report takes from the game, so a
 bug can be found and fixed without asking you back. The window shows the report as one code,
 already selected:
@@ -144,8 +147,13 @@ already selected:
 
 "Show content" shows everything the code holds before you pass it on. The code is not
 encrypted - anyone can turn it back into what "Show content" shows. Screenshots you add to the
-form are public too: crop or blur names, chat, realm, guild and anything personal first. The window does not open
-in combat; one that is open closes when combat starts and comes back after it. Errors come from
+form are public too: crop or blur names, chat, realm, guild and anything personal first.
+
+Dragging either window moves both, and closing the settings closes both; where the report
+would leave the screen, the settings move just far enough. The report does not open in combat;
+one that is open closes when combat starts and comes back after it. While a name in your group
+or around you can't be read, it does not open either: the settings say so below "Report bug"
+for a few seconds, and an open report says so above its code. Errors come from
 BugGrabber/BugSack when installed. To read a code yourself: `lua tools/decode-report.lua`
 (see [tools/README.md](tools/README.md)).
 
@@ -163,6 +171,10 @@ BugGrabber/BugSack when installed. To read a code yourself: `lua tools/decode-re
 | `/scb debug` | Technical debug output: the state part of a bug report |
 
 `/cbar` still works as an alias from the old addon name "ConjureBar".
+
+The addon writes to the chat only in demo mode, as the answer to a command - `/scb` and
+`/scb bug` in combat say why nothing opens - and for auto-buy, trades and the login lines. A
+click refused in combat says nothing; a macro button's result shows beside "Show macro".
 
 ## Key bindings
 

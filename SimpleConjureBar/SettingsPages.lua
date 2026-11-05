@@ -1,5 +1,5 @@
 -- SimpleConjureBar - settings pages
--- Tabs: General, Tracking, Supplies, Order. Built with the widgets from Settings.lua.
+-- Tabs: General, Tracking, Supplies, Order, Macros. Built with the widgets from Settings.lua.
 
 local _, ns = ...
 if not ns.enabled then return end

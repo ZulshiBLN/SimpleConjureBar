@@ -106,12 +106,13 @@ describe("the new macros", function()
             assert.are.same({ name, "mine" }, { MACROS[1].name, MACROS[1].body })
             assert.is_true(MACROS[2].perChar)
         end
-        -- The unpublished 1.33's account-wide "SCB Polymorph" is still replaced
-        _G.MACROS = { { name = "SCB Polymorph", body = "old" } }
+        -- An account-wide "SCB Polymorph" can only be the player's own: it stays
+        _G.MACROS = { { name = "SCB Polymorph", body = "mine" } }
         ns.CreatePolymorphMacro()
         ns.CreatePolymorphMacro()
-        assert.are.equal(1, #MACROS)
-        assert.is_true(MACROS[1].perChar)
+        assert.are.equal(2, #MACROS)
+        assert.are.equal("mine", MACROS[1].body)
+        assert.is_true(MACROS[2].perChar)
     end)
 
     it("uses the chosen stopcasting spell when none is given", function()
@@ -141,7 +142,14 @@ describe("the new macros", function()
     -- The result shows in the Macros tab, not the chat (ruleset plan
     -- 2026-10-25-chat-and-docked-report)
     it("creates nothing without a free character slot, and says so in the window", function()
-        for i = 1, (MAX_CHARACTER_MACROS or 18) do
+        local limit = Constants.MacroConsts.MAX_CHARACTER_MACROS
+        for i = 1, 18 do
+            MACROS[#MACROS + 1] = { name = "M" .. i, body = "", perChar = true }
+        end
+        ns.CreateIceBlockMacro() -- 18 of 30: there is room (the audit's C-02)
+        assert.are.equal(19, #MACROS)
+        table.remove(MACROS)
+        for i = 19, limit do
             MACROS[#MACROS + 1] = { name = "M" .. i, body = "", perChar = true }
         end
         local before = #MACROS

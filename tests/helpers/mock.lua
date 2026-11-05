@@ -443,7 +443,6 @@ UnitName = function(u) if u == "NPC" then return STATE.tradePartner end local r 
 UnitIsConnected = function(u) local r = U(u) return not r or r.connected ~= false end
 UnitIsDeadOrGhost = function(u) local r = U(u) return r and r.dead == true or false end
 UnitIsVisible = function() return true end
-UnitInRange = function() return true end
 C_Secrets = { ShouldAurasBeSecret = function() return STATE.secret end }
 -- A value the client keeps secret - a spell ID in an event, say - is marked in STATE.secrets
 issecretvalue = function(v) return v ~= nil and STATE.secrets[v] == true end
@@ -554,18 +553,9 @@ local function MacroIndex(pos)
   return MACROS[pos].perChar and 120 + character or account
 end
 local function MacroPos(index) for pos = 1, #MACROS do if MacroIndex(pos) == index then return pos end end end
--- The lowest index of that name, so an account-wide macro comes before a character one
-GetMacroIndexByName = function(n)
-  local best = 0
-  for pos, m in ipairs(MACROS) do
-    if m.name == n then local i = MacroIndex(pos) if best == 0 or i < best then best = i end end
-  end
-  return best
-end
 GetMacroInfo = function(i) local pos = MacroPos(i) if pos then return MACROS[pos].name, nil, MACROS[pos].body end end
 GetNumMacros = function() local a,c=0,0 for _,m in ipairs(MACROS) do if m.perChar then c=c+1 else a=a+1 end end return a,c end
-DeleteMacro = function(i) table.remove(MACROS, MacroPos(i)) end
-MAX_ACCOUNT_MACROS = 120
+Constants = { MacroConsts = { MAX_ACCOUNT_MACROS = 120, MAX_CHARACTER_MACROS = 30 } }
 CreateMacro = function(n, icon, body, perChar) MACROS[#MACROS+1] = { name = n, body = body, perChar = perChar } return #MACROS end
 EditMacro = function(i, n, icon, body) MACROS[MacroPos(i)].body = body end
 GetBuildInfo = function() return "1.15.0", "99999", "Oct 1 2026", 16001 end

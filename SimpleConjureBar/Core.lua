@@ -162,7 +162,7 @@ function ns.InitDB()
     end
 
     -- Schema migrations
-    if (db.dbVersion or 1) < 2 then
+    if db.dbVersion < 2 then
         db.runeColor = nil -- removed setting: the normal rune count is always white
     end
     if db.dbVersion < 3 then

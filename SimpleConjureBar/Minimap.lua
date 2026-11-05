@@ -163,7 +163,6 @@ function ns.RegisterOptionsPanel()
     if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
         local category = Settings.RegisterCanvasLayoutCategory(panel, "SimpleConjureBar")
         Settings.RegisterAddOnCategory(category)
-        ns.settingsCategory = category -- for Settings.OpenToCategory(category:GetID())
     elseif InterfaceOptions_AddCategory then
         InterfaceOptions_AddCategory(panel)
     end

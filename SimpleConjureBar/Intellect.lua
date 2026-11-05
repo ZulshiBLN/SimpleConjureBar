@@ -312,7 +312,7 @@ local function ApplyTargets(b, singleUnit, groupUnit, needing, known)
     if groupUnit then left, leftUnit = D.SPELL_ARCANE_BRILLIANCE, groupUnit end
 
     if b.leftSpell ~= left then b.icon:SetTexture(GetSpellTex(left)) end
-    b.leftSpell, b.rightSpell, b.spellId = left, nil, left
+    b.leftSpell, b.spellId = left, left
     b.leftItem = nil
     b.hintLeft = L.HINT_LEFT:format(ClickText(left, leftUnit, needing))
     b.hint = nil
@@ -447,7 +447,6 @@ local function ArmBuffRun()
     SetAttr(buffRun, "unit", "target")
     SetAttr(buffRun, "spell", nil)
 end
-ns.ArmBuffRun = ArmBuffRun
 
 -- Just before a middle click, out of combat: the rank for the current target. While the chosen
 -- spell is on cooldown the click does nothing at all, so no player is passed by. Demo mode
@@ -552,7 +551,7 @@ function ns.UpdateBuffState()
             -- never read (a login inside an instance): the icon, no click, no line
             local spell = IntellectSpell(nil, ReadKnownRanks())
             intel.icon:SetTexture(GetSpellTex(spell))
-            intel.leftSpell, intel.rightSpell, intel.spellId = spell, nil, spell
+            intel.leftSpell, intel.spellId = spell, spell
             intel.hintLeft, intel.hint, intel.hintKey = nil, nil, nil
             SetAttr(intel, "type1", nil)
         end

@@ -55,26 +55,19 @@ end
 
 -- Creates the character macro `name`, or updates it when it exists. A player's account-wide
 -- macro of the same name is left alone (code review 1.1.0, F-15).
--- replaceAccountCopy: the unpublished build 1.33 created "SCB Polymorph" account-wide;
--- that copy is replaced by the character macro. No other macro of this addon ever existed
--- account-wide.
-local function CreateOrUpdate(name, body, replaceAccountCopy)
+local function CreateOrUpdate(name, body)
     if InCombatLockdown() then return end
-    local maxAccount = MAX_ACCOUNT_MACROS or 120
-    local index = CharacterMacroIndex(name, maxAccount)
+    local limits = Constants.MacroConsts
+    local index = CharacterMacroIndex(name, limits.MAX_ACCOUNT_MACROS)
     if index then
         EditMacro(index, name, MACRO_ICON, body)
         ns.ShowMacroResult("MACRO_UPDATED", name)
         return
     end
     local _, characterMacros = GetNumMacros()
-    if characterMacros >= (MAX_CHARACTER_MACROS or 18) then
+    if characterMacros >= limits.MAX_CHARACTER_MACROS then
         ns.ShowMacroResult("MACRO_FULL")
         return
-    end
-    local accountIndex = GetMacroIndexByName(name)
-    if replaceAccountCopy and accountIndex and accountIndex > 0 and accountIndex <= maxAccount then
-        DeleteMacro(accountIndex)
     end
     -- 4th argument true = character macro
     CreateMacro(name, MACRO_ICON, body, true)
@@ -82,7 +75,7 @@ local function CreateOrUpdate(name, body, replaceAccountCopy)
 end
 
 function ns.CreatePolymorphMacro()
-    CreateOrUpdate(MACRO_NAME, MacroBody(), true)
+    CreateOrUpdate(MACRO_NAME, MacroBody())
 end
 
 -- The macro window's name field holds 16 characters. CreateMacro itself stores longer names

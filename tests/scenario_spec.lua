@@ -223,7 +223,7 @@ describe("the addon in a mocked client", function()
     end)
 
     it("creates the Polymorph macro once, per character, with the chosen marker", function()
-        _G.MACROS = { { name = "SCB Polymorph", body = "old" } }
+        _G.MACROS = {}
         ns.CreatePolymorphMacro(); ns.CreatePolymorphMacro()
         assert.are.equal(1, #MACROS)
         assert.are.equal("SCB Polymorph", MACROS[1].name)

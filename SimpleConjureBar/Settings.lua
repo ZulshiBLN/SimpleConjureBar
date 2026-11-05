@@ -817,10 +817,6 @@ end
 
 -- aboveBlizzard: opened from the WoW options; the window is raised above the Blizzard
 -- settings panel for as long as it is open
-function ns.CloseSettings()
-    settings:Hide()
-end
-
 -- tab: the title key of a tab to show, e.g. "TAB_TRACKING" from the Intellect button's right click
 function ns.OpenSettings(aboveBlizzard, tab)
     if aboveBlizzard then settings:SetFrameStrata("FULLSCREEN_DIALOG") end

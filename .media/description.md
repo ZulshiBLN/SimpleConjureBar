@@ -27,6 +27,8 @@ Built for **WoW Forever**. Loads for mages only.
 - **Mana Gem:** use the best one, conjure the one you are missing.
 - **Auto-buy** restocks runes and Arcane Powder at the vendor, never below your gold reserve.
 
+![Water and food in the trade window](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/03-conjure-and-trade.jpg)
+
 ## 🌀 Teleports, portals and armor
 
 One button each - a right-click opens the list, your choice is remembered. Rune counts turn

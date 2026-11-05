@@ -4,13 +4,19 @@ The images in `.previews/`, in this order: for each, the title `tools/preview-ti
 it, and the caption it gets in the CurseForge and Wago galleries (CurseForge allows at most 256
 characters). Upload the images and paste the captions by hand on both sites with each release
 whose previews change. This is the 1.1.1 set of ruleset plan 2026-10-25-store-screenshots; images
-01, 03 and 04 follow later.
+01 and 04 follow later.
 
 ## 02-intellect-and-tracking.jpg
 
 **Title:** Arcane Intellect, your way
 
 **Caption:** The Intellect button glows and counts who still needs the buff; its tooltip shows every click. On the Tracking tab you set how early to renew and from how many in need it casts Arcane Brilliance.
+
+## 03-conjure-and-trade.jpg
+
+**Title:** Water and food for everyone
+
+**Caption:** Left-click to use, right-click to conjure, middle-click to trade: the trade window opens with water and food for your target's level. A player who uses no mana gets food only. You still confirm the trade yourself.
 
 ## 05-teleports-and-armor.jpg
 

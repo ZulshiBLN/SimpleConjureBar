@@ -15,19 +15,19 @@ ns.OnDBReady(function(d) db = d end)
 local function ShowEntryTooltip(owner, anchor)
     GameTooltip:SetOwner(owner, anchor)
     GameTooltip:SetText("SimpleConjureBar |cffffffffv" .. ns.VERSION .. "|r")
+    -- Single click lines, in combat only what works there: the lock, and the minimap button's
+    -- drag (ruleset plan 2026-10-25-chat-and-docked-report)
     GameTooltip:AddLine(" ")
-    GameTooltip:AddDoubleLine(L.LEFTCLICK, L.SETTINGS, 0, 1, 0, 1, 1, 1)
-    GameTooltip:AddDoubleLine(L.RIGHTCLICK, db.locked and L.UNLOCK_BAR or L.LOCK_BAR, 0, 1, 0, 1, 1, 1)
-    if anchor == "ANCHOR_LEFT" then
-        GameTooltip:AddDoubleLine(L.DRAG, L.MOVE, 0, 1, 0, 1, 1, 1)
-    end
+    if not InCombatLockdown() then GameTooltip:AddLine(L.HINT_LEFT:format(L.SETTINGS), 0, 1, 0) end
+    GameTooltip:AddLine(L.HINT_RIGHT:format(db.locked and L.UNLOCK_BAR or L.LOCK_BAR), 0, 1, 0)
+    if anchor == "ANCHOR_LEFT" then GameTooltip:AddLine(L.HINT_DRAG:format(L.MOVE), 0, 1, 0) end
     GameTooltip:Show()
 end
 
--- owner, anchor: a tooltip the click came from, shown again so it says the new state at once
-local function ToggleLockWithMessage(owner, anchor)
+-- owner, anchor: a tooltip the click came from, shown again so it says the new state at once -
+-- the only answer: the chat speaks for commands only (ruleset plan 2026-10-25-chat-and-docked-report)
+local function ToggleLockAndRedraw(owner, anchor)
     ns.ToggleLock()
-    ns.Print(db.locked and L.LOCKED or L.UNLOCKED)
     if owner and GameTooltip:IsOwned(owner) then ShowEntryTooltip(owner, anchor) end
 end
 
@@ -85,7 +85,7 @@ minimapBtn:SetScript("OnDragStart", function(self) self:SetScript("OnUpdate", On
 minimapBtn:SetScript("OnDragStop", function(self) self:SetScript("OnUpdate", nil) end)
 
 minimapBtn:SetScript("OnClick", function(self, btn)
-    if btn == "RightButton" then ToggleLockWithMessage(self, "ANCHOR_LEFT") else ns.ToggleSettings() end
+    if btn == "RightButton" then ToggleLockAndRedraw(self, "ANCHOR_LEFT") else ns.ToggleSettings() end
 end)
 minimapBtn:SetScript("OnEnter", function(self) ShowEntryTooltip(self, "ANCHOR_LEFT") end)
 minimapBtn:SetScript("OnLeave", GameTooltip_Hide)
@@ -101,11 +101,18 @@ settingsKey:SetScript("OnClick", function() ns.ToggleSettings() end)
 -- AddOn compartment (Retail addon menu next to the minimap). The globals the TOC names
 -- live in Core.lua, ahead of the mage check, and call these.
 ---------------------------------------------------------------------------
+-- The client passes the click no frame, so the entry the mouse entered redraws its tooltip
+local menuEntry
 function ns.CompartmentClick(_, button, menuButton)
-    if button == "RightButton" then ToggleLockWithMessage(menuButton, "ANCHOR_RIGHT") else ns.ToggleSettings() end
+    if button == "RightButton" then
+        ToggleLockAndRedraw(menuButton or menuEntry, "ANCHOR_RIGHT")
+    else
+        ns.ToggleSettings()
+    end
 end
 
 function ns.CompartmentEnter(_, menuButton)
+    menuEntry = menuButton
     ShowEntryTooltip(menuButton, "ANCHOR_RIGHT")
 end
 
@@ -156,7 +163,6 @@ function ns.RegisterOptionsPanel()
     if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
         local category = Settings.RegisterCanvasLayoutCategory(panel, "SimpleConjureBar")
         Settings.RegisterAddOnCategory(category)
-        ns.settingsCategory = category -- for Settings.OpenToCategory(category:GetID())
     elseif InterfaceOptions_AddCategory then
         InterfaceOptions_AddCategory(panel)
     end

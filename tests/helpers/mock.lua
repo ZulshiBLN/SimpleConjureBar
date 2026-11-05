@@ -5,8 +5,8 @@ local objects = {}
 -- one; this one puts the settings window (made at load) before the report (made on demand)
 local eventFrames, eventOrder = {}, {}
 local timers = {}
-STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {},
-          units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false, now = 100 }
+STATE = { combat = false, group = false, raid = false, members = 0, locale = "deDE", errors = {}, casts = {}, uses = {},
+          units = {}, friends = {}, targetedNext = 0, cooldowns = {}, secret = false, secrets = {}, unknown = {}, now = 100 }
 
 local Methods = {}
 local function New(kind, name, parent)
@@ -96,6 +96,7 @@ function Methods:SetAlpha(a) self.alpha = a end
 function Methods:GetAlpha() return self.alpha or 1 end
 function Methods:SetTexture(t) self.texture = t end
 function Methods:SetVertexColor(r, g, b, a) self.vertexColor = { r, g, b, a } end
+function Methods:SetTextColor(r, g, b, a) self.textColor = { r, g, b, a } end
 -- The anchors a region was last given, in order (ClearAllPoints empties them)
 function Methods:SetPoint(...) self.points = rawget(self, "points") or {}; table.insert(self.points, { ... }) end
 function Methods:ClearAllPoints() self.points = {} end
@@ -104,17 +105,31 @@ function Methods:GetFontString() if not self.fs then self.fs = New("FontString",
 function Methods:GetRegions() return unpack(self.regions) end
 function Methods:GetChildren() return unpack(self.children) end
 -- The rect follows the frame's last anchor on UIParent (a 2000 x 650 screen), so a saved
--- position can be told from the start position; other anchors give a fixed rect
+-- position can be told from the start position, or on another frame whose rect is known (a
+-- report docked to the settings window); other anchors give a fixed rect
 local ANCHOR = { CENTER = { 0.5, 0.5 }, LEFT = { 0, 0.5 }, RIGHT = { 1, 0.5 }, TOP = { 0.5, 1 },
   BOTTOM = { 0.5, 0 }, BOTTOMLEFT = { 0, 0 }, BOTTOMRIGHT = { 1, 0 }, TOPLEFT = { 0, 1 }, TOPRIGHT = { 1, 1 } }
 function Methods:GetRect()
   local points = rawget(self, "points") or {}
   local last = points[#points]
-  if not last or last[2] ~= UIParent then return 100, 100, self.w, self.h end
+  -- SetPoint("CENTER") or SetPoint("TOPLEFT", x, y) on a window of the screen: relative to it
+  if last and type(last[2]) ~= "table" and self.parent == UIParent then
+    last = { last[1], UIParent, last[1], last[2], last[3] }
+  end
+  local relTo = last and last[2]
+  if type(relTo) ~= "table" then return 100, 100, self.w, self.h end
+  local rl, rb, rw, rh
+  if relTo == UIParent then
+    rl, rb, rw, rh = 0, 0, UIParent.w, UIParent.h
+  elseif rawget(relTo, "points") and #relTo.points > 0 then
+    rl, rb, rw, rh = relTo:GetRect()
+  else
+    return 100, 100, self.w, self.h
+  end
   local point, _, rel, x, y = unpack(last)
   local a, r = ANCHOR[point], ANCHOR[rel or point]
   if not a or not r then return 100, 100, self.w, self.h end
-  local ax, ay = UIParent.w * r[1] + (x or 0), UIParent.h * r[2] + (y or 0)
+  local ax, ay = rl + rw * r[1] + (x or 0), rb + rh * r[2] + (y or 0)
   return ax - self.w * a[1], ay - self.h * a[2], self.w, self.h
 end
 function Methods:GetCenter() return 500, 300 end
@@ -241,7 +256,8 @@ end
 -- ruleset plan 2026-10-21-buff-and-run), the post bodies of the wrappers that returned a
 -- message, then the insecure scripts - none of them after a cancel: the client's OnClick
 -- never runs for a click a snippet dropped (ruleset decisions, 2026-10-21). A spell cast is appended to STATE.casts as
--- { spell, unit }; a macro runs its "/click Name [button] [1]" and "/targetfriendplayer"
+-- { spell, unit }, an item used - by an "item" action or a macro's "/use item:N" - to STATE.uses as its
+-- ID; a macro runs its "/click Name [button] [1]" and "/targetfriendplayer"
 -- lines, the latter making the next of STATE.friends the target and counting in
 -- STATE.targetedNext.
 local function Attr(frame, name, button)
@@ -270,6 +286,8 @@ function RUNCLICK(frame, button, down, fromMacro)
       local kind = Attr(frame, "type", button)
       if kind == "spell" and Attr(frame, "spell", button) ~= nil then
         STATE.casts[#STATE.casts + 1] = { spell = Attr(frame, "spell", button), unit = Attr(frame, "unit", button) }
+      elseif kind == "item" then
+        STATE.uses[#STATE.uses + 1] = tonumber(tostring(Attr(frame, "item", button)):match("%d+"))
       elseif kind == "macro" then
         RunMacro(Attr(frame, "macrotext", button))
       end
@@ -289,6 +307,8 @@ RunMacro = function(text)
     if name then
       local target = _G[name]
       if target then RUNCLICK(target, mouse ~= "" and mouse or "LeftButton", keyDown == "1", true) end
+    elseif line:match("^/use item:%d+") then
+      STATE.uses[#STATE.uses + 1] = tonumber(line:match("^/use item:(%d+)"))
     elseif line:match("^/targetfriendplayer") then
       STATE.units.target = table.remove(STATE.friends, 1)
       STATE.targetedNext = STATE.targetedNext + 1
@@ -327,8 +347,9 @@ TICKERS = {}
 -- NewTimer keeps its delay and waits for ADVANCE: RUNTIMERS would fire it at once, and with the
 -- clock standing still a timer that re-arms itself would run 50 rounds.
 DELAYED = {} -- timers waiting for ADVANCE, visible to specs
+AFTER_DELAYS = {} -- the delay of every C_Timer.After, in order
 C_Timer = {
-  After = function(_, f) table.insert(timers, f) end,
+  After = function(delay, f) AFTER_DELAYS[#AFTER_DELAYS + 1] = delay; table.insert(timers, f) end,
   NewTicker = function(_, f) local t = New("Ticker"); t.fn = f; TICKERS[#TICKERS + 1] = t; return t end,
   NewTimer = function(delay, f)
     local t = { delay = delay, due = GetTime() + delay, fn = f, cancelled = false }
@@ -422,8 +443,9 @@ UnitName = function(u) if u == "NPC" then return STATE.tradePartner end local r 
 UnitIsConnected = function(u) local r = U(u) return not r or r.connected ~= false end
 UnitIsDeadOrGhost = function(u) local r = U(u) return r and r.dead == true or false end
 UnitIsVisible = function() return true end
-UnitInRange = function() return true end
 C_Secrets = { ShouldAurasBeSecret = function() return STATE.secret end }
+-- A value the client keeps secret - a spell ID in an event, say - is marked in STATE.secrets
+issecretvalue = function(v) return v ~= nil and STATE.secrets[v] == true end
 GetLocale = function() return STATE.locale end
 GetRealmName = function() return "Realm" end
 GetNormalizedRealmName = function() return "Realm" end
@@ -454,13 +476,21 @@ ClearCursor = function() CURSOR = nil end
 ClickTradeButton = function(i) if CURSOR then TRADE_SLOTS[i] = CURSOR; CURSOR = nil end end
 SlashCmdList = {}
 NUM_BAG_SLOTS = 4
+-- Every spell is learned but Molten Armor and those in STATE.unknown; asked here, so a spec
+-- counting the spell book's calls counts only the addon's
+local function Learned(id) return id ~= 429307 and not STATE.unknown[id] end
 C_Spell = {
   GetSpellName = function(id) return "Spell" .. id end,
   GetSpellTexture = function(id) return id end,
-  IsSpellInRange = function(_, u) local r = U(u) return not r or r.range ~= false end,
+  -- The client gives no range answer for a spell the player has not learned (SmartBlessingBar
+  -- 022d74d, in game 2026-10-22)
+  IsSpellInRange = function(id, u)
+    if not Learned(id) then return nil end
+    local r = U(u) return not r or r.range ~= false
+  end,
   GetSpellCooldown = function(id) return { startTime = STATE.cooldowns[id] or 0, duration = 1.5 } end,
 }
-C_SpellBook = { IsSpellKnown = function(id) return id ~= 429307 end }
+C_SpellBook = { IsSpellKnown = Learned }
 IsPlayerSpell = function() return false end
 ITEMS = { [8079] = 20, [8076] = 20, [17031] = 3, [17020] = 5, [8008] = 1 }
 C_Item = {
@@ -486,7 +516,9 @@ local function Aura(a)
   end
   return { spellId = a, expirationTime = 0, name = "A" .. a, as = a }
 end
+-- While the client keeps auras secret (STATE.secret) it refuses a read with an error
 C_UnitAuras = { GetAuraDataBySpellName = function(u, name)
+  if STATE.secret then error("auras are secret") end
   if AURAS[u .. name] then return { expirationTime = 0 } end
   local r = U(u)
   for _, a in ipairs(r and r.auras or {}) do
@@ -508,6 +540,7 @@ UIDropDownMenu_SetWidth = noop
 UnitGUID = function(u) if u == "NPC" then return STATE.tradeGuid end return "Player-1-" .. u end
 AURALIST = {}
 C_UnitAuras.GetAuraDataByIndex = function(u, i)
+  if STATE.secret then error("auras are secret") end
   local r = U(u)
   local l = AURALIST[u] or (r and r.auras)
   if l and l[i] then return Aura(l[i]) end
@@ -520,18 +553,9 @@ local function MacroIndex(pos)
   return MACROS[pos].perChar and 120 + character or account
 end
 local function MacroPos(index) for pos = 1, #MACROS do if MacroIndex(pos) == index then return pos end end end
--- The lowest index of that name, so an account-wide macro comes before a character one
-GetMacroIndexByName = function(n)
-  local best = 0
-  for pos, m in ipairs(MACROS) do
-    if m.name == n then local i = MacroIndex(pos) if best == 0 or i < best then best = i end end
-  end
-  return best
-end
 GetMacroInfo = function(i) local pos = MacroPos(i) if pos then return MACROS[pos].name, nil, MACROS[pos].body end end
 GetNumMacros = function() local a,c=0,0 for _,m in ipairs(MACROS) do if m.perChar then c=c+1 else a=a+1 end end return a,c end
-DeleteMacro = function(i) table.remove(MACROS, MacroPos(i)) end
-MAX_ACCOUNT_MACROS = 120
+Constants = { MacroConsts = { MAX_ACCOUNT_MACROS = 120, MAX_CHARACTER_MACROS = 30 } }
 CreateMacro = function(n, icon, body, perChar) MACROS[#MACROS+1] = { name = n, body = body, perChar = perChar } return #MACROS end
 EditMacro = function(i, n, icon, body) MACROS[MacroPos(i)].body = body end
 GetBuildInfo = function() return "1.15.0", "99999", "Oct 1 2026", 16001 end

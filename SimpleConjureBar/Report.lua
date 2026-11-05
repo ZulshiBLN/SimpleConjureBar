@@ -49,19 +49,23 @@ local function TrackedItems()
     return ids
 end
 
+-- The player's buffs as far as they can be read: none while the client keeps auras secret (as
+-- Buff & Run in Intellect.lua), and a buff whose ID is secret is left out
 local function OwnBuffs()
+    if not ns.AurasReadable() then return "unreadable" end
     local parts = {}
     local GetAura = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
     for i = 1, 40 do
         local ok, aura = pcall(GetAura, "player", i, "HELPFUL")
         if not ok or not aura then break end
-        local okLeft, left = pcall(function()
-            local e = aura.expirationTime
-            if type(e) == "number" and e > 0 then return math.floor((e - GetTime()) / 60 + 0.5) .. "m" end
-            return "-"
-        end)
-        local okId, id = pcall(tostring, aura.spellId)
-        parts[#parts + 1] = (okId and id or "?") .. ":" .. (okLeft and left or "?")
+        local id, e = aura.spellId, aura.expirationTime
+        if not ns.IsSecret(id) and id ~= nil then
+            local left = "-"
+            if not ns.IsSecret(e) and type(e) == "number" and e > 0 then
+                left = math.floor((e - GetTime()) / 60 + 0.5) .. "m"
+            end
+            parts[#parts + 1] = tostring(id) .. ":" .. left
+        end
     end
     return table.concat(parts, " ")
 end
@@ -80,7 +84,7 @@ local function GroupLine()
     local byClass, classes = {}, {}
     for _, u in ipairs(units) do
         local _, class = UnitClass(u)
-        if class then
+        if not ns.IsSecret(class) and class then
             if not byClass[class] then classes[#classes + 1] = class end
             byClass[class] = (byClass[class] or 0) + 1
         end
@@ -180,7 +184,7 @@ local function ErrorWhen(e)
     if type(e.time) ~= "number" then return "time unknown", "unknown" end
     local when = ("%d min ago"):format(math.floor((time() - e.time) / 60 + 0.5))
     local since = e.time - ns.logStartClock
-    if since >= 0 then when = when .. (", %d s after login"):format(since) end
+    if since >= 0 then when = when .. (", %d s after load"):format(since) end
     return when, ns.CombatAt(e.time)
 end
 
@@ -239,7 +243,7 @@ local function BuildReport(form)
         "- Addon version: " .. ns.VERSION,
         "- Client: " .. tostring(version) .. " (build " .. tostring(build) .. ", interface " .. tostring(interface) .. ")",
         "- Client locale: " .. tostring(GetLocale()) .. ", addon language: "
-            .. tostring((SimpleConjureBarGlobalDB and SimpleConjureBarGlobalDB.language) or "auto"),
+            .. ns.SafeValue((SimpleConjureBarGlobalDB and SimpleConjureBarGlobalDB.language) or "auto"),
         "- Character: " .. tostring(classFile) .. ", level " .. LevelBand()
             .. (IsInRaid() and ", raid" or IsInGroup() and ", party" or ", solo"),
         "- Settings: " .. SettingsText(),
@@ -255,7 +259,7 @@ local function BuildReport(form)
         for i, e in ipairs(errors) do
             local when, combat = ErrorWhen(e)
             lines[#lines + 1] = ""
-            lines[#lines + 1] = ("Error %d (x%s, %s, combat: %s):"):format(i, tostring(e.counter or 1), when, combat)
+            lines[#lines + 1] = ("Error %d (x%s, %s, combat: %s):"):format(i, type(e.counter) == "number" and e.counter or 1, when, combat)
             lines[#lines + 1] = "```"
             for _, l in ipairs(FirstLines(e.message, 6, "msg", names)) do lines[#lines + 1] = l end
             for _, l in ipairs(FirstLines(e.stack, MAX_STACK_LINES, "at", names)) do lines[#lines + 1] = l end
@@ -270,7 +274,7 @@ local function BuildReport(form)
         for _, l in ipairs(list) do lines[#lines + 1] = tag .. " " .. (scrub and ns.Scrub(l, names) or l) end
         lines[#lines + 1] = "```"
     end
-    Block("**Last actions (seconds since login):**", "log", ns.LogLines())
+    Block("**Last actions (seconds since load):**", "log", ns.LogLines())
     Block("**State:**", "state", ns.StateSnapshot())
     Block("**Loaded addons:**", "addon", ns.AddonList(), true)
     return ns.CapReport(table.concat(lines, "\n"))
@@ -306,13 +310,15 @@ local function ShowBox()
     SetL(frame.toggle, frame.showContent and "REPORT_SHOW_CODE" or "REPORT_SHOW_CONTENT")
 end
 
--- Each keystroke rebuilds the report; while a name is secret the last clean one stays
+-- Each keystroke rebuilds the report; while a name is secret the last clean one stays, and the
+-- line above the code box says why until the next clean report (no chat)
 local function Refresh()
     local text = BuildReport(FormValues())
     if not text then
-        ns.Print(L.REPORT_SECRET)
+        SetL(frame.step2, "REPORT_SECRET")
         return
     end
+    SetL(frame.step2, "REPORT_STEP2")
     frame.reportText = text
     frame.codeText = ns.ReportCode.Encode(text)
     ShowBox()
@@ -331,26 +337,42 @@ local function AddInput(anchor, width)
     return box
 end
 
+-- Docked to the settings' left: where the report would leave the screen to the left or below,
+-- the settings move just far enough (ruleset plan 2026-10-25-chat-and-docked-report)
+local function FitOnScreen()
+    if not (frame and frame:IsShown()) then return end
+    local left, bottom = frame:GetRect()
+    if not left then return end
+    local dx, dy = math.max(0, -left), math.max(0, -bottom)
+    if dx == 0 and dy == 0 then return end
+    local settings = ns.UI.window
+    local x, y = settings:GetRect()
+    settings:ClearAllPoints()
+    settings:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x + dx, y + dy)
+end
+
 local function CreateWindow()
     local W, H, PAD = 520, 580, 22
     frame = CreateFrame("Frame", "SimpleConjureBarReport", UIParent, API.BACKDROP_TPL)
     frame:SetSize(W, H)
-    frame:SetPoint("CENTER")
     frame:SetFrameStrata("FULLSCREEN_DIALOG")
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
-    -- Docked beside the settings window, a drag moves that window and the report goes with it
-    local function Mover() return frame.docked and ns.UI.window or frame end
-    frame:SetScript("OnDragStart", function() Mover():StartMoving() end)
-    frame:SetScript("OnDragStop", function() Mover():StopMovingOrSizing() end)
-    frame:SetClampedToScreen(true)
-    -- Closing the settings closes a report docked to them
+    -- Always docked beside the settings window: a drag moves that window and the report goes with it
+    local settings = ns.UI.window
+    frame:SetScript("OnDragStart", function() settings:StartMoving() end)
+    frame:SetScript("OnDragStop", function()
+        settings:StopMovingOrSizing()
+        FitOnScreen()
+    end)
+    ns.UI.placers[#ns.UI.placers + 1] = FitOnScreen
+    -- Closing the settings closes the report docked to them
     -- Combat closes both windows, each from its own event, in no set order: whichever closes
     -- the report first marks it to come back once the settings are back
     local reopen = false
-    ns.UI.window:HookScript("OnHide", function()
-        if frame.docked and frame:IsShown() then
+    settings:HookScript("OnHide", function()
+        if frame:IsShown() then
             if UnitAffectingCombat("player") then reopen = true end
             frame:Hide()
         end
@@ -423,6 +445,7 @@ local function CreateWindow()
     local step2 = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     step2:SetPoint("TOPLEFT", frame.details, "BOTTOMLEFT", -6, -12)
     SetL(step2, "REPORT_STEP2")
+    frame.step2 = step2
 
     local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", step2, "BOTTOMLEFT", 0, -6)
@@ -492,19 +515,20 @@ local function CreateWindow()
     frame:SetScript("OnShow", function()
         if InCombatLockdown() then
             frame:Hide()
-            ns.Print(L.REPORT_COMBAT)
             return
         end
-        -- A secret name could not be filtered: no report until it is readable again
+        -- A secret name could not be filtered: no report until it is readable again; the
+        -- settings say why under "Report bug", not the chat
         if not ns.KnownNames() then
             frame:Hide()
-            ns.Print(L.REPORT_SECRET)
+            ns.ShowReportSecretHint()
             return
         end
         -- also when the background was set while the window was closed
         ns.ApplyWindowOpacity(frame)
         Refresh()
         SelectReport()
+        FitOnScreen()
     end)
     local events = CreateFrame("Frame")
     events:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -516,7 +540,7 @@ local function CreateWindow()
             reopen = false
             -- after the settings window's own handler, which may run after this one
             C_Timer.After(0, function()
-                if not frame.docked or ns.UI.window:IsShown() then frame:Show() end
+                if settings:IsShown() then frame:Show() end
             end)
         end
     end)
@@ -529,21 +553,22 @@ function ns.ApplyReportOpacity()
     if frame then ns.ApplyWindowOpacity(frame) end
 end
 
+-- The settings open on General and the report docks to their left, 4 px apart (Michel,
+-- 2026-10-21; always, ruleset plan 2026-10-25-chat-and-docked-report). In combat nothing opens,
+-- and only /scb bug says why.
 function ns.OpenBugReport()
     if not frame then CreateWindow() end
-    -- With the settings window open it stays, and the report opens docked to its left
-    -- (Michel, 2026-10-21); else in the middle of the screen
-    frame:ClearAllPoints()
-    frame.docked = ns.UI.window:IsShown()
-    if frame.docked then
-        frame:SetPoint("TOPRIGHT", ns.UI.window, "TOPLEFT", -4, 0)
-    else
-        frame:SetPoint("CENTER")
+    if InCombatLockdown() then
+        if ns.fromCommand then ns.Print(L.REPORT_COMBAT) end
+        return
     end
+    ns.OpenSettings(nil, "TAB_GENERAL")
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPRIGHT", ns.UI.window, "TOPLEFT", -4, 0)
     frame.desc:SetText("")
     frame.details:SetText("")
     frame.area = "OTHER"
     frame.areaMenu:GenerateMenu()
     frame.showContent = false
-    if frame:IsShown() then Refresh() SelectReport() else frame:Show() end
+    if frame:IsShown() then Refresh() SelectReport() FitOnScreen() else frame:Show() end
 end

@@ -198,6 +198,13 @@ local function report(ns, area, description, details)
     return f.BuildText()
 end
 
+-- The settings page shown, by its title key
+local function shownTab()
+    for _, child in ipairs(SimpleConjureBarSettings.children) do
+        if child.titleKey and child:IsShown() then return child.titleKey end
+    end
+end
+
 describe("the report form", function()
     it("carries the area key and both texts, and offers every area", function()
         local ns = login()
@@ -226,46 +233,104 @@ describe("the report form", function()
         assert.are.equal(ns.locales.zhCN.AREA_TRAVEL, menu.selectedText)
     end)
 
-    it("opens beside the open settings window, which stays open, and goes with it", function()
+    -- Always docked: the settings open on General and the report docks to their left (ruleset
+    -- plan 2026-10-25-chat-and-docked-report, item 5)
+    it("opens the settings on General with the report docked to their left, from any tab", function()
         local ns = login()
         grabber({}, 1)
-        ns.ToggleSettings()
         local settings = SimpleConjureBarSettings
-        ns.OpenBugReport()
+        ns.OpenBugReport() -- settings closed
         local window = SimpleConjureBarReport
         assert.is_true(settings:IsShown())
         assert.is_true(window:IsShown())
-        local point, relativeTo, relativePoint = window:GetPoint()
+        assert.are.equal("TAB_GENERAL", shownTab())
+        local point, relativeTo, relativePoint, x = window:GetPoint()
         assert.are.equal("TOPRIGHT", point)
         assert.are.equal(settings, relativeTo)
         assert.are.equal("TOPLEFT", relativePoint)
-        settings:Hide()
-        assert.is_false(window:IsShown())
+        assert.are.equal(-4, x)
+        assert.are.equal("", window.desc:GetText())
 
-        -- without the settings window: in the middle of the screen, as before
-        ns.OpenBugReport()
+        window.desc:SetText("typed")
+        window:Hide() -- closing the report keeps the settings
+        assert.is_true(settings:IsShown())
+        ns.OpenSettings(nil, "TAB_TRACKING")
+        ns.OpenBugReport() -- from another tab: General, and an empty form
+        assert.are.equal("TAB_GENERAL", shownTab())
         assert.is_true(window:IsShown())
-        assert.are.equal("CENTER", (window:GetPoint()))
-        ns.ToggleSettings() -- opening the settings later leaves the report where it is
-        settings:Hide()
-        assert.is_true(window:IsShown())
+        assert.are.equal("", window.desc:GetText())
+        assert.are.equal(settings, select(2, window:GetPoint()))
+
+        settings:Hide() -- closing the settings closes the report
+        assert.is_false(window:IsShown())
+        assert.are.same({}, STATE.errors)
     end)
 
-    it("comes back with the settings after combat when docked to them", function()
+    it("moves the settings just far enough that the report stays on the screen", function()
         local ns = login()
         grabber({}, 1)
-        ns.ToggleSettings()
+        local settings = SimpleConjureBarSettings
+        local function reportRect() return SimpleConjureBarReport:GetRect() end
+        local function placeSettings(point, x, y)
+            settings:ClearAllPoints()
+            settings:SetPoint(point, UIParent, point, x, y)
+        end
+
+        placeSettings("TOPLEFT", 0, -10) -- at the left edge when the report opens
+        ns.OpenBugReport()
+        local left, bottom = reportRect()
+        assert.are.equal(0, left)
+        assert.is_true(bottom >= 0)
+        local settingsLeft = settings:GetRect()
+        assert.are.equal(SimpleConjureBarReport.w + 4, settingsLeft)
+
+        settings:SetHeight(400) -- lower than the report, dragged to the bottom edge
+        placeSettings("BOTTOMLEFT", 900, 0)
+        RUNSCRIPT(SimpleConjureBarReport, "OnDragStop")
+        left, bottom = reportRect()
+        assert.are.equal(0, bottom)
+        assert.is_true(left >= 0)
+        placeSettings("TOPLEFT", 10, -10) -- the settings' own drag
+        RUNSCRIPT(settings, "OnDragStop")
+        assert.are.equal(0, (reportRect()))
+
+        -- a layout that widens the settings: anchored by the centre, its left edge moves left
+        placeSettings("CENTER", -1000 + SimpleConjureBarReport.w + 4 + settings.w / 2, 0)
+        assert.are.equal(0, (reportRect()))
+        local measures = ns.UI.measures
+        measures[#measures + 1] = function() return 900 end
+        ns.ApplyLanguage("enUS")
+        measures[#measures] = nil
+        assert.are.equal(0, (reportRect()))
+
+        placeSettings("TOPLEFT", 1000, -10) -- room enough: nothing moves
+        RUNSCRIPT(settings, "OnDragStop")
+        assert.are.equal("TOPLEFT", (settings:GetPoint()))
+        assert.are.equal(1000, select(4, settings:GetPoint()))
+        assert.are.same({}, STATE.errors)
+    end)
+
+    it("closes with the settings in combat and comes back with them and the text", function()
+        local ns = login()
+        grabber({}, 1)
         ns.OpenBugReport()
         local settings, window = SimpleConjureBarSettings, SimpleConjureBarReport
+        window.desc:SetText("Portal does nothing")
         -- PLAYER_REGEN_DISABLED: the player is in combat, the lockdown not yet
         STATE.affecting = true
         FIRE("PLAYER_REGEN_DISABLED")
         assert.is_false(settings:IsShown())
         assert.is_false(window:IsShown())
         STATE.affecting = false
+        settings:ClearAllPoints() -- the report fits when it comes back, too
+        settings:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, -10)
+        local after = #AFTER_DELAYS
         FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.are.equal(0, AFTER_DELAYS[after + 1]) -- after the settings' own handler
         assert.is_true(settings:IsShown())
         assert.is_true(window:IsShown())
+        assert.are.equal("Portal does nothing", window.desc:GetText())
+        assert.are.equal(0, (window:GetRect()))
         -- closed by hand, the settings take the report along, and it stays closed
         settings:Hide()
         FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
@@ -314,13 +379,15 @@ describe("the report form", function()
         grabber({}, 1)
         _G.CHAT = {}
         STATE.combat = true
-        ns.OpenBugReport()
+        ns.OpenBugReport() -- the button: silent; /scb bug says why (chat_spec)
         assert.is_false(SimpleConjureBarReport:IsShown())
-        assert.is_truthy(CHAT[#CHAT]:find(ns.L.REPORT_COMBAT, 1, true))
+        assert.are.same({}, CHAT)
         STATE.combat = false
         ns.OpenBugReport()
         assert.is_true(SimpleConjureBarReport:IsShown())
+        STATE.affecting = true -- as in the game when the event comes
         FIRE("PLAYER_REGEN_DISABLED")
+        STATE.affecting = false
         assert.is_false(SimpleConjureBarReport:IsShown())
         FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
         assert.is_true(SimpleConjureBarReport:IsShown())
@@ -450,19 +517,65 @@ describe("the report's privacy", function()
         end
     end)
 
-    it("keeps the window shut while a name is secret", function()
+    -- A secret name: no chat, the settings open on General and say why under "Report bug" for
+    -- 8 seconds (ruleset plan 2026-10-25-chat-and-docked-report, item 6)
+    it("keeps the window shut while a name is secret, and says so under the button", function()
         local ns = login()
         grabber({}, 1)
         STATE.units.target = { name = "Targetguy" }
-        _G.issecretvalue = function(v) return v == "Targetguy" end
+        STATE.secrets.Targetguy = true
         _G.CHAT = {}
         ns.OpenBugReport()
+        local hint = ns.ReportSecretHint
         assert.is_false(SimpleConjureBarReport:IsShown())
-        assert.is_truthy(CHAT[#CHAT]:find(ns.L.REPORT_SECRET, 1, true))
-        _G.issecretvalue = nil
+        assert.is_true(SimpleConjureBarSettings:IsShown())
+        assert.are.equal("TAB_GENERAL", shownTab())
+        assert.is_true(hint:IsShown())
+        assert.are.equal(ns.L.REPORT_SECRET, hint:GetText())
+        assert.are.same({}, CHAT)
+        ADVANCE(5)
+        ns.OpenBugReport() -- the newest wins
+        ADVANCE(5)
+        assert.is_true(hint:IsShown())
+        ADVANCE(3)
+        assert.is_false(hint:IsShown())
+        ns.OpenBugReport()
+        SimpleConjureBarSettings:Hide() -- hidden with the settings
+        assert.is_false(hint:IsShown())
+        ADVANCE(8)
+        assert.are.same({}, STATE.errors)
+
+        -- the report's return after combat checks again
+        STATE.secrets.Targetguy = nil
+        ns.OpenBugReport()
+        assert.is_true(SimpleConjureBarReport:IsShown())
+        STATE.affecting = true
+        FIRE("PLAYER_REGEN_DISABLED")
+        STATE.affecting = false
+        STATE.secrets.Targetguy = true
+        FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
+        assert.is_true(SimpleConjureBarSettings:IsShown())
+        assert.is_false(SimpleConjureBarReport:IsShown())
+        assert.is_true(hint:IsShown())
+        assert.are.same({}, CHAT)
+        STATE.secrets.Targetguy = nil
     end)
 
-    it("builds nothing new while a name turns secret after the window opened", function()
+    it("fits the secret-name hint into its two lines under Report bug in every language", function()
+        for code in pairs(addon.load("enUS").locales) do
+            _G.SimpleConjureBarDB = nil
+            local ns = addon.load(code)
+            FIRE("PLAYER_LOGIN"); RUNTIMERS()
+            ns.ToggleSettings()
+            local hint = ns.ReportSecretHint
+            hint:SetText(ns.L.REPORT_SECRET)
+            assert.is_true(hint:GetStringWidth() <= 2 * hint:GetWidth(),
+                code .. ": " .. hint:GetStringWidth() .. " > 2 x " .. hint:GetWidth())
+            ns.ToggleSettings()
+        end
+    end)
+
+    it("builds nothing new while a name turns secret after the window opened, and says so above the code", function()
         local ns, db
         ns, db = login(nil)
         poisonedClient()
@@ -470,13 +583,16 @@ describe("the report's privacy", function()
         ns.OpenBugReport()
         local f = SimpleConjureBarReport
         local before = f.report:GetText()
-        _G.issecretvalue = function(v) return v == "Targetguy" end
+        STATE.secrets.Targetguy = true
         _G.CHAT = {}
         f.desc:SetText("Testplayer saw it"); RUNSCRIPT(f.desc, "OnTextChanged", true)
         assert.are.equal(before, f.report:GetText())
         assert.is_nil((ns.ReportCode.Decode(f.report:GetText()) or ""):find("Testplayer", 1, true))
-        assert.is_truthy(CHAT[#CHAT]:find(ns.L.REPORT_SECRET, 1, true))
-        _G.issecretvalue = nil
+        assert.are.equal(ns.L.REPORT_SECRET, f.step2:GetText())
+        assert.are.same({}, CHAT)
+        STATE.secrets.Targetguy = nil
+        f.desc:SetText("clean"); RUNSCRIPT(f.desc, "OnTextChanged", true)
+        assert.are.equal(ns.L.REPORT_STEP2, f.step2:GetText())
     end)
 
     it("stays under 20,000 bytes, cut at a whole character, and shows the data list", function()
@@ -512,5 +628,293 @@ describe("the loaded addons", function()
         assert.are.equal("Addon1 1.0.0", lines[1])
         assert.is_nil(contains(lines, "^Addon3 "))
         assert.is_truthy(lines[61]:find("4 more", 1, true))
+    end)
+end)
+
+-- A name beside any non-letter and in any case the filter folds (ruleset plan
+-- 2026-10-25-report-filter-fixes, item 2 and 3, SmartBlessingBar's audit S-01)
+describe("the report's name filter", function()
+    it("finds a name beside any non-letter, inside CJK text and in non-ASCII capitals", function()
+        local ns = login(nil)
+        STATE.units.player = { name = "Testplayer" }
+        STATE.units.party1 = { name = "Иван", class = "PRIEST" }
+        STATE.units.party2 = { name = "Tèstplayer", class = "DRUID" }
+        STATE.group, STATE.members = true, 3
+        local inputs = {
+            "\226\128\158Testplayer\226\128\156", "\194\171Testplayer\194\187", "\194\161Testplayer!",
+            "\194\191Testplayer?", "Testplayer\226\128\166", "Testplayer\226\128\148ok",
+            "Testplayer\239\188\140\229\165\189", "\227\128\128Testplayer",
+            "\228\189\160\229\165\189Testplayer\228\189\160\229\165\189", "Testplayer\234\176\128",
+            "TESTPLAYER", "\208\152\208\146\208\144\208\157", "T\195\136STPLAYER",
+        }
+        local half = math.floor(#inputs / 2)
+        local text = report(ns, "OTHER", table.concat(inputs, " ", 1, half),
+            table.concat(inputs, " ", half + 1))
+        for _, bad in ipairs({ "Testplayer", "TESTPLAYER", "\208\152\208\146\208\144\208\157",
+            "T\195\136STPLAYER", "Tèstplayer" }) do
+            assert.is_nil(text:find(bad, 1, true), bad .. " leaked:\n" .. text)
+        end
+        local _, count = text:gsub("<name>", "")
+        assert.is_true(count >= #inputs, text)
+        -- as before: a name before a space goes, one inside a longer word stays
+        text = report(ns, "OTHER", "Testplayer Secondname", "Testplayerish")
+        assert.is_truthy(text:find("<name> Secondname", 1, true), text)
+        assert.is_truthy(text:find("Testplayerish", 1, true), text)
+    end)
+end)
+
+-- Every path on a line, more user folders, hidden marks inside a name, and no pattern that
+-- rescans a long run from every byte (ruleset plan 2026-10-25-report-filter-fixes, items 4
+-- and 5, SmartBlessingBar's audit F-01, S-02, S-03)
+describe("the report's text filter", function()
+    it("drops hidden marks inside a name", function()
+        local ns = login(nil)
+        for _, mark in ipairs({ "\239\184\143", "\204\129", "\205\143", "\227\133\164" }) do
+            assert.are.equal("<name>", ns.Scrub("Test" .. mark .. "player", { "Testplayer" }), mark)
+        end
+    end)
+
+    it("filters every path on a line and the other user folders, keeping line numbers", function()
+        local ns = login(nil)
+        local pair = "C:\\Users\\JohnRoe\\a.lua:1: in C:\\Users\\JaneDoe\\b.lua:2"
+        local inputs = { pair, pair:rep(150, " "), "/media/janeroe/x", "/run/media/janeroe/x",
+            "see Users\\Jane Roe\\x", "mail j\195\169r\195\180me@example.ch now" }
+        for _, input in ipairs(inputs) do
+            local out = ns.Scrub(input, {})
+            for _, bad in ipairs({ "JohnRoe", "JaneDoe", "janeroe", "Jane Roe", "j\195\169r\195\180me" }) do
+                assert.is_nil(out:find(bad, 1, true), bad .. " in " .. out:sub(1, 200))
+            end
+        end
+        assert.is_truthy(ns.Scrub(pair, {}):find(":1:", 1, true))
+    end)
+
+    it("scrubs a long run without a space quickly", function()
+        local ns = login(nil)
+        for _, input in ipairs({ ("a"):rep(20000) .. "@", ("a"):rep(20000) .. "#1234", ("1"):rep(20000) .. "#" }) do
+            local start = os.clock()
+            ns.Scrub(input, { "Testplayer" })
+            local took = os.clock() - start
+            assert.is_true(took < 0.5, input:sub(-6) .. ": " .. took .. " s")
+        end
+    end)
+end)
+
+-- The report's own values and the rows mutations left green in SmartBlessingBar (ruleset plan
+-- 2026-10-25-report-filter-fixes, item 7 and criterion 4)
+describe("the report's own values", function()
+    it("leave a secret buff out, and say when buffs cannot be read", function()
+        local ns = login()
+        local D = ns.D
+        STATE.units.player = { auras = { { id = D.ARMOR_BUFF_IDS[1], expires = GetTime() + 600 }, 8098 } }
+        STATE.secrets[D.ARMOR_BUFF_IDS[1]] = true
+        assert.is_truthy(contains(ns.StateSnapshot(), "^buffs 8098:%-$"))
+        STATE.secret = true
+        assert.is_truthy(contains(ns.StateSnapshot(), "^buffs unreadable$"))
+    end)
+
+    it("report the addon language through the allowlist", function()
+        local ns = login()
+        SimpleConjureBarGlobalDB.language = "Testplayer"
+        assert.is_truthy(report(ns, "OTHER"):find("addon language: <text:10>", 1, true))
+        SimpleConjureBarGlobalDB.language = "deDE"
+        assert.is_truthy(report(ns, "OTHER"):find("addon language: deDE", 1, true))
+    end)
+
+    it("filter the realm in both spellings and a two-letter name, longest first", function()
+        local ns = login()
+        _G.GetRealmName = function() return "Twin Peaks" end
+        _G.GetNormalizedRealmName = function() return "TwinPeaks" end
+        _G.GetGuildInfo = function() return "Averyveryverylongguildname" end
+        STATE.units.player = { name = "Testplayer" }
+        STATE.units.party1 = { name = "Al", class = "PRIEST" }
+        STATE.group, STATE.members = true, 2
+        local names = ns.KnownNames()
+        for i = 2, #names do assert.is_true(#names[i - 1] >= #names[i], names[i]) end
+        assert.are.equal("<name> and <name> and <name> hit <name>",
+            ns.Scrub("Twin Peaks and TwinPeaks and Al hit Testplayer", names))
+    end)
+
+    it("take errors without a session number only from the addon's load on", function()
+        local ns = login()
+        local at = ns.logStartClock
+        STATE.now = STATE.now + 100
+        grabber({
+            ourError(at - 99999, nil, { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:1: before" }),
+            ourError(at, nil, { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:2: atload" }),
+        }, nil)
+        local text = report(ns, "OTHER")
+        assert.is_truthy(text:find("atload", 1, true), text)
+        assert.is_nil(text:find("before", 1, true), text)
+    end)
+
+    it("filter names in the loaded addons", function()
+        local ns = login()
+        STATE.units.player = { name = "Testplayer" }
+        _G.ADDONS = { { name = "Testplayer", loaded = true } }
+        local text = report(ns, "OTHER")
+        assert.is_nil(text:find("Testplayer", 1, true), text)
+        assert.is_truthy(text:find("<name> 1.0.0", 1, true), text)
+    end)
+end)
+
+-- Exact outputs (ruleset plan 2026-11-05-audit-fixes; the audits' S-01, S-02 and S-05)
+describe("the report's filter, by exact output", function()
+    local ELODIE = "\195\137lodie"
+    local function check(rows, names)
+        local ns = login(nil)
+        for _, row in ipairs(rows) do
+            assert.are.equal(row[2], ns.Scrub(row[1], names or { "Testa", ELODIE }), row[1])
+        end
+    end
+
+    it("finds a BattleTag at the start of a text", function()
+        check({
+            { "Fakejoe#1234 told me", "<tag> told me" },
+            { "(Fakejoe#1234)", "<tag>)" },
+            { "\208\153\208\190\209\131#1234", "<tag>" },
+            { "x:Joe#1234", "<tag>" },
+        })
+    end)
+
+    it("finds a BattleTag first in the description, a message and a stack line", function()
+        local ns = login()
+        grabber({ ourError(time(), 1, { message = "Interface/AddOns/SimpleConjureBar/Bar.lua:1: x\nFakejoe#1234 sent this",
+            stack = "Interface/AddOns/SimpleConjureBar/Bar.lua:1: x\nFakeann#1234 in stack" }) }, 1)
+        local text = report(ns, "OTHER", "Fakejoe#1234 told")
+        assert.is_truthy(text:find("**Description:** <tag> told", 1, true), text)
+        assert.is_truthy(text:find("msg <tag> sent this", 1, true), text)
+        assert.is_truthy(text:find("at <tag> in stack", 1, true), text)
+    end)
+
+    it("takes display codes out, and finds what they hid or split", function()
+        check({
+            { "|cffc41f3bTesta|r failed", "<name> failed" },
+            { "|cFFFFD100" .. ELODIE .. "|r failed", "<name> failed" },
+            { "|TInterface\\Icons\\x:16|tTesta", "<name>" },
+            { "line|nTesta", "line <name>" },
+            { "Water|nFood", "Water Food" },
+            { "abc|cffc41f3bTesta|r failed", "abc<name> failed" },
+            { "|cffc41f3bTesta|rfoo", "<name>foo" },
+            { "Tes|rta", "<name>" },
+            { "|cffffffffTes|r|cffffffffta|r failed", "<name> failed" },
+            { "joe@exa|rmple.de", "<email>" },
+            { "/ho|rme/joe/x", "<path>" },
+            { "Player-1|r-0AAAAAAA", "<guid>" },
+            { "|Hplayer:Unknownguy-Realm:1|h[click]|h", "[click]" },
+            { "|Hplayer:Unknownguy-Realm:1", "" },
+            { "|Hplayer:Unknownguy|h", "" },
+            { "|cff000000hidden text|r", "hidden text" },
+            { "|c|cffffffffffffffffTesta", "<name>" },
+            { "|Kq1|k", "" },
+            { "|cnGREEN_FONT_COLOR:Testa|r", "<name>" },
+            { "a | b", "a | b" },
+            { "on|off", "on|off" },
+            { "left|right", "leftight" },
+            { "x|Ty and z|t", "x" },
+            { "see |Hello and more text", "see " },
+            { "|Tjoe.blp", "|Tjoe.blp" },
+        })
+    end)
+
+    it("handles paths with an apostrophe, new roots and other addons' folders", function()
+        check({
+            { "C:\\Users\\O'Brien\\AppData\\x.lua:3: bad", "<path>:3: bad" },
+            { "'C:\\Users\\O'Brien\\a.lua'", "'<path>'" },
+            { "D:\\Jo's Games\\WoW\\Interface\\AddOns\\Foo\\a.lua:5", "Interface/AddOns/Foo/a.lua:5" },
+            { "x\\WTF\\Account\\JOE's\\y", "x\\<wtf>" },
+            { "\\\\srv:445\\joe\\share", "<path>" },
+            { "users\\joe\\x", "<path>" },
+            { "/users/joe/x", "<path>" },
+            { "/mnt/data/joe/x", "<path>" },
+            { "/opt/joe/x", "<path>" },
+            { "~/joe/x", "<path>" },
+            { "some users/players lag here", "some users/players lag here" },
+            { "users/players and foo/bar lag", "users/players and foo/bar lag" },
+            { "Interface/AddOns/Foo/Account/Data/a.lua:5: bad", "Interface/AddOns/Foo/Account/Data/a.lua:5: bad" },
+            { "Interface/AddOns/Foo/opt/a.lua:5: bad", "Interface/AddOns/Foo/opt/a.lua:5: bad" },
+            { "Interface/AddOns/Foo/users/lists/a.lua:5: bad", "Interface/AddOns/Foo/users/lists/a.lua:5: bad" },
+            { "Interface/AddOns/Foo/media/a.lua:5: bad", "Interface/AddOns/Foo/media/a.lua:5: bad" },
+            { "/media/janeroe/x", "<path>" },
+            { "/run/media/janeroe/x", "<path>" },
+            { "/home/joe/Interface/AddOns/Foo/a.lua:3", "<path>:3" },
+            { "Interface/AddOns/Foo/../../Users/joe/x", "Interface/AddOns/Foo/../..<path>" },
+            { "Interface/AddOns/Foo/a.lua:C:\\Users\\joe\\x", "Interface/AddOns/Foo/a.lua:<path>" },
+            { "C:\\Users\\Chris' PC\\a.lua:3: bad", "<path>' PC\\a.lua:3: bad" },
+            { "Account\\JOEACC\\SavedVariables\\a.lua", "<path>" },
+            { "Documents\\Joe\\x", "Documents\\Joe\\x" },
+            { "Interface/AddOns/Foo/a.lua:1:/home/joe/x", "Interface/AddOns/Foo/a.lua:1:<path>" },
+            { "Interface/AddOns/Foo,/Users/joe/x", "Interface/AddOns/Foo,<path>" },
+            { "Interface/AddOns/Foo/a.lua:1(/Users/joe/x)", "Interface/AddOns/Foo/a.lua:1(<path>" },
+            { "Interface/AddOns/Foo/a.lua:1;/home/joe Smith/x", "Interface/AddOns/Foo/a.lua:1;<path>" },
+            { "Interface\\AddOns\\Bar\\/Users/amy/x", "Interface/AddOns/Bar/<path>" },
+        })
+    end)
+
+    it("takes capital codes, nested codes and a marker byte in the input out too", function()
+        check({
+            { "|CffffffffTesta|R failed", "<name> failed" },
+            { "Te|c|rffffffffsta failed", "<name> failed" },
+            { "/ho|c|rffffffffme/joe/x", "<path>" },
+            { "joe@exa|c|rffffffffmple.de", "<email>mple.de" }, -- nothing of the address is left
+            { "Tes\1ta failed", "<name> failed" },
+            { "joe@exa\1mple.de", "<email>" },
+        })
+    end)
+
+    it("finds addresses without a dot, but no unit tokens or versions", function()
+        check({
+            { "joe@caf\195\169.example", "<email>" },
+            { "joe@example", "<email>" },
+            { "joe@gmail", "<email>" },
+            { "joe@caf\195\169", "<email>" },
+            { "Ace3@r1234", "Ace3@r1234" },
+            { "x@focus", "x@focus" },
+            { "x@player", "x@player" },
+            { "x@player|r", "x@player" },
+            { "[@focus,harm]", "[@focus,harm]" },
+            { "foo@Interface/AddOns/Foo/a.lua:1", "foo@Interface/AddOns/Foo/a.lua:1" },
+        })
+    end)
+
+    it("matches a name's base form only where the text held a combining mark", function()
+        check({ { "E\204\129lodie", "<name>" }, { "E\204\129lo|rdie", "<name>" } })
+        check({ { "Interface/AddOns/Foo/Bar.lua:1: Bar", "Interface/AddOns/Foo/Bar.lua:1: Bar" } }, { "B\195\161r" })
+    end)
+
+    it("scrubs long runs of display codes quickly", function()
+        local ns = login(nil)
+        for _, code in ipairs({ "|T", "|A", "|K", "|H", "|c", "|T|t", "|H|h", "~/:1", "~/x:1 ", "Account\\a\\b:1 ",
+            "users\\a\\b:1 ", "\\\\x:1 ", "Users\\x:1 ", "Interface/AddOns/a Account\\a\\b:1 " }) do
+            local start = os.clock()
+            ns.Scrub(code:rep(math.floor(20000 / #code)), { "Testplayer" })
+            local took = os.clock() - start
+            assert.is_true(took < 0.5, code .. ": " .. took .. " s")
+        end
+    end)
+end)
+
+-- The allowlisted parts (the security audit's S-04)
+describe("the report's allowlisted parts", function()
+    it("let no name through a local's kind, nor a line inside a string", function()
+        local ns = login(nil)
+        local out = table.concat(ns.SafeLocals(table.concat({
+            "who=<Testplayer>", "Other=<Secretguy> {", "}", "self=<table> {", "}",
+            'a="x', "Secretguy = 5", 'y"', "count=3",
+        }, "\n"), {}), "\n")
+        assert.is_nil(out:find("Testplayer", 1, true), out)
+        assert.is_nil(out:find("Secretguy", 1, true), out)
+        assert.is_truthy(out:find("self=<table> {", 1, true), out)
+        assert.is_truthy(out:find("count=3", 1, true), out)
+    end)
+
+    it("log no text as a mouse button, and print no text as an error count", function()
+        local ns = login()
+        RUNCLICK(ns.buttons.Water, "Clickname", true)
+        RUNCLICK(ns.buttons.Water, "Clickname", false)
+        assert.is_nil(table.concat(ns.LogLines(), "\n"):find("Clickname", 1, true))
+        grabber({ ourError(time(), 1, { counter = "Leakcounter" }) }, 1)
+        local text = report(ns, "OTHER")
+        assert.is_nil(text:find("Leakcounter", 1, true), text)
+        assert.is_truthy(text:find("Error 1 (x1,", 1, true), text)
     end)
 end)

@@ -3,6 +3,8 @@
 A slim mage bar for **WoW Forever** (Classic content on the modern Retail client, Interface 16001).
 It bundles everything a mage conjures, buffs and travels with into one movable bar.
 
+![The Tracking tab with the Arcane Brilliance threshold, and the Intellect button's tooltip](.previews/02-intellect-and-tracking.jpg)
+
 ## Installation
 
 SimpleConjureBar is published on
@@ -29,21 +31,29 @@ The addon loads for mages only.
 | Button | Left click | Right click | Middle click |
 |---|---|---|---|
 | Armor | Cast the last armor | Open the armor flyout (choice is remembered) | – |
-| Arcane Intellect | Solo: single buff, group: Arcane Brilliance | The other one | Buff & Run |
-| Mana Gem | Use the best gem | Conjure the highest missing gem | – |
-| Water / Food | Consume the best item | Conjure (rank fitting a targeted player) | Trade water & food to the target |
+| Arcane Intellect | The recommended buff: Arcane Brilliance from the threshold, else the single buff | In a group: open the Brilliance threshold | Buff & Run |
+| Mana Gem | Use the best gem (none without a gem) | Conjure the highest missing gem (none with every gem) | – |
+| Water / Food | Consume the best item (none without one) | Conjure (rank fitting a targeted player) | Trade water & food to the target |
 | Teleport / Portal | Last destination | Open the destinations (choice is remembered) | – |
 | Handle | Move the bar | Lock / unlock | Open the settings |
 
-- **Arcane Intellect** never buffs your current target: solo it always targets you, in a group the
-  addon picks the next mana user without the buff (members in range first). In a raid, Brilliance
-  goes to the subgroup with the most missing buffs. The button is locked and greyed out in combat.
-  The number on the button shows how many mana users need the buff; its tooltip names what
-  each click casts and on whom - the member, "your group" for Brilliance, in a raid its group.
-  A buff with less than its renew time left (Tracking tab, 5 minutes by default) is needed again,
-  after everyone who has none. When nobody needs it, a click casts nothing and the tooltip says
-  "everyone has it"; in a raid Brilliance waits until a group in need is in range, and the
-  tooltip says that none is.
+A click with nothing to do has no action and no line in the tooltip. The armor's line names the
+armor the left click casts.
+
+- **Arcane Intellect** never buffs your current target: solo it always targets you, in a group
+  only mana users in range count and are buffed. A member needs it who has none, then one with a
+  weaker rank than yours for his level, then one whose buff runs out within its renew time
+  (Tracking tab, 5 minutes by default). The left click casts one recommendation: Arcane Brilliance
+  once enough are in need in range - the Brilliance threshold, 3 by default; in a party all of
+  them, in a raid those of one subgroup who have none or a weaker one - else the single buff on
+  the first in need. Without Brilliance, Arcane Powder or with the threshold at "never" it is
+  always the single buff. In a group the right click opens the threshold on the Tracking tab;
+  solo it does nothing. The button is locked and greyed out in combat.
+  The number on the button shows how many need the buff in range; the tooltip names the click's
+  spell and target - the member, "Group" for Brilliance, in a raid its group - and how many need
+  it, how many of them out of range. Solo it says whether yours is missing, weaker or expiring.
+  When nobody needs it, a click casts nothing and the tooltip says "active", or "out of range"
+  while those in need are too far.
 - **Buff & Run** - a middle click on Arcane Intellect buffs the player you target and then targets
   the next friendly player, so you can buff passing players by clicking again and again. Only
   Arcane Intellect, never Brilliance, in the highest rank his level accepts, and only for a mana
@@ -54,21 +64,31 @@ The addon loads for mages only.
   5-minute timer: by `/pvp`, in a battleground, an arena or a PvP zone. Flagged only by the timer,
   as after buffing a flagged player, you still pass them. Both are switched on the General tab.
 - **Highlights** - the modern client's glow - show a missing or expiring armor, missing or expiring
-  Intellect and a missing mana gem. An armor glows from its renew time on (3 minutes by default).
+  Intellect and a missing mana gem - the highest one you know. An armor glows from its renew time
+  on (3 minutes by default).
+- **In combat** the bar offers only what works there; the tooltips leave out the other clicks.
+  Arcane Intellect, water and food are greyed out and take no click - Intellect without count and
+  glow. The mana gem is used but not conjured - every gem costs more mana than it gives - and
+  never glows; its icon follows the best gem left, greyed without one. The armor's glow goes off
+  once you cast an armor.
 - **Rune counts** on Teleport/Portal change color at the warning threshold and at 0.
 - **Auto-buy** buys runes and Arcane Powder at reagent vendors up to the configured amounts and
   never spends below the configured gold reserve (default 1 gold).
 - **Flyouts** (armor, teleports, portals): a left click on an entry only chooses it; the button on
   the bar casts the choice. They close by themselves a few seconds after the mouse has
-  left them, also in combat. The bar cannot be moved in combat; the handle says so.
+  left them, also in combat. The bar cannot be moved in combat.
 - **Teleport and Portal** are greyed out in combat, where the game refuses them; their flyout
   still lets you choose the next destination.
+
+![The Teleport flyout open above the bar, with a destination's tooltip](.previews/05-teleports-and-armor.jpg)
 
 ## Settings
 
 Open with `/scb`, the minimap button, the AddOn compartment, a middle click on the handle or
 *Options > AddOns > SimpleConjureBar*. The settings window cannot be opened in combat; an open
-window closes when combat starts and reopens afterwards.
+window closes when combat starts and reopens afterwards. The minimap button's left click opens
+the settings, its right click locks or unlocks the bar - the tooltip shows the new state - and a
+drag moves it around the minimap; the AddOn compartment entry works the same, without the drag.
 
 - **General**: language, hide in combat, hide the minimap button, scale, the background of the
   settings and bug report windows (0 % invisible to 100 % solid; 60 % is the look they always
@@ -80,12 +100,17 @@ window closes when combat starts and reopens afterwards.
   are buffed anyway), Report bug, Reload UI
 - **Tracking**: show/hide and colors of Armor, Intellect and Mana Gem, highlight speed; how many
   minutes before it runs out Arcane Intellect (0-15, default 5) and the armor (0-5, default 3)
-  count as needed again - 0 means only once they are gone
+  count as needed again - 0 means only once they are gone; the Arcane Brilliance threshold
+  (1-5 or never, default 3)
 - **Supplies**: rune warning threshold and colors, auto-buy, gold reserve and target amounts
 - **Order**: drag and drop the button order
 - **Macros**: the Polymorph macro with its raid marker, the Ice Block macro, the stopcasting
-  macros, and "Show macro" in the bottom right corner (opens the macro window on the
-  character tab; the settings window stays open)
+  macros, and "Show macro" in the bottom right corner (opens the macro window, where the SCB
+  macros are on the character tab; the settings window stays open)
+
+| Macros | General, with the language list and a vertical bar |
+|---|---|
+| ![The Macros tab](.previews/06-macros.jpg) | ![The General tab with the language list open, the bar vertical](.previews/07-general-and-languages.jpg) |
 
 In the Polymorph section, "Create macro" creates (or updates) the character macro **SCB Polymorph**:
 the first click sets a hostile, living target as focus and marks it with the chosen raid marker
@@ -103,7 +128,10 @@ A macro for a spell you have not learned yet shows a question mark until you lea
 
 ## Reporting a bug
 
-"Report bug" (General tab) or `/scb bug` opens a short form: what happened, where - a list of
+![The bug report docked beside the settings](.previews/08-bug-report.jpg)
+
+"Report bug" (General tab) or `/scb bug` opens the settings on the General tab with a short form
+docked to their left: what happened, where - a list of
 the addon's parts - and optional details. Everything else the report takes from the game, so a
 bug can be found and fixed without asking you back. The window shows the report as one code,
 already selected:
@@ -111,12 +139,17 @@ already selected:
 1. Copy the code with Ctrl+C.
 2. Open the link below the code: it opens the bug report form on GitHub (a GitHub account is
    needed).
-3. Paste the code into its one field, tick the consent box and send it.
+3. Paste the code into its one field, tick the box and send it.
 
 "Show content" shows everything the code holds before you pass it on. The code is not
 encrypted - anyone can turn it back into what "Show content" shows. Screenshots you add to the
-form are public too: crop or blur names, chat, realm, guild and anything personal first. The window does not open
-in combat; one that is open closes when combat starts and comes back after it. Errors come from
+form are public too: crop or blur names, chat, realm, guild and anything personal first.
+
+Dragging either window moves both, and closing the settings closes both; where the report
+would leave the screen, the settings move just far enough. The report does not open in combat;
+one that is open closes when combat starts and comes back after it. While a name in your group
+or around you can't be read, it does not open either: the settings say so below "Report bug"
+for a few seconds, and an open report says so above its code. Errors come from
 BugGrabber/BugSack when installed. To read a code yourself: `lua tools/decode-report.lua`
 (see [tools/README.md](tools/README.md)).
 
@@ -135,13 +168,17 @@ BugGrabber/BugSack when installed. To read a code yourself: `lua tools/decode-re
 
 `/cbar` still works as an alias from the old addon name "ConjureBar".
 
+The addon writes to the chat only in demo mode, as the answer to a command - `/scb` and
+`/scb bug` in combat say why nothing opens - and for auto-buy, trades and the login lines. A
+click refused in combat says nothing; a macro button's result shows beside "Show macro".
+
 ## Key bindings
 
 In a section of their own under *Options > Key Bindings > SimpleConjureBar*:
 
 | Key | Action |
 |---|---|
-| Cast next buff | One press, one cast: what the first highlighted button of the bar (in the bar's order) would fix - your armor, Arcane Intellect on the next member, a mana gem conjured. Nothing when nothing is highlighted. In combat it keeps what it held when the fight started - your armor, if nothing was highlighted then - and never casts Arcane Intellect, as the button does not. |
+| Cast next buff | One press, one cast: what the first highlighted button of the bar (in the bar's order) would fix - your armor, Arcane Intellect on the next member, a mana gem conjured. Nothing when nothing is highlighted. In combat it casts only your armor, also one chosen in the flyout there - nothing when the armor is hidden. |
 | Buff & Run | The Arcane Intellect button's middle click: buffs the target, then targets the next friendly player. Also with the button hidden. One player per press. |
 | Open Settings | Opens or closes the settings window; not in combat. |
 
@@ -165,7 +202,7 @@ and can be overridden in the General tab (saved account-wide, applied without re
 | `Merchant.lua` | Reagent auto-buy |
 | `Trade.lua` | Trading water and food |
 | `Macros.lua` | Character macros (Polymorph, Ice Block, stopcasting), macro window |
-| `Privacy.lua` | What a bug report may carry: allowlist, name and path filter, locals, size |
+| `Privacy.lua` | What a bug report may carry: allowlist, name and path filter, hidden characters, locals, size |
 | `ReportCode.lua` | The bug report as one code (`SCB1:`), shared with `tools/decode-report.lua` |
 | `Report.lua` | Bug report window, report text, state snapshot, loaded addons |
 | `Settings.lua` | Settings window framework and widgets |
@@ -181,31 +218,42 @@ every file far below Lua's limit of 200 local variables per chunk.
 - No network or addon-channel communication, no chat messages to other players.
 - No dynamic code: secure snippets and macros are built from constants only.
 - Saved settings are validated at login (types and ranges), so damaged files cannot break the addon.
-- No personal data is stored; the trade partner's GUID is only kept in memory for 10 seconds.
+- No personal data is stored; the trade partner's GUID is used for 10 seconds and kept in memory
+  until the next trade event.
 
 ### Bug reports
 
 A bug report leaves the game only when you copy its code and send it. **A GitHub issue is
-public**: everyone can read it. Write no names or personal data into the form's fields.
+public and appears under your GitHub name**: everyone can read it, with the addon list and play
+times beside your name. Write no names or personal data into the form's fields.
 
 - **What it holds, and why** - to find and fix the bug you report: your description, where it
   happened and your details; the addon's version and its settings (known keys only); your
   client's version, build and language; your class, level range (e.g. 20-29) and whether you are
-  solo, in a party or a raid; this addon's Lua errors of the current session with how long ago
-  they came and whether in combat; its last 50 actions (clicks with spell and item IDs and unit
+  solo, in a party or a raid; the current session's Lua errors that name this addon - another
+  addon's too, if it does - with their stack lines and local values, how long ago they came,
+  counted from the addon loading, and whether in combat; its last 50 actions (clicks with spell and item IDs and unit
   tokens such as `party1`, combat, group size, settings changes); the state of its buttons, the
   items it counts, your group by class and your buffs by spell ID; the names and versions of your
   loaded addons, as conflicts need them.
-- **What it never holds** - chat, mail or whispers; positions or zones; date or clock time.
-  Strings the addon does not know are shown by their length only.
-- **What it filters out** - free text and error messages pass a filter for character, realm,
-  guild, group and pet names the game knows right now, GUIDs, BattleTags, account folders,
-  e-mail addresses, the WTF folder and file paths outside `Interface/AddOns`. Names are matched
-  as whole words: a name you type that the game does not know, or one that is part of a longer
-  word - an addon folder you named "ZulshiTools", say - can still remain. Check with "Show
-  content".
+- **What it never collects** - chat, mail or whispers; positions or zones; date or clock time.
+  An error message is free text, though, and holds whatever its author wrote. Strings in local
+  values and settings that the addon does not know are shown by their length only. The times are relative, but
+  with the time GitHub shows on your post they tell roughly when you played.
+- **What it filters out** - free text and error messages pass a filter for your character, realm
+  and guild, your current group, pets, target, focus, mouseover and trade partner, GUIDs,
+  BattleTags, account folders, e-mail addresses, the WTF folder, absolute file paths outside
+  `Interface/AddOns`, colour, texture and link codes - of a link only its visible text stays -
+  and characters that show nothing. Names are matched as whole words in any case for Latin and
+  Cyrillic letters; beside punctuation and inside Chinese, Japanese or Korean text they are found
+  too. Friends, guild members outside your group and anyone else who is not around, a name the
+  game is still loading, a relative path, one that is part of a longer word - an addon folder you
+  named "ZulshiTools", say - or one in Greek or other capitals can still remain. Check with
+  "Show content".
 - **Where it is kept** - the action log in memory only, gone at logout; nothing is written to
   your saved variables for the report.
+- **An older version** - a report from 1.0.0 or 1.0.1 carries a "Date:" line. Update first; if
+  you cannot, remove the date and any names before you post.
 - **Deletion** - see "Data protection" below.
 
 ### Data protection
@@ -218,25 +266,37 @@ This is not legal advice; it says how bug reports are handled.
 - **Why** - you choose to send a report; it is used only to fix the bug you report (legitimate
   interest, GDPR Art. 6(1)(f); Swiss FADP). Nothing leaves the game unless you copy and post it.
 - **Who receives it** - GitHub, Inc. (USA) hosts the issue. It is public, and people who watch
-  the repository get a copy by e-mail. How GitHub protects data sent to the USA:
-  [GitHub's privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
+  the repository get a copy by e-mail. GitHub is responsible for what it hosts under its own
+  [privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement);
+  for transfers to the USA it relies on the EU-U.S. and Swiss-U.S. Data Privacy Framework.
+  To read a report, the author may decode it and pass it to an AI coding assistant. Decoded
+  copies are used only to fix the bug and are deleted once it is fixed; the assistant provider's
+  own retention applies to what it receives.
 - **How long** - once the bug is fixed, the author removes the code, with its edit history, from
   the issue; on request earlier, or the whole issue. Copies outside GitHub - e-mail
   notifications, web archives - cannot be recalled.
-- **Your rights** - access, correction, deletion and objection, through the contact above. You
+- **Your rights** - access, correction, deletion, restriction, portability and objection, through
+  the contact above. You
   may also complain to the Swiss FDPIC or to the data protection authority of your EU country.
 - **Under 16** - ask a parent before you post a report.
 
 ## License
 
 MIT, see [LICENSE](LICENSE). Author: ZulshiBLN. World of Warcraft screenshots and game art are
-(c) Blizzard Entertainment and not covered by the MIT license.
+(c) Blizzard Entertainment and not covered by the MIT license. The font of the screenshots'
+titles, Cinzel, is under the SIL Open Font License ([tools/fonts/OFL.txt](tools/fonts/OFL.txt));
+it is a tool's and never ships with the addon.
 
 ## Known limits
 
 - With several mana gems in the bags, a left click in combat may still show the shared cooldown
   message for the second gem line of the macro.
-- Armor and Intellect highlights and the Intellect count are frozen during combat (the client
-  restricts aura data in combat); they update right after combat.
+- The client restricts aura data in combat: the armor highlight there follows a cast, not the
+  aura - when the game hides which spell was cast, a cast after a press on the Armor button or the
+  key counts, even if that press was refused. Everything updates right after combat.
+- In instances and PvP the client keeps buff data unreadable out of combat too. The armor and
+  Arcane Intellect then keep what they showed - the count may be as old as the visit, and a
+  click may buff a member again who already has it - and update once the buffs can be read;
+  an armor cast there still ends its glow.
 - Intellect buffs the addon does not know yet can be identified with `/scb debug` (lists your
   buffs with spell IDs).

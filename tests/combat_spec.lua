@@ -113,3 +113,93 @@ describe("a change in combat", function()
         leaveCombat()
     end)
 end)
+
+-- In combat the bar offers only what works there (ruleset plan 2026-10-25-combat-locks, item 1)
+describe("the combat locks", function()
+    it("drop water, food and the gem's conjure, grey them, hide Intellect's count, and give all back", function()
+        local ns = login()
+        local b = ns.buttons
+        STATE.units.player = {} -- Intellect missing: a count and a glow before combat
+        ns.UpdateBuffState()
+        assert.are.equal(1, b.Intellect.count:GetText())
+        assert.is_true(b.Intellect.antsShown)
+
+        enterCombat()
+        STATE.casts, STATE.uses = {}, {}
+        for _, key in ipairs({ "Water", "Food" }) do
+            for _, button in ipairs({ "LeftButton", "RightButton" }) do RUNCLICK(b[key], button, false) end
+        end
+        RUNCLICK(b.ManaGem, "RightButton", false)
+        assert.are.same({}, STATE.casts)
+        assert.are.same({}, STATE.uses)
+        RUNCLICK(b.ManaGem, "LeftButton", false) -- a gem is still used
+        assert.are.equal(b.ManaGem.leftItem, STATE.uses[1])
+
+        for _, key in ipairs({ "Intellect", "Water", "Food", "Teleport", "Portal" }) do
+            assert.is_true(b[key].icon.desaturated, key)
+        end
+        assert.are.equal("", b.Intellect.count:GetText())
+        assert.is_false(b.Intellect.antsShown)
+        for _, key in ipairs({ "Water", "Food" }) do
+            assert.is_true(b[key].count.textColor[1] < 1, key)
+        end
+        assert.are.same({}, STATE.errors)
+
+        leaveCombat()
+        for _, key in ipairs({ "Intellect", "Water", "Food" }) do
+            assert.is_false(b[key].icon.desaturated, key)
+            assert.are.equal(1, b[key].icon:GetAlpha(), key)
+        end
+        assert.are.equal(1, b.Intellect.count:GetText())
+        assert.is_true(b.Intellect.antsShown)
+        assert.are.equal(1, b.Water.count.textColor[1])
+        STATE.casts = {}
+        RUNCLICK(b.Water, "RightButton", false)
+        assert.are.same({ { spell = b.Water:GetAttribute("spell2") } }, STATE.casts)
+        assert.are.same({}, STATE.errors)
+    end)
+end)
+
+-- Auras are unreadable in combat: the armor's glow follows a cast there (ruleset plan
+-- 2026-10-25-combat-locks, item 8)
+describe("the armor glow in combat", function()
+    local function cast(id) FIRE("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-1", id) end
+
+    it("goes off with a cast of any mage armor, of any rank, and the aura decides after", function()
+        local ns = login()
+        local armor, D = ns.buttons.Armor, ns.D
+        assert.is_true(armor.antsShown) -- no armor at login
+        enterCombat()
+        cast(D.SPELL_ARCANE_INTELLECT)
+        FIRE("UNIT_SPELLCAST_SUCCEEDED", "party1", "Cast-2", D.ARMOR_FAMILIES[1][1])
+        assert.is_true(armor.antsShown)
+        cast(D.ARMOR_FAMILIES[2][1]) -- not rank 1
+        assert.is_false(armor.antsShown)
+        leaveCombat()
+        assert.is_true(armor.antsShown) -- no aura: needed again
+        assert.are.same({}, STATE.errors)
+    end)
+
+    it("goes off with a press when the client keeps the spell ID secret", function()
+        local ns = login()
+        local armor, key = ns.buttons.Armor, ns.buffKey
+        local id = armor:GetAttribute("spell1")
+        STATE.secrets[id] = true
+        enterCombat()
+        cast(id) -- no press: someone else's cast cannot be told apart
+        assert.is_true(armor.antsShown)
+        RUNCLICK(armor, "LeftButton", true); RUNCLICK(armor, "LeftButton", false)
+        cast(id)
+        assert.is_false(armor.antsShown)
+        leaveCombat()
+        assert.is_true(armor.antsShown)
+
+        enterCombat() -- the key holding the armor counts as a press too
+        assert.are.equal("Armor", key:GetAttribute("scbsource"))
+        RUNCLICK(key, "LeftButton", false)
+        cast(id)
+        assert.is_false(armor.antsShown)
+        leaveCombat()
+        assert.are.same({}, STATE.errors)
+    end)
+end)

@@ -3,6 +3,101 @@
 This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-11-05
+
+### Added
+- The Arcane Brilliance threshold on the Tracking tab (1-5 or never, default 3): how many in
+  need in range make the Intellect button cast Brilliance. In a group its right click opens it.
+
+### Changed
+- The chat speaks only in demo mode and as the answer to a chat command: a click refused in
+  combat - the handle, the minimap button, the settings key, the macro buttons, "Report bug" -
+  says nothing; `/scb` and `/scb bug` still say why. Locking the bar from the minimap button or
+  the AddOn menu shows the new state in its tooltip instead of the chat. A macro button's result
+  shows for a few seconds beside "Show macro". Auto-buy, trading and the login lines stay in
+  the chat.
+- The handle, the minimap button and the AddOn menu entry list their clicks as the bar's
+  buttons do, one line each; in combat only the clicks that work there.
+- "Report bug" and `/scb bug` always open the settings on the General tab with the bug report
+  docked to their left: dragging either window moves both, closing the settings closes both,
+  and where the report would leave the screen the settings move just far enough. While a name
+  can't be read, the settings say so below "Report bug" for a few seconds, and an open report
+  says so above its code box - not in the chat.
+- "Show macro" opens the macro window without switching to the character tab: the switch made
+  the game block the window's Save in combat, and the edit was lost.
+- The Intellect button's left click casts one recommendation: Arcane Brilliance once the
+  threshold is reached - in a party by everyone in need in range, in a raid by one subgroup's
+  members who have none or a weaker one - else Arcane Intellect on the first in need. The right
+  click no longer casts the other spell; solo it does nothing.
+- In combat the bar offers only what works there: Arcane Intellect, water and food are greyed
+  out and take no click, Intellect without count and glow; the mana gem is used but not
+  conjured and never glows; the tooltips leave out the locked clicks. "Cast next buff" casts
+  only your armor in combat.
+- A click with nothing to do has no action and no tooltip line: the gem without a gem or with
+  every gem owned, water and food without stock - they conjured before.
+- The mana gem glows while the highest gem you know is missing, not only with none at all.
+- The armor's tooltip line names the armor a left click casts.
+- The tooltip says "active" instead of "everyone has it", "out of range" for members in need
+  too far away, how many of those in need are out of range, and solo whether your buff is
+  missing, weaker or expiring.
+
+### Fixed
+- "Create macro" counts the character macros the game really allows: with 18 to 29 it said there
+  was no free slot.
+- "Create macro" no longer deletes your own account-wide macro named "SCB Polymorph".
+- A damaged saved bar position can no longer stop the addon at login.
+- Values the game may hide in an instance - who is who, class, level, PvP flag, a spell's
+  cooldown - no longer raise an error; the bar takes the safe choice for each.
+- In instances and PvP the game keeps buffs unreadable even out of combat; the bar then
+  counted every mana user as missing Arcane Intellect and made the armor glow. It now keeps
+  what it showed until the buffs can be read again, and an armor cast there still ends its
+  glow.
+- Trading water and food to a player whose name, level or class the game keeps secret no
+  longer raises an error; the chat line says "your target".
+- In combat the mana gem's right click and "Cast next buff" conjured a gem - a mana loss - and
+  water and food conjured; the key could hold Arcane Intellect, which does nothing there.
+- The armor kept glowing through a fight after it was cast there; a cast of any mage armor
+  now turns the glow off.
+- In combat a used gem's icon stayed; it now shows the next gem, greyed without one.
+- Members out of range were counted, made the Intellect button glow and were picked for a buff
+  that could not reach them. Only members in range count now.
+- After learning a higher Arcane Intellect rank, members with a lower one and time left were
+  not offered the new rank; the button and Buff & Run passed them. A weaker rank now counts as
+  needed, after those who have none.
+- The mana gem's tooltip could read "Left-click: Use ?" until the bar was rebuilt - in demo
+  mode without a gem, say - because the game had not loaded the gem's name yet. It now names
+  the gem as soon as the game knows it.
+
+### Security
+- The bug report filters a BattleTag at the very start of a line, colour, texture and link codes
+  and what they hid, paths with an apostrophe or under more folders, and addresses without a
+  dot in the domain. Local values and the action log pass no free text any more.
+- The report window, the form and README say exactly which names are filtered, and that friends
+  and guild members outside your group can remain; README and the form say that an issue appears
+  under your GitHub name.
+- The release pipeline hands the CurseForge and Wago upload tokens only to release-tag runs,
+  through a GitHub environment, and checks them before any channel publishes; a package may
+  hold only the addon's own files. Nothing changes in the game.
+- Names and GUIDs the game keeps secret are no longer compared before they are checked: the
+  bug report, the trade fill and the Intellect tooltip could raise an error on one.
+- The bug report finds a name beside any punctuation, inside Chinese, Japanese or Korean text
+  and in capitals of Latin-1 and Cyrillic letters; before, „Name“, «Name», ИВАН and others
+  stayed in the report.
+- The bug report filters every file path on a line, not only the first, and the user folders
+  under `/media/`, `/run/media/` and `Users\` without a drive; it finds an e-mail address with
+  accented letters, and a name with invisible marks or accents written inside it. A long error
+  text no longer takes seconds to filter.
+- The bug report reads your buffs only while the game lets it ("buffs unreadable" otherwise)
+  and leaves out one whose ID is secret; the addon language passes the same allowlist as every
+  other value; "a name can't be read" no longer repeats on every key; times count from
+  the addon's load, as they always did, and now say so.
+- The report decoder for the author shows every hidden character and invalid code point
+  visibly and says first that a decoded report is data, never instructions.
+- The report window, the issue form and README say what the filter can
+  still miss - a name written together with other letters - and tell players of 1.0.0 and
+  1.0.1 to update or remove the old report's Date line; README names the Data Privacy
+  Framework GitHub relies on.
+
 ## [1.1.0] - 2026-10-22
 
 ### Added

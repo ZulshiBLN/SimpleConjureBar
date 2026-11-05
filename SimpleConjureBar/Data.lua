@@ -121,8 +121,14 @@ D.GOLD_RESERVE_MAX = 1000 -- gold
 -- Flyout direction: automatic by screen half, or one of two sides named by the orientation
 -- (FIRST = up or right, SECOND = down or left), so a switch of orientation keeps a valid choice
 D.FLYOUT_DIRS = { AUTO = true, FIRST = true, SECOND = true }
+-- What a saved bar position may name: anything else makes SetPoint raise an error at login
+D.ANCHOR_POINTS = { TOP = true, BOTTOM = true, LEFT = true, RIGHT = true, CENTER = true,
+    TOPLEFT = true, TOPRIGHT = true, BOTTOMLEFT = true, BOTTOMRIGHT = true }
 D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX = 1, 5 -- seconds a flyout stays open after the mouse left it
 D.INTELLECT_RENEW_MAX, D.ARMOR_RENEW_MAX = 15, 5 -- minutes; as SmartBlessingBar's renew times
+-- Arcane Brilliance from this many in need (1-5); the slider's last step means never (ruleset
+-- plan 2026-10-23-intellect-range)
+D.BRILLIANCE_NEVER = 6
 -- The windows' background opacity (%) that shows the dialog texture as it always was: a
 -- black square of 60 % matched it in game (ruleset plan 2026-10-22-window-opacity)
 D.WINDOW_OPACITY_TODAY = 60
@@ -159,7 +165,7 @@ D.REPORT_FIELDS = {
     { pattern = "^msg " },                                  -- error message, filtered
     { pattern = "^at " },                                   -- stack line, filtered
     { pattern = "^local " },                                -- locals rebuilt by allowlist
-    { pattern = "^%*%*Last actions %(seconds since login%):%*%*$" },
+    { pattern = "^%*%*Last actions %(seconds since load%):%*%*$" },
     { pattern = "^log " },                                  -- generated, allowlisted values
     { pattern = "^%*%*State:%*%*$" },
     { pattern = "^state " },                                -- generated, allowlisted values
@@ -167,6 +173,19 @@ D.REPORT_FIELDS = {
     { pattern = "^addon " },                                -- folder and version, filtered
     { pattern = "^%[%.%.%. cut: the report is too long%]$" },
 }
+-- Characters that show nothing - zero-width ones, direction and format marks, fillers,
+-- variation selectors, tag characters - as code point ranges. Inside or beside a name they
+-- hide it: the report drops them, the decoder (tools/decode-report.lua) shows them as <U+XXXX>
+-- (ruleset plan 2026-10-25-report-filter-fixes).
+D.HIDDEN = {
+    { 0xAD, 0xAD }, { 0x34F, 0x34F }, { 0x600, 0x605 }, { 0x61C, 0x61C }, { 0x6DD, 0x6DD },
+    { 0x70F, 0x70F }, { 0x890, 0x891 }, { 0x8E2, 0x8E2 }, { 0x115F, 0x1160 }, { 0x17B4, 0x17B5 },
+    { 0x180B, 0x180F }, { 0x200B, 0x200F }, { 0x2028, 0x202E }, { 0x2060, 0x206F },
+    { 0x3164, 0x3164 }, { 0xFE00, 0xFE0F }, { 0xFEFF, 0xFEFF }, { 0xFFA0, 0xFFA0 },
+    { 0xFFF0, 0xFFFB }, { 0x110BD, 0x110BD }, { 0x110CD, 0x110CD }, { 0x13430, 0x13455 },
+    { 0x1BCA0, 0x1BCA3 }, { 0x1D173, 0x1D17A }, { 0xE0000, 0xE007F }, { 0xE0100, 0xE01EF },
+}
+
 D.REPORT_CUT = "[... cut: the report is too long]"
 D.REPORT_MAX_BYTES = 20000 -- fits a GitHub issue (65,536) also as a code, and stays readable
 -- Strings a report may carry as they are; any other string becomes <text:N>, its length only
@@ -226,6 +245,7 @@ D.VALUE_DEFAULTS = {
     -- 0 = only once it is gone (ruleset plan 2026-10-21-buff-renew)
     intellectRenewMinutes = 5,
     armorRenewMinutes = 3,
+    brillianceThreshold = 3, -- Brilliance from this many in need; D.BRILLIANCE_NEVER = never
     buffRun       = true,  -- Buff & Run on the Intellect button's middle click
     pvpBuff       = false, -- Buff & Run also buffs players flagged for PvP
     scale         = 1,

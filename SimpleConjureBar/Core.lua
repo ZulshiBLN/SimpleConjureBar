@@ -56,6 +56,20 @@ local ItemCount, Known, GetSpellName = API.ItemCount, API.Known, API.GetSpellNam
 ---------------------------------------------------------------------------
 -- Chat output
 ---------------------------------------------------------------------------
+-- A value the client keeps secret - a name, a GUID, a spell ID - errors when it is compared or
+-- truth-tested: ask this first (rules/code.md)
+function ns.IsSecret(v) return issecretvalue ~= nil and issecretvalue(v) end
+
+-- Whether the client lets auras be read now: in combat, and in instances and PvP often out of
+-- it too, it keeps them secret and refuses a read with an error (SmartBlessingBar's BugSack
+-- note, 2026-10-20). Where C_Secrets is missing, one read is tried.
+function ns.AurasReadable()
+    local secret = C_Secrets and C_Secrets.ShouldAurasBeSecret
+    if secret then return not secret() end
+    local read = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
+    return read == nil or (pcall(read, "player", 1, "HELPFUL"))
+end
+
 function ns.Print(msg)
     print("|cff69ccf0SimpleConjureBar|r: " .. msg)
 end
@@ -122,6 +136,7 @@ function ns.InitDB()
     db.flyoutAutoClose = Num(db.flyoutAutoClose, D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX, V.flyoutAutoClose, true)
     db.intellectRenewMinutes = Num(db.intellectRenewMinutes, 0, D.INTELLECT_RENEW_MAX, V.intellectRenewMinutes, true)
     db.armorRenewMinutes = Num(db.armorRenewMinutes, 0, D.ARMOR_RENEW_MAX, V.armorRenewMinutes, true)
+    db.brillianceThreshold = Num(db.brillianceThreshold, 1, D.BRILLIANCE_NEVER, V.brillianceThreshold, true)
     db.windowOpacity = Num(db.windowOpacity, 0, 100, V.windowOpacity, true)
     for _, key in ipairs({ "antsSpeed", "armorAntsSpeed", "gemAntsSpeed" }) do
         db[key] = Num(db[key], 1, #D.GLOW_DURATIONS, V[key], true)
@@ -134,7 +149,7 @@ function ns.InitDB()
             for _, f in ipairs({ "r", "g", "b", "a" }) do c[f] = Num(c[f], 0, 1, color[f]) end
         end
     end
-    if type(db.point) ~= "string" or type(db.rel) ~= "string"
+    if not D.ANCHOR_POINTS[db.point] or not D.ANCHOR_POINTS[db.rel]
         or type(db.x) ~= "number" or type(db.y) ~= "number" or db.x ~= db.x or db.y ~= db.y then
         db.point, db.rel, db.x, db.y = nil, nil, nil, nil -- invalid position: back to the default
     end
@@ -147,14 +162,15 @@ function ns.InitDB()
     end
 
     -- Schema migrations
-    if (db.dbVersion or 1) < 2 then
+    if db.dbVersion < 2 then
         db.runeColor = nil -- removed setting: the normal rune count is always white
     end
     if db.dbVersion < 3 then
         db.showGreeting = nil -- removed setting: the login message is always shown
     end
     -- Version 4 adds flyoutDir, flyoutAutoClose, buffRun, pvpBuff, showAnchor,
-    -- intellectRenewMinutes, armorRenewMinutes and windowOpacity; the defaults above fill them in
+    -- intellectRenewMinutes, armorRenewMinutes, windowOpacity and brillianceThreshold; the
+    -- defaults above fill them in
     db.dbVersion = D.DB_VERSION
 
     -- Button order: keep the saved order, drop unknown keys, append new buttons at the end
@@ -218,8 +234,12 @@ end
 -- Level of a friendly player in the target, otherwise nil
 function ns.TargetPlayerLevel()
     local u = "target"
-    if UnitExists(u) and UnitIsPlayer(u) and not UnitIsUnit(u, "player") and UnitIsFriend("player", u) then
+    -- Each of these may be secret in an instance (ruleset plan 2026-11-05-audit-fixes)
+    local isSelf = UnitIsUnit(u, "player")
+    if ns.IsSecret(isSelf) then return end
+    if UnitExists(u) and UnitIsPlayer(u) and not isSelf and UnitIsFriend("player", u) then
         local level = UnitLevel(u)
+        if ns.IsSecret(level) then return end
         if level and level > 0 then return level end
     end
 end
@@ -283,8 +303,11 @@ function ns.KnownTravel(key)
 end
 
 -- Secure attributes are only written when they change: every SetAttribute triggers
--- OnAttributeChanged on the secure button, which is wasted work for unchanged values.
+-- OnAttributeChanged on the secure button, which is wasted work for unchanged values. Never in
+-- combat, where the client refuses the write (ADDON_ACTION_BLOCKED): callers queue such changes
+-- themselves, this only keeps one that forgot from raising the error (Michel, 2026-10-25).
 function ns.SetAttr(b, key, value)
+    if InCombatLockdown() then return end
     if b:GetAttribute(key) ~= value then b:SetAttribute(key, value) end
 end
 

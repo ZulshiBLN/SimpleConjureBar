@@ -35,7 +35,7 @@ describe("the addon in a mocked client", function()
         assert.are.equal(ns.D.WATER_SPELLS[1], b.Water:GetAttribute("spell2"))
         assert.are.equal("player", b.Intellect:GetAttribute("unit1"))
         assert.are.equal(ns.D.INTELLECT_RANKS[1].id, b.Intellect:GetAttribute("spell1"))
-        assert.are.equal(ns.D.SPELL_ARCANE_BRILLIANCE, b.Intellect:GetAttribute("spell2"))
+        assert.is_nil(b.Intellect:GetAttribute("type2")) -- solo no right click (ruleset plan 2026-10-23-intellect-range)
         assert.are.equal("/use item:8008\n/use item:8007\n/use item:5513\n/use item:5514",
             b.ManaGem:GetAttribute("macrotext1"))
         assert.are.equal(3, b.Teleport.count:GetText())
@@ -51,25 +51,28 @@ describe("the addon in a mocked client", function()
     it("chooses group targets and keeps a ticker running in a group", function()
         STATE.group = true; STATE.members = 3
         FIRE("GROUP_ROSTER_UPDATE"); RUNTIMERS()
+        -- three in need: Brilliance on the left, on the player
         assert.are.equal(ns.D.SPELL_ARCANE_BRILLIANCE, b.Intellect:GetAttribute("spell1"))
-        assert.are.equal("player", b.Intellect:GetAttribute("unit2"))
+        assert.are.equal("player", b.Intellect:GetAttribute("unit1"))
 
         AURAS["playerSpell1459"] = true
         FIRE("UNIT_AURA", "player"); RUNTIMERS()
-        assert.are.equal("party1", b.Intellect:GetAttribute("unit2"))
+        -- two in need, below the threshold of three: the single buff
+        assert.are.equal("party1", b.Intellect:GetAttribute("unit1"))
         assert.are.equal(2, b.Intellect.count:GetText())
         assert.are.equal(1, #TICKERS)
         assert.is_falsy(TICKERS[1].cancelled)
         TICK()
     end)
 
-    it("freezes the count in combat and recounts after it", function()
+    it("hides the count in combat and recounts after it", function()
         STATE.combat = true
         FIRE("PLAYER_REGEN_DISABLED")
         assert.is_true(TICKERS[1].cancelled)
         AURAS["party1Spell1459"] = true
         FIRE("UNIT_AURA", "party1"); RUNTIMERS()
-        assert.are.equal(2, b.Intellect.count:GetText())
+        -- no click works in combat (ruleset plan 2026-10-25-combat-locks)
+        assert.are.equal("", b.Intellect.count:GetText())
         FIRE("UNIT_AURA", "partypet1"); RUNTIMERS()
         FIRE("PLAYER_TARGET_CHANGED"); RUNTIMERS()
         STATE.combat = false
@@ -182,7 +185,9 @@ describe("the addon in a mocked client", function()
         assert.are.equal("", b.Intellect.count:GetText())
         assert.is_true(not b.Armor.antsShown or b.Armor.antsShown == armorBefore)
         STATE.combat = false; FIRE("PLAYER_REGEN_ENABLED"); RUNTIMERS()
-        assert.is_truthy(b.Intellect.hint2 and b.Intellect.hint2:find("1$"))
+        -- solo the line names the case, without a number (ruleset plan 2026-10-23-intellect-range)
+        assert.are.equal(ns.L.SELF_MISSING:format(ns.LocalName(ns.SpellName(ns.D.SPELL_ARCANE_INTELLECT), "BTN_INTELLECT")),
+            b.Intellect.hint2)
     end)
 
     it("opens above the Blizzard settings panel", function()
@@ -218,7 +223,7 @@ describe("the addon in a mocked client", function()
     end)
 
     it("creates the Polymorph macro once, per character, with the chosen marker", function()
-        _G.MACROS = { { name = "SCB Polymorph", body = "old" } }
+        _G.MACROS = {}
         ns.CreatePolymorphMacro(); ns.CreatePolymorphMacro()
         assert.are.equal(1, #MACROS)
         assert.are.equal("SCB Polymorph", MACROS[1].name)
@@ -230,14 +235,14 @@ describe("the addon in a mocked client", function()
         ns.CreatePolymorphMacro()
         assert.is_truthy(MACROS[1].body:find("/tm %[@focus,harm,nodead%] 8"))
 
-        -- Blizzard's macro window switches to its first tab (general) when shown; the
-        -- addon must switch it to the second (character) afterwards, and stay open.
+        -- The addon only opens Blizzard's macro window. A tab switch from addon code taints the
+        -- window, and its Save is then blocked in combat (live test 2026-11-05).
         local tabs = {}
         _G.MacroFrame = { ChangeTab = function(_, id) tabs[#tabs + 1] = id end }
         _G.ShowMacroFrame = function() _G.SHOWN_MACRO = true; MacroFrame:ChangeTab(1) end
         SimpleConjureBarSettings:Show(); ns.ShowMacroWindow()
         assert.is_true(SHOWN_MACRO)
-        assert.are.same({ 1, 2 }, tabs)
+        assert.are.same({ 1 }, tabs)
         assert.is_true(SimpleConjureBarSettings:IsShown())
     end)
 

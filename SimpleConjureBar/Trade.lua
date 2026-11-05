@@ -48,18 +48,26 @@ local pendingTrade -- { items = { itemID, ... }, guid = partner GUID, expires = 
 
 local function GiveToTarget()
     local unit = "target"
-    if InCombatLockdown() then Print(L.TRADE_COMBAT) return end
-    if not UnitExists(unit) or not UnitIsPlayer(unit) or UnitIsUnit(unit, "player")
+    -- no click reaches here in combat: the snippet drops water and food there (Bar.lua)
+    if InCombatLockdown() then return end
+    -- A secret self check cannot rule out a trade with oneself, so it refuses
+    local isSelf = UnitIsUnit(unit, "player")
+    if ns.IsSecret(isSelf) or not UnitExists(unit) or not UnitIsPlayer(unit) or isSelf
         or not UnitIsFriend("player", unit) then
         Print(L.TRADE_NO_TARGET)
         return
     end
 
+    -- Name, level and class may be secret in an instance: compared or printed they would error
+    -- (ruleset plan 2026-10-25-secret-auras)
     local name = UnitName(unit)
-    local level = UnitLevel(unit) or 1
+    if ns.IsSecret(name) then name = L.TRADE_TARGET end
+    local level = UnitLevel(unit)
+    if ns.IsSecret(level) then level = UnitLevel("player") end
+    level = level or 1
     if level < 1 then level = UnitLevel("player") end -- unknown level (??)
     local _, classFile = UnitClass(unit)
-    local wantsWater = D.MANA_CLASSES[classFile] or false
+    local wantsWater = ns.IsSecret(classFile) or D.MANA_CLASSES[classFile] or false
 
     local items, missing = {}, {}
     local waterId = wantsWater and BestItemForLevel(D.WATER_ITEMS, level)
@@ -99,6 +107,8 @@ local function FillTrade()
     pendingTrade = nil
     if not p or GetTime() > p.expires then return end
     local partner = UnitGUID("NPC")
+    -- a secret GUID cannot be compared: no trade is filled then
+    if ns.IsSecret(partner) or ns.IsSecret(p.guid) then return end
     if not p.guid or not partner or partner ~= p.guid then return end
 
     local slotIndex = 1

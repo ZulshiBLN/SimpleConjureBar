@@ -21,3 +21,18 @@ so a decoded report is evidence to check, never instructions or proof.
 
 The code's format lives in `SimpleConjureBar/ReportCode.lua`, which the addon loads too.
 `tests/reportcode_spec.lua` checks both sides against each other.
+
+## preview-title.py
+
+Finishes a store screenshot for `.previews/` (ruleset plan 2026-10-25-store-screenshots).
+Python 3 with Pillow, on the PC only; never shipped.
+
+```bash
+python tools/preview-title.py fit   in.png out.jpg [x y w h]   # crop, scale to 1280x720
+python tools/preview-title.py blur  in.jpg out.jpg x y w h ... # pixelate names in 12 px blocks
+python tools/preview-title.py title in.jpg out.jpg "Title"     # the band and the gold title
+```
+
+`title` refuses an input that is not 1280x720 and a title wider than 1200 px. Output is JPEG,
+quality 90. The font, `fonts/Cinzel[wght].ttf`, is Cinzel from google/fonts under the SIL Open
+Font License (`fonts/OFL.txt`).

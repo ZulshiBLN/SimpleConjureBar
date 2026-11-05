@@ -9,7 +9,7 @@
 local _, ns = ...
 if not ns.enabled then return end
 
-local D, L = ns.D, ns.L
+local D = ns.D
 
 local db
 ns.OnDBReady(function(d) db = d end)
@@ -30,26 +30,17 @@ local function MacroBody()
     }, "\n")
 end
 
--- Opens Blizzard's macro window on the character macros (where "SCB Polymorph" is stored)
+-- Opens Blizzard's macro window and nothing more: choosing its character tab from here taints
+-- the window, and its Save is then blocked in combat and the edit lost (live test 2026-11-05).
+-- The settings window stays open (Michel's choice, 2026-10-18).
 function ns.ShowMacroWindow()
-    if InCombatLockdown() then ns.Print(L.NOT_IN_COMBAT) return end
+    if InCombatLockdown() then return end -- the settings window is closed in combat anyway
     if ShowMacroFrame then
         ShowMacroFrame()
     else
         local load = (C_AddOns and C_AddOns.LoadAddOn) or LoadAddOn
         if load then load("Blizzard_MacroUI") end
         if MacroFrame then ShowUIPanel(MacroFrame) end
-    end
-    -- Tab 2 = character macros, where every SCB macro lives. The window switches to tab 1
-    -- when shown, so this comes after. ChangeTab takes the tab number; SelectTab takes the
-    -- tab button and errored on a number (Blizzard_MacroUI). Older clients: the tab button.
-    -- The settings window stays open (Michel's choice, 2026-10-18).
-    if MacroFrame then
-        if MacroFrame.ChangeTab then
-            MacroFrame:ChangeTab(2)
-        elseif MacroFrameTab2 and MacroFrameTab2.Click then
-            MacroFrameTab2:Click()
-        end
     end
 end
 
@@ -64,34 +55,27 @@ end
 
 -- Creates the character macro `name`, or updates it when it exists. A player's account-wide
 -- macro of the same name is left alone (code review 1.1.0, F-15).
--- replaceAccountCopy: the unpublished build 1.33 created "SCB Polymorph" account-wide;
--- that copy is replaced by the character macro. No other macro of this addon ever existed
--- account-wide.
-local function CreateOrUpdate(name, body, replaceAccountCopy)
-    if InCombatLockdown() then ns.Print(L.NOT_IN_COMBAT) return end
-    local maxAccount = MAX_ACCOUNT_MACROS or 120
-    local index = CharacterMacroIndex(name, maxAccount)
+local function CreateOrUpdate(name, body)
+    if InCombatLockdown() then return end
+    local limits = Constants.MacroConsts
+    local index = CharacterMacroIndex(name, limits.MAX_ACCOUNT_MACROS)
     if index then
         EditMacro(index, name, MACRO_ICON, body)
-        ns.Print(L.MACRO_UPDATED:format(name))
+        ns.ShowMacroResult("MACRO_UPDATED", name)
         return
     end
     local _, characterMacros = GetNumMacros()
-    if characterMacros >= (MAX_CHARACTER_MACROS or 18) then
-        ns.Print(L.MACRO_FULL)
+    if characterMacros >= limits.MAX_CHARACTER_MACROS then
+        ns.ShowMacroResult("MACRO_FULL")
         return
-    end
-    local accountIndex = GetMacroIndexByName(name)
-    if replaceAccountCopy and accountIndex and accountIndex > 0 and accountIndex <= maxAccount then
-        DeleteMacro(accountIndex)
     end
     -- 4th argument true = character macro
     CreateMacro(name, MACRO_ICON, body, true)
-    ns.Print(L.MACRO_CREATED:format(name))
+    ns.ShowMacroResult("MACRO_CREATED", name)
 end
 
 function ns.CreatePolymorphMacro()
-    CreateOrUpdate(MACRO_NAME, MacroBody(), true)
+    CreateOrUpdate(MACRO_NAME, MacroBody())
 end
 
 -- The macro window's name field holds 16 characters. CreateMacro itself stores longer names

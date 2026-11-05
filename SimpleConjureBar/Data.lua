@@ -121,6 +121,9 @@ D.GOLD_RESERVE_MAX = 1000 -- gold
 -- Flyout direction: automatic by screen half, or one of two sides named by the orientation
 -- (FIRST = up or right, SECOND = down or left), so a switch of orientation keeps a valid choice
 D.FLYOUT_DIRS = { AUTO = true, FIRST = true, SECOND = true }
+-- What a saved bar position may name: anything else makes SetPoint raise an error at login
+D.ANCHOR_POINTS = { TOP = true, BOTTOM = true, LEFT = true, RIGHT = true, CENTER = true,
+    TOPLEFT = true, TOPRIGHT = true, BOTTOMLEFT = true, BOTTOMRIGHT = true }
 D.AUTOCLOSE_MIN, D.AUTOCLOSE_MAX = 1, 5 -- seconds a flyout stays open after the mouse left it
 D.INTELLECT_RENEW_MAX, D.ARMOR_RENEW_MAX = 15, 5 -- minutes; as SmartBlessingBar's renew times
 -- Arcane Brilliance from this many in need (1-5); the slider's last step means never (ruleset

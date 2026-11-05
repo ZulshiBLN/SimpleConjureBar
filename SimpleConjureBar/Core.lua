@@ -149,7 +149,7 @@ function ns.InitDB()
             for _, f in ipairs({ "r", "g", "b", "a" }) do c[f] = Num(c[f], 0, 1, color[f]) end
         end
     end
-    if type(db.point) ~= "string" or type(db.rel) ~= "string"
+    if not D.ANCHOR_POINTS[db.point] or not D.ANCHOR_POINTS[db.rel]
         or type(db.x) ~= "number" or type(db.y) ~= "number" or db.x ~= db.x or db.y ~= db.y then
         db.point, db.rel, db.x, db.y = nil, nil, nil, nil -- invalid position: back to the default
     end
@@ -234,8 +234,12 @@ end
 -- Level of a friendly player in the target, otherwise nil
 function ns.TargetPlayerLevel()
     local u = "target"
-    if UnitExists(u) and UnitIsPlayer(u) and not UnitIsUnit(u, "player") and UnitIsFriend("player", u) then
+    -- Each of these may be secret in an instance (ruleset plan 2026-11-05-audit-fixes)
+    local isSelf = UnitIsUnit(u, "player")
+    if ns.IsSecret(isSelf) then return end
+    if UnitExists(u) and UnitIsPlayer(u) and not isSelf and UnitIsFriend("player", u) then
         local level = UnitLevel(u)
+        if ns.IsSecret(level) then return end
         if level and level > 0 then return level end
     end
 end

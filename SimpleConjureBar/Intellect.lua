@@ -8,7 +8,7 @@ if not ns.enabled then return end
 
 local D, L, API = ns.D, ns.L, ns.API
 local ItemCount, GetSpellTex = API.ItemCount, API.GetSpellTex
-local IsDemo, IsKnown, SetAttr = ns.IsDemo, ns.IsKnown, ns.SetAttr
+local IsDemo, IsKnown, SetAttr, IsSecret = ns.IsDemo, ns.IsKnown, ns.SetAttr, ns.IsSecret
 local MANA_CLASSES = D.MANA_CLASSES
 local UnitExists, UnitIsConnected, UnitIsDeadOrGhost, UnitClass = UnitExists, UnitIsConnected, UnitIsDeadOrGhost, UnitClass
 local InCombatLockdown, IsInGroup, IsInRaid = InCombatLockdown, IsInGroup, IsInRaid
@@ -112,7 +112,9 @@ local function IntellectSpell(level, known)
 end
 
 local function InSpellRange(spell, unit)
-    if UnitIsUnit(unit, "player") then return true end
+    local isSelf = UnitIsUnit(unit, "player")
+    if IsSecret(isSelf) then isSelf = unit == "player" end
+    if isSelf then return true end
     if not UnitIsVisible(unit) then return false end
     local r
     if C_Spell and C_Spell.IsSpellInRange then
@@ -136,15 +138,19 @@ end
 --   "expiring" - our strength (or an ID that cannot be read) with at most the renew time left.
 -- nil for a stronger buff (the client would refuse ours) or one without a readable expiry, then
 -- also the moment it falls due (nil when it never does). With both buffs the stronger decides.
+local function BuffValue(aura) return rawget(D.INTELLECT_BUFFS, aura.spellId) end
+
 local function NeedsIntellect(unit, aiName, abName, known)
     local level = UnitLevel(unit)
+    if IsSecret(level) then level = nil end
     local ours = IntellectSpell(level and level > 0 and level or nil, known)
     local oursValue = ours and D.INTELLECT_BUFFS[ours] or 0
     local found, latest, weaker = false, nil, false
     for i = 1, 2 do -- Intellect, then Brilliance; no table per unit and scan
         local aura = FindBuff(unit, i == 1 and aiName or abName)
         if aura then
-            local ok, value = pcall(rawget, D.INTELLECT_BUFFS, type(aura) == "table" and aura.spellId or nil)
+            -- the field is read inside the pcall: testing a secret ID outside it would raise
+            local ok, value = pcall(BuffValue, aura)
             local at = ExpiresAt(aura)
             if (ok and value and value > oursValue) or not at then return nil end
             if ok and value and value < oursValue then
@@ -207,7 +213,7 @@ local function ScanGroup(probe, known, threshold)
         end
         if UnitExists(unit) and UnitIsConnected(unit) and not UnitIsDeadOrGhost(unit) then
             local _, classFile = UnitClass(unit)
-            if MANA_CLASSES[classFile] then
+            if IsSecret(classFile) or MANA_CLASSES[classFile] then
                 local need, due = NeedsIntellect(unit, aiName, abName, known)
                 if need then
                     needing = needing + 1
@@ -271,7 +277,8 @@ local function TargetText(spell, unit)
             local index = tonumber(unit:match("^raid(%d+)$"))
             if not index then
                 for i = 1, GetNumGroupMembers() do
-                    if UnitIsUnit(RAID_UNITS[i], unit) then index = i break end
+                    local same = UnitIsUnit(RAID_UNITS[i], unit)
+                    if not IsSecret(same) and same then index = i break end
                 end
             end
             local sub = index and select(3, GetRaidRosterInfo(index))
@@ -297,7 +304,9 @@ end
 -- in a group it opens the threshold slider (OnClick below), solo it has no line.
 local function ApplyTargets(b, singleUnit, groupUnit, needing, known)
     -- Rank fitting the chosen player's level; without a target the highest, for the icon
-    local level = singleUnit and singleUnit ~= "player" and UnitLevel(singleUnit) or nil
+    local level
+    if singleUnit and singleUnit ~= "player" then level = UnitLevel(singleUnit) end
+    if IsSecret(level) then level = nil end
     if level and level <= 0 then level = nil end
     local left, leftUnit = IntellectSpell(level, known), singleUnit
     if groupUnit then left, leftUnit = D.SPELL_ARCANE_BRILLIANCE, groupUnit end
@@ -387,7 +396,9 @@ local BUFF_RUN_MACRO = "/click SimpleConjureBarBuffRun LeftButton 1\n/targetfrie
 -- PvP zone - when the flag has no timer; one that runs out came by accident, from buffing a
 -- flagged player, say (ruleset plan 2026-10-22-pvp-self-flag)
 local function FlaggedForGood()
-    return UnitIsPVP("player") and not IsPVPTimerRunning()
+    local flagged = UnitIsPVP("player")
+    if IsSecret(flagged) then return false end
+    return flagged and not IsPVPTimerRunning()
 end
 
 -- The Arcane Intellect rank for the unit - never Brilliance: nil unless it is a friendly
@@ -402,12 +413,18 @@ function ns.BuffRunSpell(unit)
         return nil, "no friendly player"
     end
     if not UnitIsConnected(unit) or UnitIsDeadOrGhost(unit) then return nil, "offline or dead" end
-    if not MANA_CLASSES[select(2, UnitClass(unit))] then return nil, "no mana user" end
-    -- buffing yourself flags nothing (code review 1.1.0, F-05)
-    if UnitIsPVP(unit) and not UnitIsUnit(unit, "player") and not db.pvpBuff and not FlaggedForGood() then
+    local classFile = select(2, UnitClass(unit))
+    if not IsSecret(classFile) and not MANA_CLASSES[classFile] then return nil, "no mana user" end
+    -- buffing yourself flags nothing (code review 1.1.0, F-05). A secret flag counts as flagged:
+    -- buffing a flagged player would flag the mage.
+    local flagged, isSelf = UnitIsPVP(unit), UnitIsUnit(unit, "player")
+    if IsSecret(flagged) then flagged = true end
+    if IsSecret(isSelf) then isSelf = false end
+    if flagged and not isSelf and not db.pvpBuff and not FlaggedForGood() then
         return nil, "flagged for PvP"
     end
     local level = UnitLevel(unit)
+    if IsSecret(level) then level = nil end
     if level and level <= 0 then level = nil end -- "??": unknown, not rank 1
     local spell = IntellectSpell(level)
     if not spell then return nil, "no rank known" end
@@ -441,7 +458,8 @@ intel:SetScript("PreClick", function(_, button, down)
     local spell, why = ns.BuffRunSpell("target")
     -- nil for a spell the client does not know - demo mode treats every rank as known
     local cd = spell and C_Spell.GetSpellCooldown(spell)
-    local cooling = cd and cd.startTime > 0
+    local started = cd and cd.startTime
+    local cooling = started and not IsSecret(started) and started > 0
     if down then -- the PreClick sees down and up; one entry per press
         ns.Log("buffrun " .. (cooling and "wait: cooldown" or spell and tostring(spell) or ("none: " .. why)))
     end

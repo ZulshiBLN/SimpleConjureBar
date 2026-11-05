@@ -135,3 +135,115 @@ describe("a trade with a target whose values are secret", function()
         assert.are.same({}, STATE.errors)
     end)
 end)
+
+-- What the API docs mark as possibly secret, each with a value that shows the guard's choice:
+-- the mock's secrets compare freely, so only a different result can fail here (ruleset plan
+-- 2026-11-05-audit-fixes; the code audit's C-03 and C-04)
+describe("values the client may keep secret", function()
+    local function group(ns)
+        STATE.group, STATE.members = true, 2
+        FIRE("GROUP_ROSTER_UPDATE"); RUNTIMERS()
+        return ns
+    end
+
+    it("give no target level while the self check is secret", function()
+        local ns = login()
+        STATE.target = true
+        STATE.units.target = { level = 33 }
+        assert.are.equal(33, ns.TargetPlayerLevel())
+        STATE.secrets[false] = true
+        assert.is_nil(ns.TargetPlayerLevel())
+    end)
+
+    it("start no trade while the self check is secret", function()
+        local ns = login()
+        STATE.target = true
+        STATE.units.target = {}
+        STATE.secrets[false] = true
+        _G.CHAT = {}
+        RUNSCRIPT(ns.buttons.Water, "OnClick", "MiddleButton", false)
+        assert.is_truthy(CHAT[#CHAT]:find(ns.L.TRADE_NO_TARGET, 1, true))
+        assert.are.same({}, STATE.errors)
+    end)
+
+    it("leave the range check to decide while the self check is secret", function()
+        local ns = login()
+        STATE.target = true
+        STATE.units.target = { is = "player", range = false }
+        STATE.secrets[true] = true
+        local spell, why = ns.BuffRunSpell("target")
+        assert.is_nil(spell)
+        assert.is_truthy(why:find("range", 1, true), why)
+    end)
+
+    it("count an aura whose ID cannot be read as our strength", function()
+        -- the addon keeps the function it finds at load, so it is replaced before that
+        local ns = group(login(function()
+            C_UnitAuras.GetAuraDataBySpellName = function()
+                return setmetatable({ expirationTime = STATE.now + 3600 }, { __index = function(_, k)
+                    if k == "spellId" then error("secret") end
+                end })
+            end
+        end))
+        STATE.units.party1 = { class = "PRIEST" }
+        local ok, err = pcall(ns.UpdateBuffState)
+        assert.is_true(ok, err)
+        local count = ns.buttons.Intellect.count:GetText()
+        assert.is_true(count == nil or count == 0 or count == "", tostring(count))
+    end)
+
+    it("count a member of a secret class as a mana user", function()
+        local ns = group(login())
+        STATE.units.player = { auras = { ns.D.SPELL_ARCANE_INTELLECT } }
+        STATE.units.party1 = { class = "WARRIOR" }
+        STATE.secrets.WARRIOR = true
+        ns.UpdateBuffState()
+        assert.are.equal(1, ns.buttons.Intellect.count:GetText())
+        STATE.units.target = { class = "WARRIOR" }
+        STATE.target = true
+        assert.is_truthy((ns.BuffRunSpell("target")))
+    end)
+
+    it("pass a target whose PvP flag is secret, and call nobody flagged for good", function()
+        local ns = login()
+        STATE.target = true
+        STATE.units.target = {}
+        STATE.secrets[false] = true -- the flag reads false, but cannot be trusted
+        local spell, why = ns.BuffRunSpell("target")
+        assert.is_nil(spell)
+        assert.are.equal("flagged for PvP", why)
+        STATE.secrets[false] = nil
+        STATE.units.player = { pvp = true }
+        STATE.units.target = { pvp = true }
+        STATE.secrets[true] = true
+        spell, why = ns.BuffRunSpell("target")
+        assert.is_nil(spell)
+        assert.are.equal("flagged for PvP", why)
+    end)
+
+    it("treat a secret cooldown as no cooldown", function()
+        local ns = login()
+        STATE.target = true
+        STATE.units.target = {}
+        local real = C_Spell.GetSpellCooldown
+        C_Spell.GetSpellCooldown = function() return { startTime = 5, duration = 1.5 } end
+        STATE.secrets[5] = true
+        RUNSCRIPT(ns.buttons.Intellect, "PreClick", "MiddleButton", true)
+        C_Spell.GetSpellCooldown = real
+        local log = table.concat(ns.LogLines(), "\n")
+        assert.is_truthy(log:find("buffrun ", 1, true), log)
+        assert.is_nil(log:find("wait: cooldown", 1, true), log)
+    end)
+end)
+
+describe("a damaged saved position", function()
+    it("is dropped before it reaches SetPoint, and a valid one stays", function()
+        _G.SimpleConjureBarDB = { point = "FOO", rel = "ALSONOT", x = 1, y = 2 }
+        addon.load("enUS").InitDB()
+        assert.is_nil(SimpleConjureBarDB.point)
+        assert.is_nil(SimpleConjureBarDB.rel)
+        _G.SimpleConjureBarDB = { point = "TOPLEFT", rel = "BOTTOMRIGHT", x = 1, y = 2 }
+        addon.load("enUS").InitDB()
+        assert.are.equal("TOPLEFT", SimpleConjureBarDB.point)
+    end)
+end)

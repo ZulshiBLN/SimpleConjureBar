@@ -50,7 +50,9 @@ local function GiveToTarget()
     local unit = "target"
     -- no click reaches here in combat: the snippet drops water and food there (Bar.lua)
     if InCombatLockdown() then return end
-    if not UnitExists(unit) or not UnitIsPlayer(unit) or UnitIsUnit(unit, "player")
+    -- A secret self check cannot rule out a trade with oneself, so it refuses
+    local isSelf = UnitIsUnit(unit, "player")
+    if ns.IsSecret(isSelf) or not UnitExists(unit) or not UnitIsPlayer(unit) or isSelf
         or not UnitIsFriend("player", unit) then
         Print(L.TRADE_NO_TARGET)
         return

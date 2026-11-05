@@ -42,6 +42,12 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   missing, weaker or expiring.
 
 ### Fixed
+- "Create macro" counts the character macros the game really allows: with 18 to 29 it said there
+  was no free slot.
+- "Create macro" no longer deletes your own account-wide macro named "SCB Polymorph".
+- A damaged saved bar position can no longer stop the addon at login.
+- Values the game may hide in an instance - who is who, class, level, PvP flag, a spell's
+  cooldown - no longer raise an error; the bar takes the safe choice for each.
 - In instances and PvP the game keeps buffs unreadable even out of combat; the bar then
   counted every mana user as missing Arcane Intellect and made the armor glow. It now keeps
   what it showed until the buffs can be read again, and an armor cast there still ends its
@@ -63,6 +69,12 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   the gem as soon as the game knows it.
 
 ### Security
+- The bug report filters a BattleTag at the very start of a line, colour, texture and link codes
+  and what they hid, paths with an apostrophe or under more folders, and addresses without a
+  dot in the domain. Local values and the action log pass no free text any more.
+- The report window, the form, README and the store say exactly which names are filtered, and
+  that friends and guild members outside your group can remain; README and the form say that an
+  issue appears under your GitHub name.
 - The release pipeline hands the CurseForge and Wago upload tokens only to release-tag runs,
   through a GitHub environment, and checks them before any channel publishes; a package may
   hold only the addon's own files. Nothing changes in the game.

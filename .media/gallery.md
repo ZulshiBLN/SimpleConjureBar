@@ -34,4 +34,4 @@ whose previews change. This is the 1.1.1 set of ruleset plan 2026-10-25-store-sc
 
 **Title:** Report a bug in one click
 
-**Caption:** /scb bug writes the report for you and docks it beside the settings. It filters the names the game knows, shows everything it holds, and gives you the code and the link to the form.
+**Caption:** /scb bug writes the report for you and docks it beside the settings. It filters your character, realm, guild and current group, shows everything it holds, and gives you the code and the link to the form.

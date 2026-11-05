@@ -76,7 +76,7 @@ armor the left click casts.
   never spends below the configured gold reserve (default 1 gold).
 - **Flyouts** (armor, teleports, portals): a left click on an entry only chooses it; the button on
   the bar casts the choice. They close by themselves a few seconds after the mouse has
-  left them, also in combat. The bar cannot be moved in combat; the handle says so.
+  left them, also in combat. The bar cannot be moved in combat.
 - **Teleport and Portal** are greyed out in combat, where the game refuses them; their flyout
   still lets you choose the next destination.
 
@@ -218,30 +218,36 @@ every file far below Lua's limit of 200 local variables per chunk.
 - No network or addon-channel communication, no chat messages to other players.
 - No dynamic code: secure snippets and macros are built from constants only.
 - Saved settings are validated at login (types and ranges), so damaged files cannot break the addon.
-- No personal data is stored; the trade partner's GUID is only kept in memory for 10 seconds.
+- No personal data is stored; the trade partner's GUID is used for 10 seconds and kept in memory
+  until the next trade event.
 
 ### Bug reports
 
 A bug report leaves the game only when you copy its code and send it. **A GitHub issue is
-public**: everyone can read it. Write no names or personal data into the form's fields.
+public and appears under your GitHub name**: everyone can read it, with the addon list and play
+times beside your name. Write no names or personal data into the form's fields.
 
 - **What it holds, and why** - to find and fix the bug you report: your description, where it
   happened and your details; the addon's version and its settings (known keys only); your
   client's version, build and language; your class, level range (e.g. 20-29) and whether you are
-  solo, in a party or a raid; this addon's Lua errors of the current session with how long ago
-  they came, counted from the addon loading, and whether in combat; its last 50 actions (clicks with spell and item IDs and unit
+  solo, in a party or a raid; the current session's Lua errors that name this addon - another
+  addon's too, if it does - with their stack lines and local values, how long ago they came,
+  counted from the addon loading, and whether in combat; its last 50 actions (clicks with spell and item IDs and unit
   tokens such as `party1`, combat, group size, settings changes); the state of its buttons, the
   items it counts, your group by class and your buffs by spell ID; the names and versions of your
   loaded addons, as conflicts need them.
-- **What it never holds** - chat, mail or whispers; positions or zones; date or clock time.
-  Strings the addon does not know are shown by their length only. The times are relative, but
+- **What it never collects** - chat, mail or whispers; positions or zones; date or clock time.
+  An error message is free text, though, and holds whatever its author wrote. Strings in local
+  values and settings that the addon does not know are shown by their length only. The times are relative, but
   with the time GitHub shows on your post they tell roughly when you played.
-- **What it filters out** - free text and error messages pass a filter for character, realm,
-  guild, group and pet names the game knows right now, GUIDs, BattleTags, account folders,
-  e-mail addresses, the WTF folder, file paths outside `Interface/AddOns` and characters that
-  show nothing. Names are matched as whole words in any case for Latin and Cyrillic letters;
-  beside punctuation and inside Chinese, Japanese or Korean text they are found too. A name you
-  type that the game does not know, one that is part of a longer word - an addon folder you
+- **What it filters out** - free text and error messages pass a filter for your character, realm
+  and guild, your current group, pets, target, focus, mouseover and trade partner, GUIDs,
+  BattleTags, account folders, e-mail addresses, the WTF folder, absolute file paths outside
+  `Interface/AddOns`, colour, texture and link codes - of a link only its visible text stays -
+  and characters that show nothing. Names are matched as whole words in any case for Latin and
+  Cyrillic letters; beside punctuation and inside Chinese, Japanese or Korean text they are found
+  too. Friends, guild members outside your group and anyone else who is not around, a name the
+  game is still loading, a relative path, one that is part of a longer word - an addon folder you
   named "ZulshiTools", say - or one in Greek or other capitals can still remain. Check with
   "Show content".
 - **Where it is kept** - the action log in memory only, gone at logout; nothing is written to
@@ -263,10 +269,14 @@ This is not legal advice; it says how bug reports are handled.
   the repository get a copy by e-mail. GitHub is responsible for what it hosts under its own
   [privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement);
   for transfers to the USA it relies on the EU-U.S. and Swiss-U.S. Data Privacy Framework.
+  To read a report, the author may decode it and pass it to an AI coding assistant. Decoded
+  copies are used only to fix the bug and are deleted once it is fixed; the assistant provider's
+  own retention applies to what it receives.
 - **How long** - once the bug is fixed, the author removes the code, with its edit history, from
   the issue; on request earlier, or the whole issue. Copies outside GitHub - e-mail
   notifications, web archives - cannot be recalled.
-- **Your rights** - access, correction, deletion and objection, through the contact above. You
+- **Your rights** - access, correction, deletion, restriction, portability and objection, through
+  the contact above. You
   may also complain to the Swiss FDPIC or to the data protection authority of your EU country.
 - **Under 16** - ask a parent before you post a report.
 

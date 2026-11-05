@@ -23,6 +23,8 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
   and where the report would leave the screen the settings move just far enough. While a name
   can't be read, the settings say so below "Report bug" for a few seconds, and an open report
   says so above its code box - not in the chat.
+- "Show macro" opens the macro window without switching to the character tab: the switch made
+  the game block the window's Save in combat, and the edit was lost.
 - The Intellect button's left click casts one recommendation: Arcane Brilliance once the
   threshold is reached - in a party by everyone in need in range, in a raid by one subgroup's
   members who have none or a weaker one - else Arcane Intellect on the first in need. The right

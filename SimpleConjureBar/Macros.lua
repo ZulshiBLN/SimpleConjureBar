@@ -30,7 +30,9 @@ local function MacroBody()
     }, "\n")
 end
 
--- Opens Blizzard's macro window on the character macros (where "SCB Polymorph" is stored)
+-- Opens Blizzard's macro window and nothing more: choosing its character tab from here taints
+-- the window, and its Save is then blocked in combat and the edit lost (live test 2026-11-05).
+-- The settings window stays open (Michel's choice, 2026-10-18).
 function ns.ShowMacroWindow()
     if InCombatLockdown() then return end -- the settings window is closed in combat anyway
     if ShowMacroFrame then
@@ -39,17 +41,6 @@ function ns.ShowMacroWindow()
         local load = (C_AddOns and C_AddOns.LoadAddOn) or LoadAddOn
         if load then load("Blizzard_MacroUI") end
         if MacroFrame then ShowUIPanel(MacroFrame) end
-    end
-    -- Tab 2 = character macros, where every SCB macro lives. The window switches to tab 1
-    -- when shown, so this comes after. ChangeTab takes the tab number; SelectTab takes the
-    -- tab button and errored on a number (Blizzard_MacroUI). Older clients: the tab button.
-    -- The settings window stays open (Michel's choice, 2026-10-18).
-    if MacroFrame then
-        if MacroFrame.ChangeTab then
-            MacroFrame:ChangeTab(2)
-        elseif MacroFrameTab2 and MacroFrameTab2.Click then
-            MacroFrameTab2:Click()
-        end
     end
 end
 

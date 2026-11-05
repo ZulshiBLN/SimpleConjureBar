@@ -51,7 +51,7 @@ read_globals = {
     "InCombatLockdown", "InitiateTrade", "InterfaceOptions_AddCategory",
     "IsInGroup", "IsInRaid", "IsMouseButtonDown", "IsPlayerSpell", "IsSpellInRange",
     "IsSpellKnown", "LoadAddOn", "MAX_ACCOUNT_MACROS", "MAX_CHARACTER_MACROS",
-    "MacroFrame", "MacroFrameTab2", "Minimap", "NUM_BAG_SLOTS",
+    "MacroFrame", "Minimap", "NUM_BAG_SLOTS",
     "NUM_TOTAL_EQUIPPED_BAG_SLOTS", "NumberFontNormal", "OpacitySliderFrame",
     "PickupContainerItem", "PixelUtil", "RegisterStateDriver", "ReloadUI",
     "STANDARD_TEXT_FONT", "Settings", "ShowMacroFrame", "ShowUIPanel",

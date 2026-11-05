@@ -105,8 +105,8 @@ drag moves it around the minimap; the AddOn compartment entry works the same, wi
 - **Supplies**: rune warning threshold and colors, auto-buy, gold reserve and target amounts
 - **Order**: drag and drop the button order
 - **Macros**: the Polymorph macro with its raid marker, the Ice Block macro, the stopcasting
-  macros, and "Show macro" in the bottom right corner (opens the macro window on the
-  character tab; the settings window stays open)
+  macros, and "Show macro" in the bottom right corner (opens the macro window, where the SCB
+  macros are on the character tab; the settings window stays open)
 
 | Macros | General, with the language list and a vertical bar |
 |---|---|

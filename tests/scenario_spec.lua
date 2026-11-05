@@ -235,14 +235,14 @@ describe("the addon in a mocked client", function()
         ns.CreatePolymorphMacro()
         assert.is_truthy(MACROS[1].body:find("/tm %[@focus,harm,nodead%] 8"))
 
-        -- Blizzard's macro window switches to its first tab (general) when shown; the
-        -- addon must switch it to the second (character) afterwards, and stay open.
+        -- The addon only opens Blizzard's macro window. A tab switch from addon code taints the
+        -- window, and its Save is then blocked in combat (live test 2026-11-05).
         local tabs = {}
         _G.MacroFrame = { ChangeTab = function(_, id) tabs[#tabs + 1] = id end }
         _G.ShowMacroFrame = function() _G.SHOWN_MACRO = true; MacroFrame:ChangeTab(1) end
         SimpleConjureBarSettings:Show(); ns.ShowMacroWindow()
         assert.is_true(SHOWN_MACRO)
-        assert.are.same({ 1, 2 }, tabs)
+        assert.are.same({ 1 }, tabs)
         assert.is_true(SimpleConjureBarSettings:IsShown())
     end)
 

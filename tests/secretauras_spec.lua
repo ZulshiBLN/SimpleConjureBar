@@ -238,12 +238,16 @@ end)
 
 describe("a damaged saved position", function()
     it("is dropped before it reaches SetPoint, and a valid one stays", function()
-        _G.SimpleConjureBarDB = { point = "FOO", rel = "ALSONOT", x = 1, y = 2 }
-        addon.load("enUS").InitDB()
-        assert.is_nil(SimpleConjureBarDB.point)
-        assert.is_nil(SimpleConjureBarDB.rel)
-        _G.SimpleConjureBarDB = { point = "TOPLEFT", rel = "BOTTOMRIGHT", x = 1, y = 2 }
-        addon.load("enUS").InitDB()
-        assert.are.equal("TOPLEFT", SimpleConjureBarDB.point)
+        for _, bad in ipairs({ { "FOO", "LEFT" }, { "LEFT", "ALSONOT" } }) do
+            _G.SimpleConjureBarDB = { point = bad[1], rel = bad[2], x = 1, y = 2 }
+            addon.load("enUS").InitDB()
+            assert.is_nil(SimpleConjureBarDB.point, bad[1] .. " " .. bad[2])
+            assert.is_nil(SimpleConjureBarDB.rel, bad[1] .. " " .. bad[2])
+        end
+        for _, good in ipairs({ "TOPLEFT", "CENTER", "BOTTOMRIGHT" }) do
+            _G.SimpleConjureBarDB = { point = good, rel = good, x = 1, y = 2 }
+            addon.load("enUS").InitDB()
+            assert.are.equal(good, SimpleConjureBarDB.point)
+        end
     end)
 end)

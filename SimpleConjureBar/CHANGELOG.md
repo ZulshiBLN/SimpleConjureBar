@@ -72,9 +72,9 @@ This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and v
 - The bug report filters a BattleTag at the very start of a line, colour, texture and link codes
   and what they hid, paths with an apostrophe or under more folders, and addresses without a
   dot in the domain. Local values and the action log pass no free text any more.
-- The report window, the form, README and the store say exactly which names are filtered, and
-  that friends and guild members outside your group can remain; README and the form say that an
-  issue appears under your GitHub name.
+- The report window, the form and README say exactly which names are filtered, and that friends
+  and guild members outside your group can remain; README and the form say that an issue appears
+  under your GitHub name.
 - The release pipeline hands the CurseForge and Wago upload tokens only to release-tag runs,
   through a GitHub environment, and checks them before any channel publishes; a package may
   hold only the addon's own files. Nothing changes in the game.

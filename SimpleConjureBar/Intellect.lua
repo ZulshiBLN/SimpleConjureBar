@@ -458,7 +458,7 @@ intel:SetScript("PreClick", function(_, button, down)
     -- nil for a spell the client does not know - demo mode treats every rank as known
     local cd = spell and C_Spell.GetSpellCooldown(spell)
     local started = cd and cd.startTime
-    local cooling = started and not IsSecret(started) and started > 0
+    local cooling = not IsSecret(started) and started and started > 0
     if down then -- the PreClick sees down and up; one entry per press
         ns.Log("buffrun " .. (cooling and "wait: cooldown" or spell and tostring(spell) or ("none: " .. why)))
     end

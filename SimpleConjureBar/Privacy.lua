@@ -186,26 +186,30 @@ local HOME_ROOTS = { "%f[%a]%a:[\\/]", "\\\\", "/Users/", "/home/", "/Volumes/",
     "/run/media/", "/media/", "/mnt/", "/opt/", "~/", "/users/", "%f[%w]Users[\\/]",
     "%f[%w]users[\\/][^\\/%s]+[\\/]", "%f[%w][Aa]ccount[\\/][^\\/%s]+[\\/]" }
 local ROOTS_EVERYWHERE = 2
-local function Path(p)
-    local from = 1
+
+-- The first line number in text[from, stop); a port is none: "\\srv:445\share"
+local function LineNumber(text, from, stop)
     while true do
-        local s, e = p:find(":%d+", from)
-        if not s then return "<path>" end
-        -- a line number, not a port: "\\srv:445\share"
-        if not p:sub(e + 1, e + 1):find("[\\/]") then return "<path>" .. p:sub(s) end
+        local s, e = text:find(":%d+", from)
+        if not s or s >= stop then return nil end
+        if not text:sub(e + 1, e + 1):find("[\\/]") then return s end
         from = e + 1
     end
 end
 
--- Where each addon path of the text runs: to a space, bracket, quote or ".."
+-- Where each addon path of the text runs: to a space, bracket, quote or other separator, "..",
+-- "//", or a colon a new path follows: past those another folder can begin
 local function AddonRuns(text)
     local runs, from = {}, 1
     while true do
         local s, e = text:find("Interface/AddOns/", from, true)
         if not s then return runs end
-        local stop = text:find("[%]%s\"']", e + 1) or #text + 1
-        local dots = text:find("..", e + 1, true)
-        if dots and dots < stop then stop = dots end
+        local stop = text:find("[%]%s\"',;%(]", e + 1) or #text + 1
+        local run = text:sub(e + 1, stop - 1)
+        for _, inner in ipairs({ "%.%.", "//", ":[\\/~]" }) do
+            local at = run:find(inner)
+            if at and e + at < stop then stop = e + at end
+        end
         runs[#runs + 1] = { s, stop }
         from = stop
     end
@@ -224,9 +228,11 @@ local function PathEnd(text, i)
     return i
 end
 
--- Every path from this root replaced by replace(path); runs, if given, are left alone
-local function ReplaceRoot(text, root, replace, runs)
-    local out, pos, from, r = {}, 1, 1, 1
+-- Every path from this root replaced by `label`, in one pass over the text. With keepLines a line
+-- number stays readable and the rest of the line stays too: it may hold a second path. Runs, if
+-- given, are left alone.
+local function ReplaceRoot(text, root, label, keepLines, runs)
+    local out, pos, from, r, stop = {}, 1, 1, 1, 0
     while true do
         local s, e = text:find(root, from)
         if not s then break end
@@ -234,10 +240,11 @@ local function ReplaceRoot(text, root, replace, runs)
         if runs and runs[r] and runs[r][1] < s then
             from = s + 1
         else
-            local stop = PathEnd(text, e + 1)
+            if stop <= e then stop = PathEnd(text, e + 1) end -- one scan for all paths up to the end
             out[#out + 1] = text:sub(pos, s - 1)
-            out[#out + 1] = replace(text:sub(s, stop - 1))
-            pos, from = stop, stop
+            out[#out + 1] = label
+            pos = keepLines and LineNumber(text, e + 1, stop) or stop
+            from = pos
         end
     end
     if pos == 1 then return text end
@@ -263,18 +270,14 @@ end
 
 local function WithoutCodes(text)
     if not text:find("|", 1, true) then return text end
-    repeat
-        local before = text
-        text = text:gsub("|n", " ")
-        -- a link's payload may hold a name no filter knows, so only its visible text stays
-        text = Pairs(text, "|H", "|h")
-        text = text:gsub("|H[^\n]*", MARK):gsub("|h", MARK)
-        text = Pairs(text, "|T", "|t")
-        text = Pairs(text, "|A", "|a")
-        text = Pairs(text, "|K", "|k")
-        text = text:gsub("|c%x%x%x%x%x%x%x%x", MARK):gsub("|cn[%w_]+:", MARK):gsub("|r", MARK)
-    until text == before
-    return text
+    text = text:gsub("|n", " ")
+    -- a link's payload may hold a name no filter knows, so only its visible text stays
+    text = Pairs(text, "|H", "|h")
+    text = text:gsub("|H[^\n]*", MARK):gsub("|h", MARK)
+    text = Pairs(text, "|T", "|t")
+    text = Pairs(text, "|A", "|a")
+    text = Pairs(text, "|K", "|k")
+    return (text:gsub("|[cC]%x%x%x%x%x%x%x%x", MARK):gsub("|[cC]n[%w_]+:", MARK):gsub("|[rR]", MARK))
 end
 
 -- An address without a dot in its domain: letters only, no unit token ("x@focus"), and nothing
@@ -305,14 +308,11 @@ local function Filter(text, names, marked)
     -- A path ends at Interface/AddOns, whatever drive or folder the game sits in
     text = text:gsub("%a:[\\/][^%[%]\"\n]-[\\/][Ii]nterface[\\/][Aa]dd[Oo]ns[\\/]", "Interface/AddOns/")
     text = text:gsub("Interface[\\/]AddOns[\\/][^%]%s\"']*", function(p) return (p:gsub("\\", "/")) end)
-    -- after each change from the first root again, so "/Users/" is never taken for "Users/"
-    local i = 1
-    while i <= #HOME_ROOTS do
-        local runs = i > ROOTS_EVERYWHERE and AddonRuns(text) or nil
-        local after = ReplaceRoot(text, HOME_ROOTS[i], Path, runs)
-        if after ~= text then text, i = after, 1 else i = i + 1 end
+    -- in this order, so "/Users/" is never taken for "Users/"
+    for i, root in ipairs(HOME_ROOTS) do
+        text = ReplaceRoot(text, root, "<path>", true, i > ROOTS_EVERYWHERE and AddonRuns(text) or nil)
     end
-    text = ReplaceRoot(text, "%f[%a][Ww][Tt][Ff][\\/]", function() return "<wtf>" end)
+    text = ReplaceRoot(text, "%f[%a][Ww][Tt][Ff][\\/]", "<wtf>")
     -- The frontier starts a match only where a run of address characters starts: without it a
     -- long run would be scanned again from every byte
     text = text:gsub("%f[%w%.%%%+%-_\128-\255][%w%.%%%+%-_\128-\255]+@[%w%-\128-\255]+%.[%w%.%-\128-\255]+", "<email>")
@@ -335,12 +335,21 @@ local function Filter(text, names, marked)
     return (text:gsub(MARK, ""))
 end
 
+-- Enough for codes nested in codes: a crafted line could nest deeper, but costs the same each pass
+local MAX_PASSES = 8
+
 function ns.Scrub(text, names)
-    text = tostring(text or "")
+    text = tostring(text or ""):gsub(MARK, "")
     local marked = text:find("\204[\128-\191]") or text:find("\205[\128-\175]")
     local out = Filter(text, names, marked)
     -- Data a display code split is whole only now: "Tes|rta", "joe@exa|rmple.de"
-    if text:find("|", 1, true) then out = Filter(out, names, marked) end
+    if text:find("|", 1, true) then
+        for _ = 2, MAX_PASSES do
+            local again = Filter(out, names, marked)
+            if again == out then break end
+            out = again
+        end
+    end
     return out
 end
 

@@ -84,7 +84,7 @@ local function GroupLine()
     local byClass, classes = {}, {}
     for _, u in ipairs(units) do
         local _, class = UnitClass(u)
-        if class then
+        if not ns.IsSecret(class) and class then
             if not byClass[class] then classes[#classes + 1] = class end
             byClass[class] = (byClass[class] or 0) + 1
         end

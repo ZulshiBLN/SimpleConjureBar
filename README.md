@@ -139,7 +139,7 @@ already selected:
 1. Copy the code with Ctrl+C.
 2. Open the link below the code: it opens the bug report form on GitHub (a GitHub account is
    needed).
-3. Paste the code into its one field, tick the consent box and send it.
+3. Paste the code into its one field, tick the box and send it.
 
 "Show content" shows everything the code holds before you pass it on. The code is not
 encrypted - anyone can turn it back into what "Show content" shows. Screenshots you add to the

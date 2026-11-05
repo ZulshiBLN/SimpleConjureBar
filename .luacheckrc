@@ -58,7 +58,7 @@ read_globals = {
     "UIDropDownMenu_AddButton", "UIDropDownMenu_CreateInfo", "UIDropDownMenu_Initialize",
     "UIDropDownMenu_SetText", "UIDropDownMenu_SetWidth", "UIParent", "UISpecialFrames",
     "C_Secrets", "UnitCanAssist", "UnitIsPVP", "IsPVPTimerRunning",
-    "UnitBuff", "UnitClass", "UnitExists", "UnitFactionGroup", "UnitGUID", "UnitInRange",
+    "UnitBuff", "UnitClass", "UnitExists", "UnitFactionGroup", "UnitGUID", 
     "UnitIsConnected", "UnitIsDeadOrGhost", "UnitIsFriend", "UnitIsPlayer", "UnitIsUnit",
     "UnitIsVisible", "UnitLevel", "UnitName", "UnregisterStateDriver",
     "issecretvalue", "GetRealmName", "GetNormalizedRealmName", "GetGuildInfo", "UnitAffectingCombat",

@@ -842,6 +842,22 @@ describe("the report's filter, by exact output", function()
             { "C:\\Users\\Chris' PC\\a.lua:3: bad", "<path>' PC\\a.lua:3: bad" },
             { "Account\\JOEACC\\SavedVariables\\a.lua", "<path>" },
             { "Documents\\Joe\\x", "Documents\\Joe\\x" },
+            { "Interface/AddOns/Foo/a.lua:1:/home/joe/x", "Interface/AddOns/Foo/a.lua:1:<path>" },
+            { "Interface/AddOns/Foo,/Users/joe/x", "Interface/AddOns/Foo,<path>" },
+            { "Interface/AddOns/Foo/a.lua:1(/Users/joe/x)", "Interface/AddOns/Foo/a.lua:1(<path>" },
+            { "Interface/AddOns/Foo/a.lua:1;/home/joe Smith/x", "Interface/AddOns/Foo/a.lua:1;<path>" },
+            { "Interface\\AddOns\\Bar\\/Users/amy/x", "Interface/AddOns/Bar/<path>" },
+        })
+    end)
+
+    it("takes capital codes, nested codes and a marker byte in the input out too", function()
+        check({
+            { "|CffffffffTesta|R failed", "<name> failed" },
+            { "Te|c|rffffffffsta failed", "<name> failed" },
+            { "/ho|c|rffffffffme/joe/x", "<path>" },
+            { "joe@exa|c|rffffffffmple.de", "<email>mple.de" }, -- nothing of the address is left
+            { "Tes\1ta failed", "<name> failed" },
+            { "joe@exa\1mple.de", "<email>" },
         })
     end)
 
@@ -867,7 +883,8 @@ describe("the report's filter, by exact output", function()
 
     it("scrubs long runs of display codes quickly", function()
         local ns = login(nil)
-        for _, code in ipairs({ "|T", "|A", "|K", "|H", "|c", "|T|t", "|H|h" }) do
+        for _, code in ipairs({ "|T", "|A", "|K", "|H", "|c", "|T|t", "|H|h", "~/:1", "~/x:1 ", "Account\\a\\b:1 ",
+            "users\\a\\b:1 ", "\\\\x:1 ", "Users\\x:1 ", "Interface/AddOns/a Account\\a\\b:1 " }) do
             local start = os.clock()
             ns.Scrub(code:rep(math.floor(20000 / #code)), { "Testplayer" })
             local took = os.clock() - start

@@ -76,6 +76,8 @@ describe("secret values", function()
         assertCheckedFirst(run, "level", "BuffRunSpell")
         assertCheckedFirst(run, "isSelf", "BuffRunSpell")
         assertCheckedFirst(region(intellect, "if not index then", "local sub ="), "same", "the raid index")
+        assertCheckedFirst(region(intellect, 'intel:SetScript("PreClick"', "^end%)"), "started", "the cooldown")
+        assertCheckedFirst(region(source("Report.lua"), "local byClass, classes", "^    end"), "class", "the group line")
     end)
 
     it("fill no trade for a partner whose GUID is secret", function()

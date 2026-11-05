@@ -3,7 +3,7 @@
 A slim mage bar for **WoW Forever** (Classic content on the modern Retail client, Interface 16001).
 It bundles everything a mage conjures, buffs and travels with into one movable bar.
 
-![The bar in demo mode, the handle's tooltip and the settings' General tab](.previews/01-general.jpg)
+![The Tracking tab with the Arcane Brilliance threshold, and the Intellect button's tooltip](.previews/02-intellect-and-tracking.jpg)
 
 ## Installation
 
@@ -80,7 +80,7 @@ armor the left click casts.
 - **Teleport and Portal** are greyed out in combat, where the game refuses them; their flyout
   still lets you choose the next destination.
 
-![The armor flyout open above the bar, and the language list on the General tab](.previews/02-flyout-armor-languages.jpg)
+![The Teleport flyout open above the bar, with a destination's tooltip](.previews/05-teleports-and-armor.jpg)
 
 ## Settings
 
@@ -108,13 +108,9 @@ drag moves it around the minimap; the AddOn compartment entry works the same, wi
   macros, and "Show macro" in the bottom right corner (opens the macro window on the
   character tab; the settings window stays open)
 
-| Supplies, with the mana gem's clicks | Order, with the water's clicks |
+| Macros | General, with the language list and a vertical bar |
 |---|---|
-| ![Supplies tab and the Mana Ruby tooltip](.previews/04-supplies.jpg) | ![Order tab and the water tooltip](.previews/05-order.jpg) |
-
-| Macros, with the teleport flyout open | The minimap button |
-|---|---|
-| ![Macros tab and the teleport flyout](.previews/06-macros-flyout-teleport.jpg) | ![The minimap button's tooltip](.previews/08-minimap.jpg) |
+| ![The Macros tab](.previews/06-macros.jpg) | ![The General tab with the language list open, the bar vertical](.previews/07-general-and-languages.jpg) |
 
 In the Polymorph section, "Create macro" creates (or updates) the character macro **SCB Polymorph**:
 the first click sets a hostile, living target as focus and marks it with the chosen raid marker
@@ -132,7 +128,7 @@ A macro for a spell you have not learned yet shows a question mark until you lea
 
 ## Reporting a bug
 
-![The bug report window beside the settings](.previews/07-bug-report.jpg)
+![The bug report docked beside the settings](.previews/08-bug-report.jpg)
 
 "Report bug" (General tab) or `/scb bug` opens the settings on the General tab with a short form
 docked to their left: what happened, where - a list of

@@ -3,7 +3,7 @@
 **Everything a mage conjures, buffs and travels with - on one slim bar.**
 Built for **WoW Forever**. Loads for mages only.
 
-![SimpleConjureBar with its settings](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/01-general.jpg)
+![Intellect tooltip and tracking](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/02-intellect-and-tracking.jpg)
 
 ---
 
@@ -20,8 +20,6 @@ Built for **WoW Forever**. Loads for mages only.
 - **Ready for a fight:** in combat the bar greys out what cannot work there, and its tooltips
   show only the clicks that do.
 
-![Intellect tooltip and tracking](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/03-tracking.jpg)
-
 ## 🍞 Conjure, eat, trade
 
 - **Water & Food:** left-click to use, right-click to conjure - in the rank your target
@@ -29,24 +27,26 @@ Built for **WoW Forever**. Loads for mages only.
 - **Mana Gem:** use the best one, conjure the one you are missing.
 - **Auto-buy** restocks runes and Arcane Powder at the vendor, never below your gold reserve.
 
-![Supplies and auto-buy](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/04-supplies.jpg)
-
 ## 🌀 Teleports, portals and armor
 
 One button each - a right-click opens the list, your choice is remembered. Rune counts turn
 orange when you run low.
+
+![Teleports and armor](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/05-teleports-and-armor.jpg)
 
 ## 🪄 Macros in one click
 
 **Polymorph** with a raid marker, **Ice Block** that cancels on a second press, and
 **stopcasting** macros for Fire Blast, Frost Nova, Blink or Counterspell.
 
-![Macros and teleport menu](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/06-macros-flyout-teleport.jpg)
+![Macros](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/06-macros.jpg)
 
 ## 🎨 Make it yours
 
 Horizontal or vertical, any button order, scale, colors, border, window transparency.
 **11 languages**, switchable in game. **Demo mode** shows every button before you learn it.
+
+![General tab and languages](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/07-general-and-languages.jpg)
 
 ## 🐞 Found a bug?
 
@@ -54,6 +54,8 @@ Type `/scb bug`: the addon writes the report for you - it filters the names the 
 nothing to explain twice - and shows the code and the link to the form. What a report holds and
 how it is handled:
 [Privacy and security](https://github.com/ZulshiBLN/SimpleConjureBar#privacy-and-security).
+
+![The bug report](https://raw.githubusercontent.com/ZulshiBLN/SimpleConjureBar/main/.previews/08-bug-report.jpg)
 
 ---
 

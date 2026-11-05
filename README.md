@@ -71,6 +71,8 @@ armor the left click casts.
   glow. The mana gem is used but not conjured - every gem costs more mana than it gives - and
   never glows; its icon follows the best gem left, greyed without one. The armor's glow goes off
   once you cast an armor.
+![The trade window filled with water and food, beside the water button's tooltip](.previews/03-conjure-and-trade.jpg)
+
 - **Rune counts** on Teleport/Portal change color at the warning threshold and at 0.
 - **Auto-buy** buys runes and Arcane Powder at reagent vendors up to the configured amounts and
   never spends below the configured gold reserve (default 1 gold).

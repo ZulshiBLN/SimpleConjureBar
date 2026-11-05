@@ -259,7 +259,7 @@ local function BuildReport(form)
         for i, e in ipairs(errors) do
             local when, combat = ErrorWhen(e)
             lines[#lines + 1] = ""
-            lines[#lines + 1] = ("Error %d (x%s, %s, combat: %s):"):format(i, tostring(e.counter or 1), when, combat)
+            lines[#lines + 1] = ("Error %d (x%s, %s, combat: %s):"):format(i, type(e.counter) == "number" and e.counter or 1, when, combat)
             lines[#lines + 1] = "```"
             for _, l in ipairs(FirstLines(e.message, 6, "msg", names)) do lines[#lines + 1] = l end
             for _, l in ipairs(FirstLines(e.stack, MAX_STACK_LINES, "at", names)) do lines[#lines + 1] = l end
